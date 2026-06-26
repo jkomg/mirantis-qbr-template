@@ -69,6 +69,60 @@
         </div>
       </div>
 
+      <!-- SECTION: Pull from Salesforce -->
+      <div style="margin-top:16px; padding:24px 28px; background:#070D1A; color:white; border:1px solid #1F2A44;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00C9B0; letter-spacing:2px;">// PULL FROM SALESFORCE</div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <sc-if value="{{ sidecarStatus === 'ok' }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(61,174,115,0.18); color:#3DAE73; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>SIDECAR READY
+              </div>
+            </sc-if>
+            <sc-if value="{{ sidecarStatus === 'no-creds' }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(245,166,35,0.15); color:#F5A623; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#F5A623;"></div>MISSING CREDS
+              </div>
+            </sc-if>
+            <sc-if value="{{ sidecarStatus === 'unreachable' }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(224,53,70,0.15); color:#E03546; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#E03546;"></div>UNREACHABLE
+              </div>
+            </sc-if>
+          </div>
+        </div>
+        <div style="font-family:'Lato',sans-serif; font-size:13px; color:#7E8CA8; margin-bottom:14px; line-height:1.5;">
+          Runs as a sidecar on port 8081. Pulls Account, Opportunities, Assets, and Contacts from Salesforce and merges them into the form. Usage, support metrics, incidents, wins, risks, and asks still need the TAM's input.
+          See <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0; font-size:12px;">sf-sync/README.md</span> for setup.
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1.5px; font-weight:700;">SALESFORCE ACCOUNT NAME (exact match)</span>
+            <input type="text" value="{{ sfAccount }}" onInput="{{ onSfAccountChange }}" placeholder="e.g. Vertex Logistics" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:17px; background:#0E1A2E; color:#C8D0E0; border:1px solid #1F2A44; outline:none;"/>
+          </label>
+          <div style="display:flex; flex-direction:column; gap:8px; justify-content:flex-end;">
+            <sc-if value="{{ sidecarChecking }}" hint-placeholder-val="{{ false }}">
+              <button style="padding:11px 18px; font-family:'JetBrains Mono',monospace; font-size:13px; background:transparent; border:1px solid #3A4661; color:#5C6B85; cursor:default; letter-spacing:1px; text-align:center;">Checking…</button>
+            </sc-if>
+            <sc-if value="{{ !sidecarChecking }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ onSidecarCheck }}" style="padding:11px 18px; font-family:'JetBrains Mono',monospace; font-size:13px; background:transparent; border:1px solid #3A4661; color:#7E8CA8; cursor:pointer; letter-spacing:1px; text-align:center;">Check sidecar</button>
+            </sc-if>
+            <sc-if value="{{ sfPulling }}" hint-placeholder-val="{{ false }}">
+              <button style="padding:11px 18px; font-family:'Overpass',sans-serif; font-weight:700; font-size:15px; background:#009E8A; border:none; color:#0E1A2E; cursor:default; letter-spacing:0.5px;">Pulling…</button>
+            </sc-if>
+            <sc-if value="{{ !sfPulling }}" hint-placeholder-val="{{ true }}">
+              <button onClick="{{ onSfPull }}" style="padding:11px 18px; font-family:'Overpass',sans-serif; font-weight:700; font-size:15px; background:#00C9B0; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px;">↓ Pull from Salesforce</button>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{ sfPullError }}" hint-placeholder-val="{{ '' }}">
+          <div style="padding:10px 14px; background:rgba(224,53,70,0.12); border-left:3px solid #E03546; font-family:'JetBrains Mono',monospace; font-size:13px; color:#E03546; line-height:1.5;">{{ sfPullError }}</div>
+        </sc-if>
+        <sc-if value="{{ sfPulledRecently }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 14px; background:rgba(61,174,115,0.12); border-left:3px solid #3DAE73; font-family:'JetBrains Mono',monospace; font-size:13px; color:#3DAE73;">✓ Merged into form — review and fill in telemetry, support metrics, and narrative below.</div>
+        </sc-if>
+      </div>
+
       <!-- SECTION: Customer & meeting -->
       <div style="margin-top:36px;">
         <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
@@ -683,6 +737,12 @@ class Component extends DCLogic {
     savedAt: null,
     importText: '',
     importedAt: null,
+    sfAccount: '',
+    sidecarStatus: null,   // null | 'checking' | 'ok' | 'no-creds' | 'unreachable'
+    sidecarChecking: false,
+    sfPulling: false,
+    sfPulledAt: null,
+    sfPullError: '',
   };
 
   loadInitial() {
@@ -1278,8 +1338,61 @@ class Component extends DCLogic {
     const npsTrendStr = (nd >= 0 ? '▲ +' : '▼ ') + nd + ' QoQ';
     const presentationDateFmt = (form.presentationDate || '').replace(/-/g, '.');
 
+    // ---- SALESFORCE SIDECAR ----
+    const SIDECAR = 'http://localhost:8081';
+
+    const onSfAccountChange = (e) => {
+      this.setState({ sfAccount: e.target.value, sfPullError: '' });
+    };
+
+    const onSidecarCheck = async () => {
+      this.setState({ sidecarChecking: true, sidecarStatus: 'checking', sfPullError: '' });
+      try {
+        const r = await fetch(SIDECAR + '/health', { signal: AbortSignal.timeout(5000) });
+        const j = await r.json();
+        this.setState({ sidecarChecking: false, sidecarStatus: j.ready ? 'ok' : 'no-creds' });
+      } catch {
+        this.setState({ sidecarChecking: false, sidecarStatus: 'unreachable' });
+      }
+    };
+
+    const onSfPull = async () => {
+      const account = (this.state.sfAccount || '').trim();
+      if (!account) {
+        this.setState({ sfPullError: 'Enter a Salesforce Account name first.' });
+        return;
+      }
+      this.setState({ sfPulling: true, sfPullError: '', sfPulledAt: null });
+      try {
+        const r = await fetch(SIDECAR + '/pull', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ account, quarter: this.state.form.quarter }),
+          signal: AbortSignal.timeout(30000),
+        });
+        const j = await r.json();
+        if (!r.ok) {
+          this.setState({ sfPulling: false, sfPullError: j.error || 'Pull failed (HTTP ' + r.status + ')' });
+          return;
+        }
+        const merged = this.hydrate(j.payload);
+        this.setState({ sfPulling: false, sfPulledAt: Date.now(), sfPullError: '', form: merged, sidecarStatus: 'ok' });
+      } catch (err) {
+        const msg = err.name === 'TimeoutError' ? 'Sidecar timed out (30 s). Is it running?' : 'Sidecar unreachable — run `docker compose up`.';
+        this.setState({ sfPulling: false, sfPullError: msg, sidecarStatus: 'unreachable' });
+      }
+    };
+
     return {
       form,
+      sfAccount: this.state.sfAccount,
+      sidecarStatus: this.state.sidecarStatus,
+      sidecarChecking: this.state.sidecarChecking,
+      sfPulling: this.state.sfPulling,
+      sfPulledAt: this.state.sfPulledAt,
+      sfPulledRecently: this.state.sfPulledAt && (Date.now() - this.state.sfPulledAt < 12000),
+      sfPullError: this.state.sfPullError || '',
+      onSfAccountChange, onSidecarCheck, onSfPull,
       onFieldChange, onActionChange, onActionAdd, onActionRemove,
       onIncChange, onIncAdd, onIncRemove,
       onWinChange, onWinAdd, onWinRemove,

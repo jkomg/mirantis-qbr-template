@@ -1,7 +1,11 @@
 # docker-compose.yml — Mirantis QBR Template
 # Run:    docker compose up --build
-# Visit:  http://localhost:8080
-# Stop:   docker compose down  (data is ephemeral; nothing persists)
+# Visit:  http://localhost:8080  (deck + configurator)
+#         http://localhost:8081  (sf-sync sidecar health)
+# Stop:   docker compose down
+#
+# SF credentials: copy .env.example → .env and fill in before `docker compose up`.
+# The sf-sync service won't start without a valid .env but the deck runs fine without it.
 
 services:
   qbr:
@@ -17,3 +21,21 @@ services:
     # Tighten the network surface: container can be reached but cannot
     # phone home. Comment out if you need to install packages live.
     # network_mode: "none"   # uncomment for fully air-gapped
+
+  sf-sync:
+    build:
+      context: .
+      dockerfile: sf-sync/Dockerfile
+    image: mirantis-qbr-sf-sync:local
+    container_name: mirantis-qbr-sf-sync
+    ports:
+      - "8081:8081"
+    env_file:
+      - path: .env
+        required: false   # stack still starts even without .env
+    volumes:
+      - sf-data:/data/accounts
+    restart: "no"
+
+volumes:
+  sf-data:
