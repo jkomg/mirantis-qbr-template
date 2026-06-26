@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="./assets/fonts.css">
+<style>
+  body { font-family: 'Lato', -apple-system, sans-serif; margin:0; background:#0a0a0a; }
+  /* Mirantis "M" ribbon marker — reused on dark covers/dividers */
+</style>
+</helmet>
+
+<x-import component-from-global-scope="deck-stage" from="./deck-stage.js" width="1920" height="1080" hint-size="100%,100%">
+
+<!-- ============================================================ -->
+<!-- 01 · COVER — Mission Control (navy + cyan)                    -->
+<!-- ============================================================ -->
+<section data-label="Cover" data-speaker-notes="{{ coverNotes }}" style="background:#0E1A2E; color:white; position:relative; overflow:hidden; font-family:'Lato',sans-serif;">
+  <!-- subtle grid -->
+  <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(0,201,176,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,176,0.06) 1px, transparent 1px); background-size:80px 80px;"></div>
+  <!-- thin cyan top rule -->
+  <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
+
+  <!-- Top-right Mirantis Sales lockup -->
+  <div style="position:absolute; top:80px; right:100px; display:flex; align-items:center; gap:18px;">
+    <svg width="58" height="38" viewBox="0 0 200 130" fill="none"><path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/></svg>
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px; color:white; letter-spacing:2.5px;">MIRANTIS</div>
+    <div style="width:1px; height:36px; background:#3A4661;"></div>
+    <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:28px; color:#7E8CA8; letter-spacing:5px;">SALES</div>
+  </div>
+
+  <!-- Top-left run stamp -->
+  <div style="position:absolute; top:80px; left:100px; font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:2px;">QBR // {{ quarter }} // RUN_2026.06.24</div>
+  <sc-if value="{{ tdExec }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; top:128px; left:100px; padding:6px 14px; border:1px solid #00C9B0; font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; letter-spacing:2px;">EXEC REVIEW</div></sc-if>
+  <sc-if value="{{ tdMixed }}" hint-placeholder-val="{{ true }}"><div style="position:absolute; top:128px; left:100px; padding:6px 14px; border:1px solid #7E8CA8; font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">MIXED AUDIENCE</div></sc-if>
+  <sc-if value="{{ tdEngineer }}" hint-placeholder-val="{{ false }}"><div style="position:absolute; top:128px; left:100px; padding:6px 14px; border:1px solid #E03546; font-family:'JetBrains Mono',monospace; font-size:16px; color:#E03546; letter-spacing:2px;">TECHNICAL REVIEW</div></sc-if>
+
+  <!-- Title -->
+  <div style="position:absolute; top:320px; left:100px;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; letter-spacing:3px; margin-bottom:14px;">ACCOUNT</div>
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:140px; color:white; letter-spacing:-2px; line-height:1;">{{ customer }}</div>
+    <div style="width:140px; height:4px; background:#00C9B0; margin-top:32px;"></div>
+  </div>
+
+  <!-- KPI preview strip -->
+  <div style="position:absolute; bottom:140px; left:100px; right:100px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+    <div style="border:1px solid #2A3A55; padding:28px 32px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">ARR</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">{{ arrCurrent }}</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">{{ arrTrendStr }}</div>
+    </div>
+    <div style="border:1px solid #2A3A55; padding:28px 32px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">CLUSTERS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">{{ clusters }}</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">{{ clustersTrendStr }}</div>
+    </div>
+    <div style="border:1px solid #2A3A55; padding:28px 32px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">SLA MET</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">{{ slaMet }}%</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#F5A623; margin-top:6px;">{{ slaTrendStr }}</div>
+    </div>
+    <div style="border:1px solid #2A3A55; padding:28px 32px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">NPS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">{{ nps }}</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">{{ npsTrendStr }}</div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:50px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;">
+    <div>PREPARED_BY: {{ preparedBy }}</div>
+    <div>CONFIDENTIAL · 01 / 18</div>
+  </div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 00 · INTAKE FORM (REMOVE BEFORE PRESENTING)                   -->
+<!-- ============================================================ -->
+<sc-if value="{{ lengthFull }}" hint-placeholder-val="{{ false }}">
+<section data-label="00 Data Source" data-speaker-notes="Internal slide — remove before presenting. Shows where the deck's data is being loaded from. If the status badge is red, the deck is rendering from fallback values; check the file path or save a qbr.data.json next to the deck." style="background:#F7F8FB; padding:60px 80px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <img src="./assets/mirantis-logo.png" alt="Mirantis" style="position:absolute; top:48px; right:80px; width:140px; height:auto; opacity:0.92;"/>
+  <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#E03546; letter-spacing:4px; margin-bottom:14px;">SLIDE 00 · INTERNAL · REMOVE BEFORE PRESENTING</div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:64px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1;">Data source</div>
+  <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:10px; max-width:1500px; line-height:1.4;">This deck reads from a JSON file next to the slide. Edit that file (or point the dial at a different one) and the deck updates. Tweaks-panel values override the file on a per-deck basis.</div>
+
+  <!-- Status banner -->
+  <div style="margin-top:32px; background:white; border:1px solid #D6D7DC; padding:24px 32px; display:grid; grid-template-columns:auto 1fr auto auto; gap:32px; align-items:center;">
+    <div style="display:flex; align-items:center; gap:14px;">
+      <div style="width:14px; height:14px; border-radius:50%; background:{{ statusColor }};"></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#0E1A2E; font-weight:700; letter-spacing:2px;">{{ statusLabel }}</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#0E1A2E;">{{ dataPath }}</div>
+    <div><div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px;">SCHEMA</div><div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#0E1A2E; margin-top:2px;">{{ schemaVersion }}</div></div>
+    <div><div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px;">LOADED</div><div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#0E1A2E; margin-top:2px;">{{ loadedAtText }}</div></div>
+  </div>
+
+  <!-- Two columns: bound data preview · schema reference -->
+  <div style="margin-top:28px; display:grid; grid-template-columns:1.4fr 1fr; gap:32px;">
+
+    <!-- LEFT: Loaded values preview -->
+    <div style="background:white; padding:28px 32px; border:1px solid #D6D7DC;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:18px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Loaded values</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#5C6B85; letter-spacing:1.5px;">FEEDS EVERY SLIDE</div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px 28px; font-family:'Lato',sans-serif;">
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">CUSTOMER</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ customer }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">QUARTER</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ quarter }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PREPARED BY</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ preparedBy }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">RENEWAL</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ renewalDate }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">ARR</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ arrCurrent }} · {{ arrTrendStr }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">CLUSTERS</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ clusters }} · {{ clustersTrendStr }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">SLA</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ slaMet }}% · {{ slaTrendStr }}</div></div>
+        <div><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NPS</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ nps }} · {{ npsTrendStr }}</div></div>
+        <div style="grid-column:span 2;"><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PRODUCTS</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ products }}</div></div>
+        <div style="grid-column:span 2;"><div style="font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">STAKEHOLDERS</div><div style="font-size:20px; color:#0E1A2E; font-weight:600; margin-top:2px;">{{ stakeholdersText }}</div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Schema reference -->
+    <div style="background:#0E1A2E; color:white; padding:28px 32px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; letter-spacing:2px;">// SCHEMA</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#7E8CA8; letter-spacing:1.5px;">qbr.data.json</div>
+      </div>
+      <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.55; color:#C8D0E0; white-space:pre-wrap;">{
+  "customer":   { name, tier, stakeholders:[{name,title}] },
+  "quarter":    "Q3 FY26",
+  "preparedBy": "Marco Reyes, TAM",
+  "commercial": { arr:{current,prior,yoyPct},
+                  renewalDate, expansions:[…] },
+  "usage":      { clusters, nodes, workloads,
+                  environments, uptime },
+  "support":    { p1Count, slaMetPct,
+                  p1MttrHours, csat },
+  "health":     { composite, adoption, support,
+                  sentiment, commercial,
+                  history:[…] },
+  "nps":        { score, industry, delta },
+  "products":   ["MKE", "MOSK", …]
+}</pre>
+      <div style="margin-top:18px; padding-top:14px; border-top:1px solid #1F2A44; font-family:'Lato',sans-serif; font-size:15px; color:#7E8CA8; line-height:1.45;">Drop a <span style="color:#00C9B0; font-family:'JetBrains Mono',monospace;">qbr.data.json</span> next to the deck. Or point the <span style="color:#00C9B0; font-family:'JetBrains Mono',monospace;">dataFile</span> tweak at a custom path — e.g. <span style="color:#00C9B0; font-family:'JetBrains Mono',monospace;">./accounts/vertex-q3.json</span>.</div>
+    </div>
+  </div>
+
+  <!-- Bottom: precedence -->
+  <div style="margin-top:24px; background:white; padding:22px 28px; border:1px solid #D6D7DC;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PRECEDENCE — HOW VALUES ARE RESOLVED</div>
+    <div style="display:flex; gap:0; align-items:stretch; margin-top:12px; font-family:'Lato',sans-serif; font-size:16px;">
+      <div style="flex:1; padding:10px 16px; background:#EFEAEE; border-left:4px solid #3A1A3A;"><b>Tweaks panel</b><br/><span style="color:#5B5F66;">Per-deck override (customer, quarter, preparedBy)</span></div>
+      <div style="display:flex; align-items:center; padding:0 14px; color:#5C6B85; font-family:'JetBrains Mono',monospace;">→ wins over →</div>
+      <div style="flex:1; padding:10px 16px; background:#EFEAEE; border-left:4px solid #00C9B0;"><b>qbr.data.json</b><br/><span style="color:#5B5F66;">Account file next to the deck</span></div>
+      <div style="display:flex; align-items:center; padding:0 14px; color:#5C6B85; font-family:'JetBrains Mono',monospace;">→ wins over →</div>
+      <div style="flex:1; padding:10px 16px; background:#EFEAEE; border-left:4px solid #A88AA0;"><b>Built-in fallbacks</b><br/><span style="color:#5B5F66;">Demo values (Vertex Logistics)</span></div>
+    </div>
+  </div>
+</section>
+</sc-if>
+<!-- ============================================================ -->
+<!-- 02 · AGENDA — Navy                                            -->
+<!-- ============================================================ -->
+<section data-label="Agenda" data-speaker-notes="Walk through the agenda quickly. Mention you'll save asks and next-quarter goals for the end so the room can react." style="background:#0E1A2E; color:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
+  <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:2px;">// 02 · AGENDA</div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; letter-spacing:-2px; line-height:1; margin-top:24px;">What we'll cover</div>
+
+  <div style="margin-top:80px; display:grid; grid-template-columns:1fr 1fr; gap:24px 80px;">
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">01</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Executive summary</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">07</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Wins this quarter</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">02</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Account health</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">08</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Risks &amp; blockers</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">03</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Goals recap (last QBR)</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">09</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Mirantis roadmap</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">04</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Usage &amp; adoption</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">10</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Your roadmap</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">05</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Support performance</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">11</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Renewal &amp; expansion</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">06</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Incidents &amp; RCAs</div>
+    </div>
+    <div style="display:flex; gap:24px; align-items:baseline; padding:18px 0; border-bottom:1px solid #1F2A44;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; width:50px;">12</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:600; font-size:30px;">Asks · Next quarter</div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;"><div>MIRANTIS // SALES // CONFIDENTIAL</div><div>02 / 18</div></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 03 · EXECUTIVE SUMMARY — White, swaps on riskFraming           -->
+<!-- ============================================================ -->
+<sc-if value="{{ secExecSummary }}" hint-placeholder-val="{{ true }}">
+<section data-label="Executive Summary" data-speaker-notes="{{ execSummaryNotes }}" style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#0E1A2E;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">01 · EXECUTIVE SUMMARY</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <sc-if value="{{ toneFormal }}" hint-placeholder-val="{{ true }}"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1; margin-top:18px;">In one minute</div></sc-if><sc-if value="{{ toneConversational }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1; margin-top:18px;">TL;DR</div></sc-if>
+
+  <!-- Headline (swaps on riskFraming) -->
+  <sc-if value="{{ rfPositive }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:40px; padding:32px 40px; background:#E8F8F4; border-left:6px solid #3DAE73; font-family:'Overpass',sans-serif; font-weight:600; font-size:36px; color:#0E1A2E; line-height:1.3; max-width:1600px;">Strongest quarter in two years. Production estate grew 22%, sentiment hit a six-quarter high, and renewal is on a clear path.</div>
+  </sc-if>
+  <sc-if value="{{ rfBalanced }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top:40px; padding:32px 40px; background:#F7F8FB; border-left:6px solid #0E1A2E; font-family:'Overpass',sans-serif; font-weight:600; font-size:36px; color:#0E1A2E; line-height:1.3; max-width:1600px;">Healthy and growing — usage and sentiment are both up — with two open items to address: support response time and the deferred k0rdent expansion.</div>
+  </sc-if>
+  <sc-if value="{{ rfCandid }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:40px; padding:32px 40px; background:#FEF3E2; border-left:6px solid #F5A623; font-family:'Overpass',sans-serif; font-weight:600; font-size:36px; color:#0E1A2E; line-height:1.3; max-width:1600px;">Account is healthy but the trend on support response is wrong, and the k0rdent expansion slipped a quarter. Both need an answer before renewal.</div>
+  </sc-if>
+
+  <!-- 3 takeaway tiles -->
+  <div style="margin-top:60px; display:grid; grid-template-columns:repeat(3, 1fr); gap:32px;">
+    <sc-for list="{{ execSummaryTakeaways }}" as="t" hint-placeholder-count="3">
+      <div style="border-top:3px solid {{ t.borderColor }}; padding:24px 0 0 0;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:{{ t.labelColor }}; letter-spacing:2px;">{{ t.label }}</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#0E1A2E; line-height:1.2; margin-top:14px;">{{ t.headline }}</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; line-height:1.45; margin-top:14px;">{{ t.body }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>03 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 04 · ACCOUNT HEALTH — Mission Control B2                       -->
+<!-- ============================================================ -->
+<sc-if value="{{ secAccountHealth }}" hint-placeholder-val="{{ true }}">
+<section data-label="Account Health" data-speaker-notes="Score is a Mirantis-internal composite. Walk through each dimension. The amber items (Support, Commercial) are where you'll spend time later in the deck." style="background:#F7F8FB; padding:50px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#0E1A2E;"></div>
+
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <div style="display:flex; align-items:center; gap:24px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; letter-spacing:2px;">// 02 · ACCOUNT_HEALTH</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">refresh: 2026-06-24 09:14 UTC</div>
+  </div>
+
+  <div style="margin-top:30px;">
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1;">Account health</div>
+    <div style="display:inline-flex; align-items:center; gap:14px; margin-top:18px; padding:8px 20px; background:#0E1A2E; color:white;">
+      <div style="width:10px; height:10px; border-radius:50%; background:#00C9B0;"></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:20px; letter-spacing:2px;">STATUS: HEALTHY · 82/100</div>
+    </div>
+  </div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+    <div style="background:white; padding:36px 32px; border-top:4px solid #00C9B0;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">ADOPTION</div>
+      <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">88</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+      </div>
+      <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:88%; background:#00C9B0;"></div></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; margin-top:14px;">▲ +6 QoQ</div>
+    </div>
+    <div style="background:white; padding:36px 32px; border-top:4px solid #F5A623;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">SUPPORT</div>
+      <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">76</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+      </div>
+      <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:76%; background:#F5A623;"></div></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#F5A623; margin-top:14px;">▼ -4 QoQ</div>
+    </div>
+    <div style="background:white; padding:36px 32px; border-top:4px solid #00C9B0;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">SENTIMENT</div>
+      <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">91</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+      </div>
+      <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:91%; background:#00C9B0;"></div></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; margin-top:14px;">▲ +9 QoQ</div>
+    </div>
+    <div style="background:white; padding:36px 32px; border-top:4px solid #F5A623;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">COMMERCIAL</div>
+      <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">74</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+      </div>
+      <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:74%; background:#F5A623;"></div></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#F5A623; margin-top:14px;">— flat QoQ</div>
+    </div>
+  </div>
+
+  <div style="margin-top:40px; background:white; padding:32px 40px;">
+    <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:24px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#0E1A2E;">Quarterly status history</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">last 4 quarters</div>
+    </div>
+    <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+      <div style="display:flex; gap:14px; align-items:center;"><div style="width:18px; height:18px; border-radius:50%; background:#F5A623;"></div><div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q4-FY25</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Watch · 71</div></div></div>
+      <div style="display:flex; gap:14px; align-items:center;"><div style="width:18px; height:18px; border-radius:50%; background:#F5A623;"></div><div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q1-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Watch · 75</div></div></div>
+      <div style="display:flex; gap:14px; align-items:center;"><div style="width:18px; height:18px; border-radius:50%; background:#00C9B0;"></div><div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q2-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Healthy · 78</div></div></div>
+      <div style="display:flex; gap:14px; align-items:center;"><div style="width:18px; height:18px; border-radius:50%; background:#00C9B0;"></div><div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q3-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Healthy · 82</div></div></div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:30px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;"><div>MIRANTIS // SALES // CONFIDENTIAL</div><div>04 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 05 · GOALS RECAP — White                                       -->
+<!-- ============================================================ -->
+<sc-if value="{{ showGoalsRecap }}" hint-placeholder-val="{{ true }}">
+<section data-label="Goals Recap" data-speaker-notes="What we committed to last QBR and how we delivered. Be honest about misses — keeps you credible when you propose next-quarter goals later." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">03 · GOALS RECAP</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">From {{ customer }} Q2 FY26 QBR</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">What we committed last QBR</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:18px;">Four commitments. Three delivered, one slipped.</div>
+
+  <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif; margin-top:50px;">
+    <thead>
+      <tr style="border-bottom:2px solid #3A1A3A;">
+        <th style="text-align:left; padding:18px 12px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1.5px; width:50%;">COMMITMENT</th>
+        <th style="text-align:left; padding:18px 12px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1.5px;">OWNER</th>
+        <th style="text-align:left; padding:18px 12px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1.5px;">TARGET</th>
+        <th style="text-align:left; padding:18px 12px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1.5px;">STATUS</th>
+      </tr>
+    </thead>
+    <tbody style="font-size:24px; color:#14161A;">
+      <sc-for list="{{ previousActions }}" as="action" hint-placeholder-count="4">
+        <tr style="border-bottom:1px solid #EFEAEE;">
+          <td style="padding:22px 12px; font-weight:600;">{{ action.commitment }}</td>
+          <td style="padding:22px 12px;">{{ action.owner }}</td>
+          <td style="padding:22px 12px;">{{ action.dueDateFmt }}</td>
+          <td style="padding:22px 12px;"><span style="background:{{ action.statusBg }}; color:{{ action.statusTextColor }}; padding:6px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; font-weight:700; letter-spacing:1px;">{{ action.statusLabel }}</span></td>
+        </tr>
+      </sc-for>
+    </tbody>
+  </table>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>05 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 06 · USAGE & ADOPTION — White, A3 style                        -->
+<!-- ============================================================ -->
+<sc-if value="{{ secUsage }}" hint-placeholder-val="{{ true }}">
+<section data-label="Usage &amp; Adoption" data-speaker-notes="Production estate grew ~22% this quarter. Highlight the Dallas DC build-out and the freight-tracking platform migration to k0rdent." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">04 · USAGE &amp; ADOPTION</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Usage &amp; adoption</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1500px; line-height:1.4;">Production estate grew ~22% this quarter, driven by the Dallas DC build-out and three new staging environments.</div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+    <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">CLUSTERS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">14</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +3 QoQ · +6 YoY</div>
+    </div>
+    <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">NODES</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">312</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +24 QoQ</div>
+    </div>
+    <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">WORKLOADS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">1,847</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +412 QoQ</div>
+    </div>
+    <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">ENVIRONMENTS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">6</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#6B7280; margin-top:6px; font-weight:600;">— flat</div>
+    </div>
+  </div>
+
+  <div style="margin-top:50px;">
+    <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Product mix &amp; entitlement</div>
+    <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif;">
+      <thead>
+        <tr style="border-bottom:2px solid #3A1A3A;">
+          <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">PRODUCT</th>
+          <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">ENTITLEMENT</th>
+          <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">IN USE</th>
+          <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">UTILIZATION</th>
+          <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">TREND</th>
+        </tr>
+      </thead>
+      <tbody style="font-size:22px; color:#14161A;">
+        <sc-for list="{{ productMix }}" as="row" hint-placeholder-count="4">
+          <tr style="border-bottom:1px solid #EFEAEE;">
+            <td style="padding:14px 8px; font-weight:600;">{{ row.product }}</td>
+            <td style="padding:14px 8px;">{{ row.entitlement }}</td>
+            <td style="padding:14px 8px;">{{ row.inUse }}</td>
+            <td style="padding:14px 8px;">{{ row.utilizationPct }}%</td>
+            <td style="padding:14px 8px; color:#3DAE73;">{{ row.trend }}</td>
+          </tr>
+        </sc-for>
+      </tbody>
+    </table>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>06 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 07 · SUPPORT PERFORMANCE — White, KPI strip + breakdown        -->
+<!-- ============================================================ -->
+<section data-label="Support Performance" data-speaker-notes="{{ supportNotes }}" style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">05 · SUPPORT PERFORMANCE</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Support performance</div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:repeat(5, 1fr); gap:24px;">
+    <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px;">TICKETS</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">87</div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:6px;">total this Q</div>
+    </div>
+    <div style="border-top:3px solid #E03546; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#C0303E; letter-spacing:2px;">P1</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">4</div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">▼ -2 QoQ</div>
+    </div>
+    <div style="border-top:3px solid #F5A623; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#B57515; letter-spacing:2px;">SLA MET</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">96<span style="font-size:48px;">%</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">▼ -2pp QoQ</div>
+    </div>
+    <div style="border-top:3px solid #F5A623; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#B57515; letter-spacing:2px;">P1 MTTR</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">3.4<span style="font-size:48px;">h</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">target 3.0h</div>
+    </div>
+    <div style="border-top:3px solid #3DAE73; padding:24px 0 0 0;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#1F7D52; letter-spacing:2px;">CSAT</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">4.6<span style="font-size:48px;">/5</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">▲ +0.2 QoQ</div>
+    </div>
+  </div>
+
+  <sc-if value="{{ seNotLight }}" hint-placeholder-val="{{ true }}">
+  <div style="margin-top:60px; display:grid; grid-template-columns:1fr 1fr; gap:60px;">
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Ticket volume by severity</div>
+      <div style="display:flex; flex-direction:column; gap:14px;">
+        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P1 — Production down</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">4</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:5%; background:#E03546;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P2 — Degraded</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">19</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:22%; background:#F5A623;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P3 — Functional</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">42</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:48%; background:#7B4E7B;"></div></div></div>
+        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P4 — Question / how-to</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">22</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:25%; background:#A88AA0;"></div></div></div>
+      </div>
+    </div>
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Where the time goes</div>
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">38%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Networking / CNI questions — most still resolve in &lt; 1h</div></div>
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">24%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Upgrade &amp; lifecycle — MKE 3.7 path planning</div></div>
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">19%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Storage — PV reclaim and CSI driver behavior</div></div>
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">19%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Other — auth, observability, custom helm</div></div>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ seLight }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top:60px; padding:32px 40px; background:#F7F8FB; border-left:5px solid #3A1A3A; font-family:'Lato',sans-serif; font-size:24px; color:#14161A; line-height:1.45; max-width:1600px;"><b>Bottom line:</b> SLA met 96%. MTTR drifted above the 3-hour target. Detailed breakdown skipped — see appendix A-01 if needed.</div>
+  </sc-if>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>07 / 18</div></div>
+</section>
+
+<!-- ============================================================ -->
+<!-- 07b · SUPPORT DEEP DIVE — only when supportEmphasis=deep       -->
+<!-- ============================================================ -->
+<sc-if value="{{ showSupportDeepDive }}" hint-placeholder-val="{{ false }}">
+<section data-label="Support Deep Dive" data-speaker-notes="{{ supportDeepNotes }}" style="background:#F7F8FB; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">05b · SUPPORT DEEP DIVE</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:76px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Support — under the hood</div>
+
+  <div style="margin-top:40px; display:grid; grid-template-columns:1fr 1fr; gap:40px;">
+    <!-- LEFT: MTTR by severity -->
+    <div style="background:white; padding:32px 36px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#3A1A3A; margin-bottom:8px;">MTTR by severity vs. target</div>
+      <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; margin-bottom:20px;">Hours · this quarter</div>
+      <div style="display:flex; flex-direction:column; gap:18px;">
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P1 · target 3.0h</div><div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#F5A623; font-weight:700;">3.4h</div></div>
+          <div style="height:18px; background:#F4EFF1; position:relative;"><div style="position:absolute; top:0; left:0; height:100%; width:75%; background:#F5A623;"></div><div style="position:absolute; top:0; left:60%; height:100%; width:2px; background:#3A1A3A;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P2 · target 8h</div><div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#3DAE73; font-weight:700;">6.1h</div></div>
+          <div style="height:18px; background:#F4EFF1; position:relative;"><div style="position:absolute; top:0; left:0; height:100%; width:55%; background:#3DAE73;"></div><div style="position:absolute; top:0; left:72%; height:100%; width:2px; background:#3A1A3A;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P3 · target 24h</div><div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#3DAE73; font-weight:700;">14.2h</div></div>
+          <div style="height:18px; background:#F4EFF1; position:relative;"><div style="position:absolute; top:0; left:0; height:100%; width:42%; background:#3DAE73;"></div><div style="position:absolute; top:0; left:72%; height:100%; width:2px; background:#3A1A3A;"></div></div>
+        </div>
+        <div>
+          <div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P4 · target 72h</div><div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#3DAE73; font-weight:700;">29.5h</div></div>
+          <div style="height:18px; background:#F4EFF1; position:relative;"><div style="position:absolute; top:0; left:0; height:100%; width:30%; background:#3DAE73;"></div><div style="position:absolute; top:0; left:72%; height:100%; width:2px; background:#3A1A3A;"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:18px; font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; font-style:italic;">Vertical rule = target. Bar past rule = miss.</div>
+    </div>
+
+    <!-- RIGHT: Coverage gap -->
+    <div style="background:white; padding:32px 36px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#3A1A3A; margin-bottom:8px;">Coverage by region · time-of-day</div>
+      <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; margin-bottom:20px;">Engineers on-shift (current state)</div>
+      <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif;">
+        <thead><tr style="border-bottom:2px solid #3A1A3A;"><th style="text-align:left; padding:10px 6px; font-weight:700; font-size:16px; color:#3A1A3A; letter-spacing:1px;">REGION</th><th style="text-align:center; padding:10px 6px; font-weight:700; font-size:16px; color:#3A1A3A; letter-spacing:1px;">AMER</th><th style="text-align:center; padding:10px 6px; font-weight:700; font-size:16px; color:#3A1A3A; letter-spacing:1px;">EMEA</th><th style="text-align:center; padding:10px 6px; font-weight:700; font-size:16px; color:#3A1A3A; letter-spacing:1px;">APAC</th></tr></thead>
+        <tbody style="font-size:20px;">
+          <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:12px 6px; font-weight:600;">L1 — first response</td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">3</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">2</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#FEF3E2; color:#B57515; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">1</span></td></tr>
+          <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:12px 6px; font-weight:600;">L2 — escalation</td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">2</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">2</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#FBE5E7; color:#A8252F; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">0</span></td></tr>
+          <tr><td style="padding:12px 6px; font-weight:600;">L3 — engineering</td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">on-call</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#E8F8F4; color:#1F7D52; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">on-call</span></td><td style="padding:12px 6px; text-align:center;"><span style="background:#FEF3E2; color:#B57515; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">shared</span></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:18px; padding:14px 18px; background:#FBE5E7; border-left:4px solid #E03546; font-family:'Lato',sans-serif; font-size:18px; color:#14161A;"><b>Gap:</b> APAC L2 has no dedicated coverage. Both MTTR misses originated 02:00–06:00 UTC.</div>
+    </div>
+  </div>
+
+  <!-- Bottom row: top KB articles + planned changes -->
+  <div style="margin-top:32px; display:grid; grid-template-columns:1fr 1fr; gap:40px;">
+    <div style="background:white; padding:28px 36px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#3A1A3A; margin-bottom:16px;">Top KB articles referenced</div>
+      <div style="display:flex; flex-direction:column; gap:12px; font-family:'Lato',sans-serif; font-size:20px;">
+        <div style="display:flex; justify-content:space-between;"><div>etcd disk class &amp; tuning</div><div style="font-family:'JetBrains Mono',monospace; color:#5C6B85;">14×</div></div>
+        <div style="display:flex; justify-content:space-between;"><div>MKE upgrade preflight checks</div><div style="font-family:'JetBrains Mono',monospace; color:#5C6B85;">11×</div></div>
+        <div style="display:flex; justify-content:space-between;"><div>Registry pull-through cache</div><div style="font-family:'JetBrains Mono',monospace; color:#5C6B85;">9×</div></div>
+        <div style="display:flex; justify-content:space-between;"><div>CNI / Calico debug guide</div><div style="font-family:'JetBrains Mono',monospace; color:#5C6B85;">8×</div></div>
+      </div>
+    </div>
+    <div style="background:white; padding:28px 36px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#3A1A3A; margin-bottom:16px;">Planned changes (in flight)</div>
+      <div style="display:flex; flex-direction:column; gap:14px; font-family:'Lato',sans-serif; font-size:20px;">
+        <div style="display:flex; gap:14px; align-items:flex-start;"><div style="width:10px; height:10px; border-radius:50%; background:#3DAE73; margin-top:10px; flex-shrink:0;"></div><div>APAC L2 engineer hire — offer extended, start Sep 8</div></div>
+        <div style="display:flex; gap:14px; align-items:flex-start;"><div style="width:10px; height:10px; border-radius:50%; background:#F5A623; margin-top:10px; flex-shrink:0;"></div><div>OpsCare APAC add-on proposal — see Renewal slide</div></div>
+        <div style="display:flex; gap:14px; align-items:flex-start;"><div style="width:10px; height:10px; border-radius:50%; background:#3DAE73; margin-top:10px; flex-shrink:0;"></div><div>Runbook refresh — completed, internal review July 8</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>05b / —</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 08 · INCIDENTS & RCAs — White                                  -->
+<!-- ============================================================ -->
+<sc-if value="{{ showIncidents }}" hint-placeholder-val="{{ true }}">
+<section data-label="Incidents &amp; RCAs" data-speaker-notes="Two P1s exceeded MTTR. Both RCAs closed June 12. Be specific about what we changed in response — the customer is watching for follow-through." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">06 · INCIDENTS &amp; RCAs</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Incidents &amp; RCAs</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px;">Four P1s opened this quarter. All resolved within SLA total resolution; two exceeded MTTR target. All RCAs closed.</div>
+
+  <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif; margin-top:50px;">
+    <thead>
+      <tr style="border-bottom:2px solid #3A1A3A;">
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">DATE</th>
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">SEVERITY</th>
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">SUMMARY</th>
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">DURATION</th>
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">RCA</th>
+        <th style="text-align:left; padding:16px 12px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1.5px;">ACTIONS TAKEN</th>
+      </tr>
+    </thead>
+    <tbody style="font-size:20px; color:#14161A;">
+      <sc-for list="{{ incidents }}" as="inc" hint-placeholder-count="4">
+        <tr style="border-bottom:1px solid #EFEAEE;">
+          <td style="padding:18px 12px; font-family:'JetBrains Mono',monospace; font-size:18px;">{{ inc.dateFmt }}</td>
+          <td style="padding:18px 12px;"><span style="background:{{ inc.sevBg }}; color:{{ inc.sevColor }}; padding:5px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; letter-spacing:1px;">{{ inc.severity }}</span></td>
+          <td style="padding:18px 12px; font-weight:600;">{{ inc.summary }}</td>
+          <td style="padding:18px 12px;">{{ inc.duration }}</td>
+          <td style="padding:18px 12px;"><span style="background:{{ inc.rcaBg }}; color:{{ inc.rcaColor }}; padding:5px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700;">{{ inc.rcaStatus }}</span></td>
+          <td style="padding:18px 12px;">{{ inc.action }}</td>
+        </tr>
+      </sc-for>
+    </tbody>
+  </table>
+
+  <div style="margin-top:36px; padding:24px 32px; background:#F4EFF1; border-left:5px solid #3A1A3A; font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">{{ incidentsPattern }}</div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>08 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 09 · WINS — White, 3 cards                                     -->
+<!-- ============================================================ -->
+<sc-if value="{{ secWins }}" hint-placeholder-val="{{ true }}">
+<section data-label="Wins" data-speaker-notes="Three concrete wins. Lead with the one that resonates most with the room — for a CTO audience, the freight-platform migration first." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">07 · WINS</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Wins this quarter</div>
+
+  <div style="margin-top:60px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
+    <sc-for list="{{ wins }}" as="win" hint-placeholder-count="3">
+      <div style="border-top:6px solid #3A1A3A; padding:32px 0 0 0;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#3A1A3A; letter-spacing:2px;">{{ win.kind }}</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:42px; color:#14161A; line-height:1.1; margin-top:14px;">{{ win.headline }}</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; line-height:1.45; margin-top:18px;">{{ win.body }}</div>
+        <div style="margin-top:24px; padding-top:18px; border-top:1px solid #EFEAEE;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">METRIC</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; color:#3A1A3A; margin-top:4px;">{{ win.metric }}</div></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>09 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 10 · RISKS — White, swaps headline copy on riskFraming         -->
+<!-- ============================================================ -->
+<sc-if value="{{ secRisks }}" hint-placeholder-val="{{ true }}">
+<section data-label="Risks" data-speaker-notes="{{ risksNotes }}" style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">08 · RISKS &amp; BLOCKERS</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Risks &amp; blockers</div>
+
+  <sc-if value="{{ rfPositive }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three items on the radar. Each has an owner and a path to closed — none are blocking renewal.</div>
+  </sc-if>
+  <sc-if value="{{ rfBalanced }}" hint-placeholder-val="{{ true }}">
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three open items. Two are on us, one is a joint dependency. We need agreement on owners and dates before we leave the room.</div>
+  </sc-if>
+  <sc-if value="{{ rfCandid }}" hint-placeholder-val="{{ false }}">
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three items that could materially affect the renewal conversation if they're not closed by Q4. Calling them out early so we can resource them now, not in February.</div>
+  </sc-if>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
+    <sc-for list="{{ risks }}" as="risk" hint-placeholder-count="3">
+      <div style="border:1px solid {{ risk.levelColor }}; padding:32px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:{{ risk.levelTextColor }}; letter-spacing:2px;">{{ risk.id }}</div>
+          <div style="background:{{ risk.levelColor }}; color:white; padding:5px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; letter-spacing:1px;">{{ risk.levelLabel }}</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A; line-height:1.2;">{{ risk.title }}</div>
+        <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; line-height:1.45; margin-top:14px;">{{ risk.body }}</div>
+        <div style="margin-top:18px; padding-top:14px; border-top:1px solid #EFEAEE; display:grid; grid-template-columns:auto 1fr; gap:6px 16px; font-family:'Lato',sans-serif; font-size:18px;">
+          <div style="color:#6B7280;">Owner</div><div style="font-weight:600;">{{ risk.owner }}</div>
+          <div style="color:#6B7280;">Date</div><div style="font-weight:600;">{{ risk.dueDate }}</div>
+          <div style="color:#6B7280;">Action</div><div style="font-weight:600;">{{ risk.action }}</div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>10 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 11 · MIRANTIS ROADMAP — White, timeline                        -->
+<!-- ============================================================ -->
+<sc-if value="{{ secMirantisRoadmap }}" hint-placeholder-val="{{ true }}">
+<section data-label="Mirantis Roadmap" data-speaker-notes="What's coming next two quarters. Tag items that are particularly relevant to {{ customer }}'s use cases." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">09 · MIRANTIS ROADMAP</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">FY26 · forward-looking</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">What's coming from us</div>
+
+  <div style="margin-top:60px; position:relative;">
+    <!-- Quarter columns header -->
+    <div style="display:grid; grid-template-columns:160px 1fr 1fr; gap:24px; padding-bottom:14px; border-bottom:2px solid #3A1A3A;">
+      <div></div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#3A1A3A; letter-spacing:2px; font-weight:700;">{{ roadmapQ1Label }}</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#3A1A3A; letter-spacing:2px; font-weight:700;">{{ roadmapQ2Label }}</div>
+    </div>
+    <!-- Product lane -->
+    <div style="display:grid; grid-template-columns:160px 1fr 1fr; gap:24px; padding:24px 0; border-bottom:1px solid #EFEAEE;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#3A1A3A; letter-spacing:1px;">PRODUCT</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapProductQ4 }}" as="item" hint-placeholder-count="2">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapProductQ1 }}" as="item" hint-placeholder-count="2">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+    </div>
+    <!-- Platform lane -->
+    <div style="display:grid; grid-template-columns:160px 1fr 1fr; gap:24px; padding:24px 0; border-bottom:1px solid #EFEAEE;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#3A1A3A; letter-spacing:1px;">PLATFORM</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapPlatformQ4 }}" as="item" hint-placeholder-count="1">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapPlatformQ1 }}" as="item" hint-placeholder-count="1">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+    </div>
+    <!-- Services lane -->
+    <div style="display:grid; grid-template-columns:160px 1fr 1fr; gap:24px; padding:24px 0;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#3A1A3A; letter-spacing:1px;">SERVICES</div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapServicesQ4 }}" as="item" hint-placeholder-count="1">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:12px;">
+        <sc-for list="{{ roadmapServicesQ1 }}" as="item" hint-placeholder-count="1">
+          <div style="background:#F4EFF1; padding:14px 18px;"><div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#14161A;">{{ item.title }}</div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66;">{{ item.body }}</div></div>
+        </sc-for>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>11 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 12 · CUSTOMER ROADMAP — White, timeline                        -->
+<!-- ============================================================ -->
+<sc-if value="{{ showCustomerRoadmap }}" hint-placeholder-val="{{ true }}">
+<section data-label="Customer Roadmap" data-speaker-notes="What Vertex is planning. Listen actively here — usually you learn about a new initiative on this slide that wasn't in the prep call." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">10 · YOUR ROADMAP</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">As of June 2026 review</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Where {{ customer }} is heading</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three initiatives we're tracking on your side. Edit during the meeting if priorities have shifted.</div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
+    <sc-for list="{{ customerRoadmap }}" as="item" hint-placeholder-count="3">
+      <div>
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:18px;"><div style="background:{{ item.horizonColor }}; color:white; padding:4px 14px; font-family:'JetBrains Mono',monospace; font-size:16px; font-weight:700; letter-spacing:1px;">{{ item.horizon }}</div></div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A; line-height:1.2;">{{ item.title }}</div>
+        <div style="font-family:'Lato',sans-serif; font-size:21px; color:#5B5F66; line-height:1.45; margin-top:14px;">{{ item.body }}</div>
+        <div style="margin-top:18px; padding-top:14px; border-top:1px solid #EFEAEE; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;">LEAD · {{ item.lead }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>12 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 13 · RENEWAL & EXPANSION — Navy, salesAggression swap          -->
+<!-- ============================================================ -->
+<sc-if value="{{ secRenewal }}" hint-placeholder-val="{{ true }}">
+<section data-label="Renewal &amp; Expansion" data-speaker-notes="{{ renewalNotes }}" style="background:#0E1A2E; color:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:3px;">// 11 · RENEWAL &amp; EXPANSION</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">{{ customer }} · renews 2027-03-15</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Renewal &amp; expansion</div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:60px;">
+    <!-- Left: ARR waterfall -->
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#7E8CA8; letter-spacing:2px; margin-bottom:14px;">ARR PATH · CURRENT → RENEWAL</div>
+      <div style="display:flex; align-items:flex-end; gap:18px; height:340px;">
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px;">$2.4M</div><div style="width:100%; background:#00C9B0; height:280px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#0E1A2E; letter-spacing:1px;">CURRENT</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#7E8CA8;">Today</div></div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:40px; color:#5C6B85; padding-bottom:140px;">+</div>
+        <sc-for list="{{ expansions }}" as="exp" hint-placeholder-count="2">
+          <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px;">{{ exp.valueFmt }}</div><div style="width:100%; background:#5DE4D2; height:{{ exp.barHeight }}px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#0E1A2E; letter-spacing:1px;">{{ exp.name }}</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#7E8CA8;">{{ exp.quarter }}</div></div>
+        </sc-for>
+        <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:40px; color:#5C6B85; padding-bottom:140px;">=</div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:32px; color:#00C9B0;">{{ renewalTotalFmt }}</div><div style="width:100%; background:white; height:336px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#0E1A2E; letter-spacing:1px; font-weight:700;">RENEWAL</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:white; font-weight:700;">Mar 2027</div></div>
+      </div>
+    </div>
+
+    <!-- Right: facts + CTA -->
+    <div style="display:flex; flex-direction:column; gap:24px;">
+      <div style="border-top:2px solid #00C9B0; padding-top:18px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">RENEWAL WINDOW</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">Mar 15, 2027 · 9 months out</div>
+      </div>
+      <div style="border-top:2px solid #00C9B0; padding-top:18px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">BASE RENEWAL</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">$2.4M (flat) — locked path</div>
+      </div>
+      <div style="border-top:2px solid #00C9B0; padding-top:18px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">EXPANSION CANDIDATES</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; margin-top:4px; line-height:1.3;"><sc-for list="{{ expansions }}" as="exp" hint-placeholder-count="2">{{ exp.name }} · </sc-for><br/><span style="color:#7E8CA8; font-weight:400; font-size:24px;">total upside {{ expansionTotalFmt }}</span></div>
+      </div>
+
+      <!-- CTA swap based on salesAggression -->
+      <sc-if value="{{ saCheckIn }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:auto; padding:28px; background:rgba(0,201,176,0.1); border-left:4px solid #00C9B0;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; letter-spacing:2px;">ASK</div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; line-height:1.3; margin-top:8px;">Confirm renewal timing and the right sponsor on your side. We'll come back with the proposal in October.</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ saSteady }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:auto; padding:28px; background:rgba(0,201,176,0.1); border-left:4px solid #00C9B0;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; letter-spacing:2px;">ASK</div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; line-height:1.3; margin-top:8px;">Greenlight the k0rdent UK plan by mid-October so we can include it in the renewal model. Aim for proposal review in Q1.</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ saPush }}" hint-placeholder-val="{{ false }}">
+        <div style="margin-top:auto; padding:28px; background:rgba(224,53,70,0.15); border-left:4px solid #E03546;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#E03546; letter-spacing:2px;">ASK · COMMIT TODAY</div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; line-height:1.3; margin-top:8px;">Verbal commitment on k0rdent UK and OpsCare APAC in this room so we can lock the $3.08M path and start the renewal paper this month.</div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;"><div>MIRANTIS // SALES // CONFIDENTIAL</div><div>13 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 14 · TRAINING & ENABLEMENT — White                             -->
+<!-- ============================================================ -->
+<sc-if value="{{ showTraining }}" hint-placeholder-val="{{ true }}">
+<section data-label="Training" data-speaker-notes="Three sessions delivered, two planned. Highlight any sessions that helped reduce ticket volume in the support categories above." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">12 · TRAINING &amp; ENABLEMENT</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Training &amp; enablement</div>
+
+  <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:60px;">
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Delivered this quarter</div>
+      <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif;">
+        <thead><tr style="border-bottom:2px solid #3A1A3A;"><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">SESSION</th><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">ATTENDEES</th><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">CSAT</th></tr></thead>
+        <tbody style="font-size:20px; color:#14161A;">
+          <sc-for list="{{ trainingDelivered }}" as="row" hint-placeholder-count="3">
+            <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:14px 8px; font-weight:600;">{{ row.session }}</td><td style="padding:14px 8px;">{{ row.attendees }}</td><td style="padding:14px 8px;">{{ row.csat }}</td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="margin-top:18px; font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; font-style:italic;">{{ trainingDeliveredNote }}</div>
+    </div>
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Planned next quarter</div>
+      <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif;">
+        <thead><tr style="border-bottom:2px solid #3A1A3A;"><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">SESSION</th><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">TARGET</th><th style="text-align:left; padding:12px 8px; font-weight:700; font-size:18px; color:#3A1A3A; letter-spacing:1px;">DATE</th></tr></thead>
+        <tbody style="font-size:20px; color:#14161A;">
+          <sc-for list="{{ trainingPlanned }}" as="row" hint-placeholder-count="3">
+            <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:14px 8px; font-weight:600;">{{ row.session }}</td><td style="padding:14px 8px;">{{ row.target }}</td><td style="padding:14px 8px;">{{ row.date }}</td></tr>
+          </sc-for>
+        </tbody>
+      </table>
+      <div style="margin-top:18px; padding:14px 18px; background:#F4EFF1; border-left:4px solid #3A1A3A; font-family:'Lato',sans-serif; font-size:18px; color:#14161A;">{{ trainingPlannedNote }}</div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>14 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 15 · ASKS — White, two columns                                 -->
+<!-- ============================================================ -->
+<sc-if value="{{ secAsks }}" hint-placeholder-val="{{ true }}">
+<section data-label="Asks" data-speaker-notes="The most important slide of the deck. Get explicit yes/no on each ask before leaving. Don't let any item land as 'we'll think about it'." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">13 · ASKS</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">Both directions · {{ quarter }}</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Asks, both directions</div>
+
+  <div style="margin-top:60px; display:grid; grid-template-columns:1fr 1fr; gap:60px;">
+    <div>
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;"><div style="width:14px; height:14px; background:#3A1A3A;"></div><div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#3A1A3A; letter-spacing:2px;">FROM US TO YOU</div></div>
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <sc-for list="{{ asksFromUs }}" as="ask" hint-placeholder-count="3">
+          <div style="border-left:4px solid #3A1A3A; padding:6px 0 6px 20px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#14161A; line-height:1.3;">{{ ask.title }}</div>
+            <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:6px;">{{ ask.body }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex; align-items:center; gap:14px; margin-bottom:24px;"><div style="width:14px; height:14px; background:#E03546;"></div><div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#E03546; letter-spacing:2px;">FROM YOU TO US</div></div>
+      <div style="display:flex; flex-direction:column; gap:24px;">
+        <sc-for list="{{ asksFromYou }}" as="ask" hint-placeholder-count="3">
+          <div style="border-left:4px solid #E03546; padding:6px 0 6px 20px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#14161A; line-height:1.3;">{{ ask.title }}</div>
+            <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:6px;">{{ ask.body }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>15 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 16 · NEXT QUARTER GOALS — White                                -->
+<!-- ============================================================ -->
+<sc-if value="{{ secNextQuarter }}" hint-placeholder-val="{{ true }}">
+<section data-label="Next Quarter Goals" data-speaker-notes="Read each row aloud and get verbal confirmation. Anyone unsure of a date is a 'no' until they confirm." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">14 · NEXT QUARTER GOALS</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · Q4 FY26</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">What we'll do next quarter</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Five commitments. Reviewed live next QBR.</div>
+
+  <div style="margin-top:40px; border-top:2px solid #3A1A3A;">
+    <!-- Header row -->
+    <div style="display:grid; grid-template-columns:60px 2.4fr 1fr 0.9fr 1.6fr 1fr; gap:18px; padding:14px 12px; font-family:'Lato',sans-serif; font-weight:700; font-size:16px; color:#3A1A3A; letter-spacing:1.5px; border-bottom:1px solid #3A1A3A;">
+      <div>ID</div><div>COMMITMENT</div><div>OWNER</div><div>DATE</div><div>SUCCESS LOOKS LIKE</div><div>STATUS</div>
+    </div>
+    <sc-for list="{{ nextActions }}" as="action" hint-placeholder-count="5">
+      <div style="display:grid; grid-template-columns:60px 2.4fr 1fr 0.9fr 1.6fr 1fr; gap:18px; padding:18px 12px; border-bottom:1px solid #EFEAEE; font-family:'Lato',sans-serif; font-size:21px; color:#14161A; align-items:center;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0;">{{ action.id }}</div>
+        <div style="font-weight:600;">{{ action.commitment }}</div>
+        <div>{{ action.owner }}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px;">{{ action.dueDateFmt }}</div>
+        <div style="font-size:19px; color:#5B5F66;">{{ action.successCriteria }}</div>
+        <div><span style="background:{{ action.statusBg }}; color:{{ action.statusTextColor }}; padding:6px 14px; font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; letter-spacing:1.5px;">{{ action.statusLabel }}</span></div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="margin-top:24px; padding:14px 18px; background:#F4EFF1; border-left:4px solid #3A1A3A; font-family:'Lato',sans-serif; font-size:18px; color:#14161A;">Tracked in <span style="font-family:'JetBrains Mono',monospace;">qbr.data.json</span> &rarr; <span style="font-family:'JetBrains Mono',monospace;">nextActions[]</span>. Status auto-rolls to the next QBR; see appendix Asks Tracker for cross-quarter view.</div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>16 / 18</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 17 · ASKS TRACKER — White, Kanban-style status view             -->
+<!-- ============================================================ -->
+<sc-if value="{{ showAsksTracker }}" hint-placeholder-val="{{ true }}">
+<section data-label="Asks Tracker" data-speaker-notes="Cross-quarter view of every commitment. Use as a tracker in the take-away PDF. Status pills auto-update when you edit qbr.data.json.nextActions. Color-code: green on-track, amber at-risk, red blocked, lavender not-started." style="background:#F7F8FB; padding:60px 80px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#3A1A3A;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">A-00 · ASKS TRACKER</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">Auto-generated from qbr.data.json</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:14px;">Asks tracker</div>
+
+  <!-- Summary tiles -->
+  <div style="margin-top:32px; display:grid; grid-template-columns:repeat(5, 1fr); gap:18px;">
+    <div style="background:white; padding:22px 24px; border-top:4px solid #3A1A3A;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#5C6B85; letter-spacing:1.5px;">TOTAL</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; line-height:1; margin-top:8px;">{{ naCount }}</div>
+    </div>
+    <div style="background:white; padding:22px 24px; border-top:4px solid #3DAE73;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#1F7D52; letter-spacing:1.5px;">ON TRACK</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; line-height:1; margin-top:8px;">{{ naOnTrack }}</div>
+    </div>
+    <div style="background:white; padding:22px 24px; border-top:4px solid #F5A623;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#B57515; letter-spacing:1.5px;">AT RISK</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; line-height:1; margin-top:8px;">{{ naAtRisk }}</div>
+    </div>
+    <div style="background:white; padding:22px 24px; border-top:4px solid #E03546;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#A8252F; letter-spacing:1.5px;">BLOCKED</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; line-height:1; margin-top:8px;">{{ naBlocked }}</div>
+    </div>
+    <div style="background:white; padding:22px 24px; border-top:4px solid #A88AA0;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#5B4357; letter-spacing:1.5px;">NOT STARTED</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; line-height:1; margin-top:8px;">{{ naNotStarted }}</div>
+    </div>
+  </div>
+
+  <!-- Two-column layout: This quarter on left, Previous quarter on right -->
+  <div style="margin-top:28px; display:grid; grid-template-columns:1.4fr 1fr; gap:32px;">
+
+    <!-- LEFT: This quarter's actions -->
+    <div style="background:white; padding:24px 28px; border:1px solid #D6D7DC;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#3A1A3A;">This quarter &mdash; commitments forward</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px;">nextActions[]</div>
+      </div>
+      <sc-for list="{{ nextActions }}" as="action" hint-placeholder-count="5">
+        <div style="display:grid; grid-template-columns:48px 1fr 110px; gap:14px; padding:12px 0; border-bottom:1px solid #EFEAEE; align-items:center;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#A88AA0;">{{ action.id }}</div>
+          <div>
+            <div style="font-family:'Lato',sans-serif; font-weight:600; font-size:18px; color:#14161A; line-height:1.3;">{{ action.commitment }}</div>
+            <div style="font-family:'Lato',sans-serif; font-size:15px; color:#5B5F66; margin-top:2px;">{{ action.owner }} &middot; {{ action.dueDateFmt }}</div>
+          </div>
+          <div style="text-align:right;"><span style="background:{{ action.statusBg }}; color:{{ action.statusTextColor }}; padding:5px 10px; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:1px;">{{ action.statusLabel }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- RIGHT: Previous quarter -->
+    <div style="background:white; padding:24px 28px; border:1px solid #D6D7DC;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#3A1A3A;">Previous &mdash; how we did</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px;">previousActions[]</div>
+      </div>
+      <sc-for list="{{ previousActions }}" as="action" hint-placeholder-count="4">
+        <div style="display:grid; grid-template-columns:1fr 110px; gap:14px; padding:12px 0; border-bottom:1px solid #EFEAEE; align-items:center;">
+          <div>
+            <div style="font-family:'Lato',sans-serif; font-weight:600; font-size:17px; color:#14161A; line-height:1.3;">{{ action.commitment }}</div>
+            <div style="font-family:'Lato',sans-serif; font-size:14px; color:#5B5F66; margin-top:2px;">{{ action.owner }}</div>
+          </div>
+          <div style="text-align:right;"><span style="background:{{ action.statusBg }}; color:{{ action.statusTextColor }}; padding:5px 10px; font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; letter-spacing:1px;">{{ action.statusLabel }}</span></div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:30px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>A-00</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 18 · APPENDIX — White, links to detail                         -->
+<!-- ============================================================ -->
+<sc-if value="{{ showAppendix }}" hint-placeholder-val="{{ true }}">
+<section data-label="Appendix" data-speaker-notes="Detail slides for the technical track or for the take-away PDF. Skip in live presentation; reference if asked." style="background:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative;">
+  <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#A88AA0;"></div>
+  <div style="display:flex; justify-content:space-between; align-items:baseline;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85; letter-spacing:3px;">16 · APPENDIX</div>
+    <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">Reference material</div>
+  </div>
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Appendix</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px;">Detail decks bundled for your reference. Available on request.</div>
+
+  <div style="margin-top:60px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-01</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">Full incident timeline</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">Minute-by-minute for all four P1s with RCA documents linked.</div></div>
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-02</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">Per-cluster capacity report</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">Headroom by cluster, projected 6-month growth.</div></div>
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-03</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">k0rdent UK design</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">Reference architecture + DPIA inputs.</div></div>
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-04</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">Training catalog</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">All sessions available in current contract.</div></div>
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-05</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">Roadmap detail</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">Feature-by-feature for MKE 3.7, k0rdent multi-region, Lens 7.</div></div>
+    <div style="border:1px solid #EFEAEE; padding:32px;"><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#A88AA0; letter-spacing:2px;">A-06</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#14161A; margin-top:10px;">Renewal commercial detail</div><div style="font-family:'Lato',sans-serif; font-size:19px; color:#5B5F66; margin-top:8px;">Line-item pricing scenarios for proposal.</div></div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;"><div>MIRANTIS · CONFIDENTIAL</div><div>18 / 19</div></div>
+</section>
+</sc-if>
+
+<!-- ============================================================ -->
+<!-- 18 · CLOSING — Navy                                            -->
+<!-- ============================================================ -->
+<section data-label="Closing" data-speaker-notes="{{ closingNotes }}" style="background:#0E1A2E; color:white; padding:80px 100px; box-sizing:border-box; font-family:'Lato',sans-serif; position:relative; overflow:hidden;">
+  <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(0,201,176,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,176,0.06) 1px, transparent 1px); background-size:80px 80px;"></div>
+  <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
+
+  <!-- Top-right Mirantis lockup -->
+  <div style="position:absolute; top:80px; right:100px; display:flex; align-items:center; gap:18px;">
+    <svg width="58" height="38" viewBox="0 0 200 130" fill="none"><path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/></svg>
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px; color:white; letter-spacing:2.5px;">MIRANTIS</div>
+  </div>
+
+  <div style="position:absolute; top:80px; left:100px; font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:2px;">// 16 · CLOSING</div>
+
+  <div style="position:absolute; top:300px; left:100px;">
+    <sc-if value="{{ toneFormal }}" hint-placeholder-val="{{ true }}"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:240px; color:white; letter-spacing:-5px; line-height:1;">Thank you.</div></sc-if><sc-if value="{{ toneConversational }}" hint-placeholder-val="{{ false }}"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:white; letter-spacing:-4px; line-height:1;">Thanks, all.</div></sc-if>
+    <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:48px; color:#7E8CA8; letter-spacing:-0.5px; line-height:1.3; margin-top:24px; max-width:1500px;">Questions, edits, or a follow-up from anyone in the room — we'll capture before close.</div>
+  </div>
+
+  <div style="position:absolute; bottom:140px; left:100px; right:100px; display:grid; grid-template-columns:repeat(3, 1fr); gap:60px; border-top:1px solid #1F2A44; padding-top:32px;">
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">NEXT QBR</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:white; margin-top:8px;">{{ nextQbrLabel }}<br/><span style="color:#00C9B0;">{{ nextQbrDate }}</span></div>
+    </div>
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">YOUR TAM</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:white; margin-top:8px;">{{ preparedBy }}<br/><span style="color:#7E8CA8; font-size:22px; font-weight:400;">{{ preparedByEmail }}</span></div>
+    </div>
+    <div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">DECK ARCHIVE</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:white; margin-top:8px;">vertex-q3fy26.pdf<br/><span style="color:#7E8CA8; font-size:22px; font-weight:400;">delivered within 24h</span></div>
+    </div>
+  </div>
+
+  <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;"><div>MIRANTIS // SALES // CONFIDENTIAL</div><div>19 / 19</div></div>
+</section>
+
+</x-import>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: &quot;100%&quot;, &quot;height&quot;: &quot;100%&quot; },
+  &quot;dataFile&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;./qbr.data.json&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;customer&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;quarter&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;preparedBy&quot;: { &quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;&quot;, &quot;tsType&quot;: &quot;string&quot; },
+  &quot;riskFraming&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;balanced&quot;, &quot;options&quot;: [&quot;positive&quot;, &quot;balanced&quot;, &quot;candid&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;salesAggression&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;steady&quot;, &quot;options&quot;: [&quot;check-in&quot;, &quot;steady&quot;, &quot;push&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;supportEmphasis&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;standard&quot;, &quot;options&quot;: [&quot;light&quot;, &quot;standard&quot;, &quot;deep&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;techDepth&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;mixed&quot;, &quot;options&quot;: [&quot;exec&quot;, &quot;mixed&quot;, &quot;engineer&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;deckLength&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;standard&quot;, &quot;options&quot;: [&quot;compact&quot;, &quot;standard&quot;, &quot;full&quot;], &quot;tsType&quot;: &quot;string&quot; },
+  &quot;tone&quot;: { &quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;formal&quot;, &quot;options&quot;: [&quot;formal&quot;, &quot;conversational&quot;], &quot;tsType&quot;: &quot;string&quot; }
+}">
+class Component extends DCLogic {
+  state = { data: null, status: 'loading', loadedAt: null, error: null };
+
+  componentDidMount() {
+    // 1. Try localStorage first (written by the Configurator)
+    try {
+      const stashed = localStorage.getItem('qbr_data_draft');
+      if (stashed) {
+        const data = JSON.parse(stashed);
+        this.setState({ data, status: 'loaded', loadedAt: new Date(), source: 'localStorage' });
+        return;
+      }
+    } catch (e) {}
+
+    // 2. Fall back to the file on disk
+    const path = this.props.dataFile || './qbr.data.json';
+    fetch(path, { cache: 'no-cache' })
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(data => this.setState({ data, status: 'loaded', loadedAt: new Date(), source: 'file' }))
+      .catch(err => this.setState({ status: 'error', error: String(err), source: 'fallback' }));
+  }
+
+  componentDidUpdate(prevProps) {
+    if (prevProps.dataFile !== this.props.dataFile) {
+      this.setState({ data: null, status: 'loading', error: null });
+      this.componentDidMount();
+    }
+  }
+
+  renderVals() {
+    const d = this.state.data || {};
+    // Props ALWAYS win over JSON — TAM can override per-deck via Tweaks panel
+    const customer = this.props.customer ?? d.customer?.name ?? 'Vertex Logistics';
+    const quarter = this.props.quarter ?? d.quarter ?? 'Q3 FY26';
+    const preparedBy = this.props.preparedBy ?? d.preparedBy ?? 'Marco Reyes, TAM';
+
+    // Helpers
+    const fmtMoney = (n) => {
+      if (n == null) return '—';
+      if (n >= 1e6) return '$' + (n/1e6).toFixed(n % 1e6 === 0 ? 1 : 1).replace(/\.0$/, '') + 'M';
+      if (n >= 1e3) return '$' + (n/1e3).toFixed(0) + 'K';
+      return '$' + n;
+    };
+    const fmtDate = (iso) => {
+      if (!iso) return '—';
+      try { return new Date(iso).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+      catch { return iso; }
+    };
+    const arrCurrent = fmtMoney(d.commercial?.arr?.current ?? 2400000);
+    const arrYoy = d.commercial?.arr?.yoyPct ?? 33;
+    const clusters = d.usage?.clusters ?? 14;
+    const clustersDelta = d.usage?.clustersDelta ?? 3;
+    const slaMet = d.support?.slaMetPct ?? 96;
+    const slaDelta = d.support?.slaDeltaPp ?? -2;
+    const nps = d.nps?.score ?? 42;
+    const npsDelta = d.nps?.delta ?? 7;
+    const renewalDate = fmtDate(d.commercial?.renewalDate || '2027-03-15');
+    const nextQbrLabel = d.nextQbr?.label ?? 'Q4 FY26 review';
+    const nextQbrDate = fmtDate(d.nextQbr?.date || '2026-09-25');
+    const preparedByEmail = d.preparedByEmail ?? 'marco.reyes@mirantis.com';
+    const products = (d.products || ['MKE','MOSK','k0rdent Enterprise','Lens']).join(' · ');
+    const stakeholdersText = (d.customer?.stakeholders || [{name:'Jordan Patel',title:'CTO'},{name:'Lina Ortega',title:'VP Infrastructure'}])
+      .map(s => s.name + ', ' + s.title).join(' · ');
+
+    // Asks tracker — annotate each action with display fields
+    const STATUS_META = {
+      'on-track':    { label: 'ON TRACK',    color: '#3DAE73', bg: '#E8F8F4', textColor: '#1F7D52' },
+      'at-risk':     { label: 'AT RISK',     color: '#F5A623', bg: '#FEF3E2', textColor: '#B57515' },
+      'blocked':     { label: 'BLOCKED',     color: '#E03546', bg: '#FBE5E7', textColor: '#A8252F' },
+      'not-started': { label: 'NOT STARTED', color: '#A88AA0', bg: '#F4EFF1', textColor: '#5B4357' },
+      'delivered':   { label: 'DELIVERED',   color: '#3DAE73', bg: '#E8F8F4', textColor: '#1F7D52' },
+      'missed':      { label: 'MISSED',      color: '#F5A623', bg: '#FEF3E2', textColor: '#B57515' },
+      'slipped':     { label: 'SLIPPED',     color: '#E03546', bg: '#FBE5E7', textColor: '#A8252F' },
+    };
+    const annotate = (a) => {
+      const m = STATUS_META[a.status] || STATUS_META['not-started'];
+      return {
+        ...a,
+        dueDateFmt: fmtDate(a.dueDate),
+        statusLabel: m.label,
+        statusColor: m.color,
+        statusBg: m.bg,
+        statusTextColor: m.textColor,
+      };
+    };
+    const nextActions = (d.nextActions || []).map(annotate);
+    const previousActions = (d.previousActions || []).map(annotate);
+
+    // ---- Bound arrays for Incidents / Wins / Risks / Product Mix / Expansions ----
+    const SEV_META = {
+      P1: { bg: '#FBE5E7', color: '#A8252F' },
+      P2: { bg: '#FEF3E2', color: '#B57515' },
+      P3: { bg: '#EFEAEE', color: '#5B4357' },
+      P4: { bg: '#EFEAEE', color: '#5B4357' },
+    };
+    const RCA_META = {
+      CLOSED: { bg: '#E8F8F4', color: '#1F7D52' },
+      OPEN: { bg: '#FEF3E2', color: '#B57515' },
+      INVESTIGATING: { bg: '#FBE5E7', color: '#A8252F' },
+    };
+    const incidents = (d.incidents || []).map(i => {
+      const sev = SEV_META[i.severity] || SEV_META.P1;
+      const rca = RCA_META[i.rcaStatus] || RCA_META.CLOSED;
+      const dateFmt = (() => {
+        try { return new Date(i.date).toLocaleDateString('en-US', { month: 'short', day: '2-digit' }); }
+        catch { return i.date; }
+      })();
+      return { ...i, dateFmt, sevBg: sev.bg, sevColor: sev.color, rcaBg: rca.bg, rcaColor: rca.color };
+    });
+    const incidentsPattern = d.incidentsPattern || '';
+
+    const wins = d.wins || [];
+    const risks = (d.risks || []).map(r => {
+      const meta = r.level === 'high'
+        ? { color: '#E03546', label: 'HIGH', textColor: '#C0303E' }
+        : (r.level === 'low'
+            ? { color: '#3DAE73', label: 'LOW', textColor: '#1F7D52' }
+            : { color: '#F5A623', label: 'MED', textColor: '#B57515' });
+      return { ...r, levelColor: meta.color, levelLabel: meta.label, levelTextColor: meta.textColor };
+    });
+
+    const productMix = d.productMix || [];
+
+    // ---- Renewal waterfall — bind expansions and compute bar heights ----
+    const baseArr = d.commercial?.arr?.current ?? 2400000;
+    const CHART_H = 280;
+    const expansionsRaw = d.commercial?.expansions || [];
+    const expansions = expansionsRaw.map(e => ({
+      ...e,
+      valueFmt: fmtMoney(e.valueUSD),
+      barHeight: Math.max(40, Math.round((e.valueUSD / baseArr) * CHART_H)),
+    }));
+    const expansionTotal = expansionsRaw.reduce((s, e) => s + (e.valueUSD || 0), 0);
+    const renewalTotal = baseArr + expansionTotal;
+    const renewalTotalFmt = fmtMoney(renewalTotal);
+    const expansionTotalFmt = fmtMoney(expansionTotal);
+
+    // ---- Mirantis Roadmap — pre-split by lane × column ----
+    const allRm = d.mirantisRoadmap || [];
+    const byLaneCol = (lane, col) => allRm.filter(i => i.lane === lane && i.col === col);
+    const roadmapProductQ4 = byLaneCol('PRODUCT', 1);
+    const roadmapProductQ1 = byLaneCol('PRODUCT', 2);
+    const roadmapPlatformQ4 = byLaneCol('PLATFORM', 1);
+    const roadmapPlatformQ1 = byLaneCol('PLATFORM', 2);
+    const roadmapServicesQ4 = byLaneCol('SERVICES', 1);
+    const roadmapServicesQ1 = byLaneCol('SERVICES', 2);
+    const roadmapQuarters = d.roadmapQuarters || ['Q4 FY26 — Jul / Sep', 'Q1 FY27 — Oct / Dec'];
+    const roadmapQ1Label = roadmapQuarters[0];
+    const roadmapQ2Label = roadmapQuarters[1];
+
+    // ---- Customer Roadmap ----
+    const customerRoadmap = d.customerRoadmap || [];
+
+    // ---- Training ----
+    const trainingDelivered = d.training?.delivered || [];
+    const trainingPlanned = d.training?.planned || [];
+    const trainingDeliveredNote = d.training?.deliveredNote || '';
+    const trainingPlannedNote = d.training?.plannedNote || '';
+
+    // ---- Exec Summary takeaways ----
+    const KIND_META = {
+      momentum: { borderColor: '#00C9B0', labelColor: '#00A693' },
+      watch:    { borderColor: '#F5A623', labelColor: '#B57515' },
+      decide:   { borderColor: '#E03546', labelColor: '#C0303E' },
+    };
+    const execSummaryTakeaways = (d.execSummaryTakeaways || []).map(t => {
+      const m = KIND_META[t.kind] || KIND_META.momentum;
+      return { ...t, borderColor: m.borderColor, labelColor: m.labelColor };
+    });
+
+    // ---- Asks ----
+    const asksFromUs = d.asks?.fromUs || [];
+    const asksFromYou = d.asks?.fromYou || [];
+
+    // Counts for the tracker dashboard tile
+    const naCount = nextActions.length;
+    const naOnTrack = nextActions.filter(a => a.status === 'on-track').length;
+    const naAtRisk = nextActions.filter(a => a.status === 'at-risk').length;
+    const naBlocked = nextActions.filter(a => a.status === 'blocked').length;
+    const naNotStarted = nextActions.filter(a => a.status === 'not-started').length;
+
+    // Data-source slide state
+    const src = this.state.source || 'fallback';
+    const dataPath = src === 'localStorage'
+      ? 'localStorage / qbr_data_draft (Configurator)'
+      : (this.props.dataFile || './qbr.data.json');
+    const status = this.state.status;
+    const statusColor = status === 'loaded' ? '#3DAE73' : (status === 'error' ? '#E03546' : '#F5A623');
+    const statusLabel = status === 'loaded'
+      ? (src === 'localStorage' ? 'CONNECTED · CONFIGURATOR' : 'CONNECTED · FILE')
+      : (status === 'error' ? 'NOT FOUND — USING FALLBACKS' : 'LOADING…');
+    const loadedAtText = this.state.loadedAt
+      ? this.state.loadedAt.toLocaleString('en-US', { hour:'numeric', minute:'2-digit', month:'short', day:'numeric' })
+      : '—';
+    const fieldCount = d ? Object.keys(d).length : 0;
+    const schemaVersion = d._meta?.schemaVersion ?? '—';
+
+    const rf = this.props.riskFraming ?? 'balanced';
+    const sa = this.props.salesAggression ?? 'steady';
+    const se = this.props.supportEmphasis ?? 'standard';
+    const dl = this.props.deckLength ?? 'standard';
+    const td = this.props.techDepth ?? 'mixed';
+    const tn = this.props.tone ?? 'formal';
+
+    // -----------------------------------------------------------
+    // ADAPTIVE SPEAKER NOTES
+    // The notes panel reflects the dial settings live.
+    // Each block is a talk-track, not a description.
+    // -----------------------------------------------------------
+
+    const coverNotes = (() => {
+      const opener = tn === 'conversational'
+        ? `Good to be back with the team. Quick reset: this is the ${quarter} review for ${customer}.`
+        : `Welcome. This is the ${quarter} business review for ${customer}.`;
+      const audience = {
+        exec: `Audience is exec-level — keep numbers headline-only and defer architecture questions to follow-up calls.`,
+        mixed: `Mixed audience — calibrate depth from the room. Default to outcome language; drop into detail only if a technical question lands.`,
+        engineer: `Audience is technical — they will want the detail. Lean into the architecture sections and don't rush slides 7, 8, 11.`,
+      }[td];
+      return `${opener}\n\n[OPEN] Confirm attendees on both sides before clicking next. Note who's on the line if anyone's remote.\n\n[AUDIENCE READ] ${audience}\n\n[TIMING] Aim for ~45 min on the deck, 15 min discussion. The Renewal slide (13) is where to spend any time you save earlier.`;
+    })();
+
+    const execSummaryNotes = (() => {
+      const headlineCue = {
+        positive: `Lead with momentum. The bottom-line box is the green/momentum framing — read it verbatim if the room is warming up slowly.`,
+        balanced: `Lead with the bottom-line box (neutral framing). Don't editorialize — let the three takeaway tiles do the work.`,
+        candid: `Open with the candid framing in the amber box. Naming the issues here buys credibility for the rest of the deck. Don't soften the language.`,
+      }[rf];
+      const closer = tn === 'conversational'
+        ? `Wrap by asking "anything we should reorder before we keep going?"`
+        : `Close by indicating you'll walk each takeaway in turn through the deck.`;
+      return `Three sentences max on this slide. Bottom-line first, then three takeaways.\n\n[HEADLINE] ${headlineCue}\n\n[TAKEAWAY 1 — MOMENTUM] Usage up across the board. If you have time for one number, pick "+412 workloads this quarter."\n\n[TAKEAWAY 2 — WATCH] Support response softened. Acknowledge it here so the room doesn't think you're hiding it.\n\n[TAKEAWAY 3 — DECIDE] k0rdent expansion needs a date. This is the seed you'll fertilize at the Renewal slide.\n\n[CLOSE] ${closer}`;
+    })();
+
+    const supportNotes = (() => {
+      const focus = {
+        light: `Light treatment — just the KPI strip + bottom-line note are visible. Read the bottom-line box, then move on. Detail lives in appendix A-01.`,
+        standard: `Standard view. Walk the KPI strip (left to right), then the two bottom panels. Spend most of the time on the "Where the time goes" column — that's where the conversation about the upcoming MKE upgrade fits.`,
+        deep: `Deep dive enabled — there's an extra "Support — under the hood" slide right after this one. Use this slide as the setup ("here's the surface picture") and pivot to the next slide for cause analysis.`,
+      }[se];
+      return `[INTRO] 96% SLA met, down two points. Two P1s exceeded MTTR. RCAs are closed; shift-coverage changes in flight.\n\n[TREATMENT] ${focus}\n\n[ALWAYS] Whatever level you go to, end with: "we own the response time miss; here's what we changed." Then point at the Risks slide for the formal commitment.`;
+    })();
+
+    const supportDeepNotes = `Only shown when Support Emphasis = Deep.\n\n[MTTR CHART] Vertical rule on each bar is the SLA target. P1 is over; P2/P3/P4 all comfortably under. Point at P1 first.\n\n[COVERAGE TABLE] The APAC L2 row is the punchline — a zero in the EMEA-overlap window is exactly where the two MTTR misses originated. Naming it explicitly de-risks the room's "why did this happen" question before they ask it.\n\n[CHANGES] Three actions in flight; two on Mirantis, one customer-side. APAC L2 hire start date (Sep 8) is the most concrete commitment in the whole deck — say it.`;
+
+    const risksNotes = (() => {
+      const opening = {
+        positive: `Light treatment — frame these as items already on the path to closed. Don't dwell.`,
+        balanced: `Read the intro line verbatim. Name owners and dates out loud — that's how you avoid the "we'll think about it" trap later.`,
+        candid: `Candid treatment — pause before clicking through. The intro line names renewal risk explicitly. Let it land. Then walk each risk as a yes/no question to the room.`,
+      }[rf];
+      return `Three open items. Two on us, one a joint dependency.\n\n[FRAME] ${opening}\n\n[RISK 01 — MTTR] Mirantis owns. Tie this to the APAC L2 hire (Sep 8) — that's your proof point.\n\n[RISK 02 — UK k0rdent] Vertex owns the DPIA. Ask the room: who on your side is driving compliance review? Get a name.\n\n[RISK 03 — MKE 3.7] Joint. The November deadline is the binding constraint because 3.6 EOL lands three weeks before renewal. Don't let this be vague.\n\n[CLOSE] Confirm each owner verbally before moving on. Anyone who says "I'll get back to you" gets a calendar invite from you within 24h.`;
+    })();
+
+    const renewalNotes = (() => {
+      const ask = {
+        'check-in': `CHECK-IN POSTURE — light commercial touch. The ask box is just "confirm timing + sponsor." Don't push for product commitment. The October proposal call is the real selling moment; this is the relationship moment.`,
+        steady: `STEADY POSTURE — the ask box names k0rdent UK explicitly with a mid-October decision date. Read it verbatim. Don't soften.`,
+        push: `PUSH POSTURE — the ask box is red and asks for verbal commitment in the room on both expansion items. This is intentional pressure. Be explicit: "we'd like a yes today on these two so we can model them into the renewal paper this month." Be ready for pushback; have a Plan B for non-binding letter of intent.`,
+      }[sa];
+      return `The commercial slide. Most important page in the deck.\n\n[WATERFALL — LEFT] Walk the chart left to right: $2.4M base → +$420K UK k0rdent → +$260K OpsCare APAC → $3.08M renewal. Don't read the numbers; let the chart do that. Just narrate the story.\n\n[POSTURE] ${ask}\n\n[OBJECTION HANDLING] If they push back on UK k0rdent: "the DPIA work continues either way; the cost adder is post-DPIA, so we're aligned on sequencing." If they push back on OpsCare APAC: tie directly to Risk 01 MTTR data — that's why the dollar exists.\n\n[BEFORE LEAVING THIS SLIDE] You should have, at minimum: a name for the renewal sponsor, an acknowledgment that UK k0rdent path is live, and a follow-up on OpsCare APAC scheduled within 14 days.`;
+    })();
+
+    const closingNotes = (() => {
+      const closer = tn === 'conversational'
+        ? `Conversational close — thank the room by name where you can. Confirm the Sep 25 next-QBR date out loud and ask if anyone wants to add an attendee.`
+        : `Formal close — thank attendees, restate next-QBR date (Sep 25), and confirm deck delivery within 24 hours. Don't open new threads on this slide; capture them in chat and follow up by email.`;
+      return `${closer}\n\n[FOLLOW-UPS] Within 24h: deck PDF + the action-item table from slide 16 to the renewal sponsor. CC the customer success exec. Schedule any follow-up calls promised on the Risks slide before you close the laptop.\n\n[INTERNAL DEBRIEF] Block 15 minutes with the account team after — update the Salesforce record while the room is fresh. Note any roadmap items the customer reacted to (or didn't).`;
+    })();
+
+    return {
+      coverNotes, execSummaryNotes, supportNotes, supportDeepNotes, risksNotes, renewalNotes, closingNotes,
+      arrCurrent, arrYoy, clusters, clustersDelta, slaMet, slaDelta, nps, npsDelta,
+      renewalDate, nextQbrLabel, nextQbrDate, preparedByEmail, products, stakeholdersText,
+      nextActions, previousActions,
+      naCount, naOnTrack, naAtRisk, naBlocked, naNotStarted,
+      incidents, incidentsPattern, wins, risks, productMix, expansions,
+      renewalTotalFmt, expansionTotalFmt,
+      roadmapProductQ4, roadmapProductQ1, roadmapPlatformQ4, roadmapPlatformQ1, roadmapServicesQ4, roadmapServicesQ1,
+      roadmapQ1Label, roadmapQ2Label,
+      customerRoadmap,
+      trainingDelivered, trainingPlanned, trainingDeliveredNote, trainingPlannedNote,
+      execSummaryTakeaways, asksFromUs, asksFromYou,
+      dataPath, statusColor, statusLabel, loadedAtText, fieldCount, schemaVersion,
+      dataConnected: status === 'loaded',
+      dataError: status === 'error',
+      slaTrendStr: (slaDelta >= 0 ? '▲ +' : '▼ ') + slaDelta + 'pp QoQ',
+      npsTrendStr: (npsDelta >= 0 ? '▲ +' : '▼ ') + npsDelta + ' QoQ',
+      clustersTrendStr: (clustersDelta >= 0 ? '▲ +' : '▼ ') + clustersDelta + ' QoQ',
+      arrTrendStr: '▲ +' + arrYoy + '% YoY',
+      seLight: se === 'light',
+      seNotLight: se !== 'light',
+      seDeep: se === 'deep',
+      // Deck length — controls which sections render
+      lengthFull: dl === 'full',
+      lengthNotCompact: dl !== 'compact',
+      // Per-slide ON/OFF (from Configurator's Sections panel). Default ON if missing.
+      // Combined with length-gating so length=compact still trims, but the user's explicit toggles always win.
+      secExecSummary:     d.sections?.execSummary     !== false,
+      secAccountHealth:   d.sections?.accountHealth   !== false,
+      secUsage:           d.sections?.usage           !== false,
+      secWins:            d.sections?.wins            !== false,
+      secRisks:           d.sections?.risks           !== false,
+      secMirantisRoadmap: d.sections?.mirantisRoadmap !== false,
+      secRenewal:         d.sections?.renewal        !== false,
+      secAsks:            d.sections?.asks           !== false,
+      secNextQuarter:     d.sections?.nextQuarter    !== false,
+      showGoalsRecap:      (dl !== 'compact') && (d.sections?.goalsRecap      !== false),
+      showSupportDeepDive: (se === 'deep')    && (d.sections?.supportDeepDive !== false),
+      showIncidents:       (dl !== 'compact') && (d.sections?.incidents      !== false),
+      showCustomerRoadmap: (dl !== 'compact') && (d.sections?.customerRoadmap !== false),
+      showTraining:        (dl !== 'compact') && (d.sections?.training       !== false),
+      showAsksTracker:     (dl !== 'compact') && (d.sections?.asksTracker    !== false),
+      showAppendix:        (dl !== 'compact') && (d.sections?.appendix       !== false),
+      // Tech depth — cover chip + roadmap copy
+      tdExec: td === 'exec',
+      tdMixed: td === 'mixed',
+      tdEngineer: td === 'engineer',
+      // Tone — exec summary headline + closing salutation
+      toneFormal: tn === 'formal',
+      toneConversational: tn === 'conversational',
+      customer,
+      quarter,
+      preparedBy,
+      // Risk Framing dial — swaps headlines on Exec Summary + Risks
+      rfPositive: rf === 'positive',
+      rfBalanced: rf === 'balanced',
+      rfCandid: rf === 'candid',
+      // Sales Aggression dial — swaps the closing CTA on Renewal slide
+      saCheckIn: sa === 'check-in',
+      saSteady: sa === 'steady',
+      saPush: sa === 'push',
+    };
+  }
+}
+</script>
+</body>
+</html>

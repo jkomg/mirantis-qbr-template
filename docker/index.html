@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mirantis QBR Template</title>
+  <link rel="stylesheet" href="./assets/fonts.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Lato', -apple-system, system-ui, sans-serif;
+      background: #0E1A2E;
+      color: white;
+      display: grid;
+      place-items: center;
+      padding: 60px 20px;
+    }
+    .frame {
+      width: 100%;
+      max-width: 920px;
+    }
+    .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,201,176,0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,201,176,0.05) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .content { position: relative; z-index: 1; }
+    .top {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 40px;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 13px;
+      color: #00C9B0;
+      letter-spacing: 2px;
+    }
+    .top svg { flex-shrink: 0; }
+    h1 {
+      font-family: 'Overpass', system-ui, sans-serif;
+      font-weight: 800;
+      font-size: 72px;
+      line-height: 1.05;
+      letter-spacing: -1.5px;
+      margin: 0 0 20px;
+    }
+    .tag {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 14px;
+      color: #00C9B0;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+    }
+    .lede {
+      font-size: 20px;
+      line-height: 1.45;
+      color: #C8D0E0;
+      max-width: 720px;
+      margin-bottom: 56px;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 48px;
+    }
+    .card {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid #2A3A55;
+      padding: 28px;
+      text-decoration: none;
+      color: white;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .card:hover {
+      background: rgba(0,201,176,0.08);
+      border-color: #00C9B0;
+    }
+    .card .step {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 12px;
+      color: #00C9B0;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+    .card .name {
+      font-family: 'Overpass', system-ui, sans-serif;
+      font-weight: 700;
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    .card .desc {
+      font-size: 15px;
+      color: #7E8CA8;
+      line-height: 1.45;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      padding-top: 28px;
+      border-top: 1px solid #1F2A44;
+    }
+    .meta-item .label {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px;
+      color: #5C6B85;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+    .meta-item .value {
+      font-size: 14px;
+      color: #C8D0E0;
+    }
+    .meta-item a {
+      color: #00C9B0;
+      text-decoration: none;
+    }
+    .meta-item a:hover { text-decoration: underline; }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: rgba(61,174,115,0.18);
+      color: #3DAE73;
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      margin-left: 8px;
+    }
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #3DAE73;
+    }
+  </style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="frame content">
+    <div class="top">
+      <svg width="32" height="20" viewBox="0 0 200 130" fill="none">
+        <path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/>
+        <path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/>
+      </svg>
+      <div>MIRANTIS · QBR · LOCAL <span class="badge">EPHEMERAL</span></div>
+    </div>
+
+    <div class="tag">// QBR TEMPLATE · DOCKER</div>
+    <h1>Quarterly Business Review.</h1>
+    <p class="lede">Configure the deck, run live with real customer data on your machine, then export to PPTX. Container is offline — nothing leaves your network.</p>
+
+    <div class="cards">
+      <a class="card" href="./QBR%20Configurator.dc.html">
+        <div class="step">01 · CONFIGURE</div>
+        <div class="name">Configurator →</div>
+        <div class="desc">Paste from Salesforce, fill in narrative, toggle slides on/off. Saves to your browser only.</div>
+      </a>
+      <a class="card" href="./QBR%20Template.dc.html">
+        <div class="step">02 · PRESENT</div>
+        <div class="name">Deck →</div>
+        <div class="desc">Reads from your draft. Use the Tweaks panel for the dials (length, tone, sales aggression).</div>
+      </a>
+    </div>
+
+    <div class="meta">
+      <div class="meta-item">
+        <div class="label">DATA STORAGE</div>
+        <div class="value">localStorage + downloadable JSON. No volumes mounted.</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">EXTERNAL REQUESTS</div>
+        <div class="value">Zero. Fonts self-hosted; deck does not phone home.</div>
+      </div>
+      <div class="meta-item">
+        <div class="label">DOCS</div>
+        <div class="value">
+          <a href="./LOCAL-SETUP.md">Setup</a> ·
+          <a href="./AUTOMATION.md">Automation</a> ·
+          <a href="./SERVICE-CONTRACT.md">Service contract</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

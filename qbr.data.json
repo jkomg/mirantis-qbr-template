@@ -1,0 +1,150 @@
+{
+  "_meta": {
+    "schemaVersion": "qbr-2026.06",
+    "lastUpdated": "2026-06-24T09:14:00Z",
+    "source": "salesforce-export + manual"
+  },
+  "customer": {
+    "name": "Vertex Logistics",
+    "tier": "Strategic",
+    "industry": "Logistics & freight",
+    "stakeholders": [
+      { "name": "Jordan Patel", "title": "CTO" },
+      { "name": "Lina Ortega", "title": "VP Infrastructure" }
+    ]
+  },
+  "quarter": "Q3 FY26",
+  "preparedBy": "Marco Reyes, TAM",
+  "preparedByEmail": "marco.reyes@mirantis.com",
+  "presentationDate": "2026-06-24",
+  "nextQbr": { "label": "Q4 FY26 review", "date": "2026-09-25" },
+  "commercial": {
+    "arr": { "current": 2400000, "prior": 1800000, "yoyPct": 33 },
+    "renewalDate": "2027-03-15",
+    "renewalSponsor": "TBD — confirm in meeting",
+    "expansions": [
+      { "name": "k0rdent UK envs", "valueUSD": 420000, "quarter": "Q4 FY26" },
+      { "name": "OpsCare APAC add-on", "valueUSD": 260000, "quarter": "Q1 FY27" }
+    ]
+  },
+  "usage": {
+    "clusters": 14, "clustersDelta": 3,
+    "nodes": 312, "nodesDelta": 24,
+    "workloads": 1847, "workloadsDelta": 412,
+    "environments": 6,
+    "uptime": 99.94
+  },
+  "support": {
+    "ticketsTotal": 87,
+    "p1Count": 4, "p1Delta": -2,
+    "slaMetPct": 96, "slaDeltaPp": -2,
+    "p1MttrHours": 3.4, "p1MttrTargetHours": 3.0,
+    "csat": 4.6,
+    "ticketsBySeverity": { "p1": 4, "p2": 19, "p3": 42, "p4": 22 },
+    "timeSpent": [
+      { "pct": 38, "label": "Networking / CNI questions — most still resolve in < 1h" },
+      { "pct": 24, "label": "Upgrade & lifecycle — MKE 3.7 path planning" },
+      { "pct": 19, "label": "Storage — PV reclaim and CSI driver behavior" },
+      { "pct": 19, "label": "Other — auth, observability, custom helm" }
+    ]
+  },
+  "health": {
+    "composite": 82, "compositeDelta": 4,
+    "status": "Healthy",
+    "adoption": 88, "adoptionDelta": 6,
+    "support": 76, "supportDelta": -4,
+    "sentiment": 91, "sentimentDelta": 9,
+    "commercial": 74, "commercialDelta": 0,
+    "history": [
+      { "quarter": "Q4-FY25", "status": "Watch", "score": 71 },
+      { "quarter": "Q1-FY26", "status": "Watch", "score": 75 },
+      { "quarter": "Q2-FY26", "status": "Healthy", "score": 78 },
+      { "quarter": "Q3-FY26", "status": "Healthy", "score": 82 }
+    ]
+  },
+  "nps": { "score": 42, "industry": 30, "delta": 7 },
+  "productMix": [
+    { "product": "Mirantis Kubernetes Engine", "entitlement": "300 nodes", "inUse": "284", "utilizationPct": 95, "trend": "▲ +9pp" },
+    { "product": "Mirantis OpenStack for K8s", "entitlement": "120 cores", "inUse": "96", "utilizationPct": 80, "trend": "▲ +4pp" },
+    { "product": "k0rdent Enterprise", "entitlement": "2 environments", "inUse": "2", "utilizationPct": 100, "trend": "▲ new" },
+    { "product": "Lens (Pro seats)", "entitlement": "40 seats", "inUse": "31", "utilizationPct": 78, "trend": "— flat" }
+  ],
+  "incidents": [
+    { "id": "INC-01", "date": "2026-04-14", "severity": "P1", "summary": "EU-WEST ingress controller crash loop", "duration": "2h 14m", "rcaStatus": "CLOSED", "action": "Pinned ingress version; nightly canary added" },
+    { "id": "INC-02", "date": "2026-05-02", "severity": "P1", "summary": "etcd leader election storm — Dallas DC", "duration": "4h 12m", "rcaStatus": "CLOSED", "action": "Disk class upgraded; etcd tuned" },
+    { "id": "INC-03", "date": "2026-05-21", "severity": "P1", "summary": "Freight platform — image registry timeout", "duration": "1h 48m", "rcaStatus": "CLOSED", "action": "Pull-through cache deployed to all clusters" },
+    { "id": "INC-04", "date": "2026-06-08", "severity": "P1", "summary": "k0rdent webhook backlog", "duration": "3h 22m", "rcaStatus": "CLOSED", "action": "Webhook concurrency raised; queue alerts added" }
+  ],
+  "incidentsPattern": "Pattern: three of the four P1s traced to capacity / throughput limits at infrastructure boundaries. Shift coverage and a Q4 runbook review will harden these — see next-quarter goals.",
+  "wins": [
+    { "kind": "PRODUCTION", "headline": "Freight platform live on k0rdent", "body": "187 new workloads migrated. Cutover took 6 hours against a 12-hour window. Zero rollback events in the four weeks since.", "metric": "187 workloads · 0 rollbacks" },
+    { "kind": "INFRASTRUCTURE", "headline": "Dallas DC online ahead of plan", "body": "Three new MKE clusters bootstrapped in 18 days. Joint runbook reduced bring-up time by ~40% vs. the EU-WEST build last year.", "metric": "3 clusters · 12 days early" },
+    { "kind": "SENTIMENT", "headline": "CTO referenced us at KubeCon EU", "body": "Jordan Patel's session named MKE specifically in his platform-team talk track. Two inbound leads from the recording.", "metric": "NPS +9 · 2 inbound leads" }
+  ],
+  "risks": [
+    { "id": "R-01", "level": "high", "title": "P1 MTTR trending wrong", "body": "Two of four P1s exceeded the 3h target. Root cause traces to APAC-hour coverage gap.", "owner": "Mirantis Support Ops", "dueDate": "Q4 close", "action": "Add APAC-hour engineer" },
+    { "id": "R-02", "level": "med", "title": "k0rdent UK expansion slip", "body": "Originally Q3, deferred to Q4 pending data-residency review on Vertex side.", "owner": "Vertex Infra", "dueDate": "Oct 15", "action": "DPIA sign-off then schedule" },
+    { "id": "R-03", "level": "med", "title": "MKE 3.7 upgrade window", "body": "3.6 reaches EOL Feb 2027 — three weeks before renewal. Upgrade plan needed by November.", "owner": "Joint", "dueDate": "Plan by Nov 1", "action": "Stage in non-prod first" }
+  ],
+  "products": ["MKE", "MOSK", "k0rdent Enterprise", "Lens"],
+  "roadmapQuarters": ["Q4 FY26 — Jul / Sep", "Q1 FY27 — Oct / Dec"],
+  "mirantisRoadmap": [
+    { "lane": "PRODUCT",  "col": 1, "title": "MKE 3.7 GA", "body": "k8s 1.31, longer LTS window" },
+    { "lane": "PRODUCT",  "col": 1, "title": "k0rdent multi-region GA", "body": "Cross-region failover · relevant to EU-WEST + Dallas" },
+    { "lane": "PRODUCT",  "col": 2, "title": "Lens 7", "body": "SSO refresh, audit log export" },
+    { "lane": "PRODUCT",  "col": 2, "title": "MOSK 24.4", "body": "Faster compute provisioning" },
+    { "lane": "PLATFORM", "col": 1, "title": "Observability bundle", "body": "Bundled Loki + Tempo + Prom" },
+    { "lane": "PLATFORM", "col": 2, "title": "FIPS-validated builds", "body": "For regulated industries" },
+    { "lane": "SERVICES", "col": 1, "title": "OpsCare APAC-hour add-on", "body": "Directly addresses Risk 01" },
+    { "lane": "SERVICES", "col": 2, "title": "Migration accelerator", "body": "Pre-built MKE 3.6 → 3.7 path" }
+  ],
+  "customerRoadmap": [
+    { "horizon": "NOW · Q4",   "horizonColor": "#3A1A3A", "title": "UK data-residency build", "body": "k0rdent Enterprise rollout to UK envs after DPIA closes. Mirantis to support cutover plan.", "lead": "Lina Ortega" },
+    { "horizon": "NEXT · Q1",  "horizonColor": "#7B4E7B", "title": "Last-mile platform v2",   "body": "Real-time routing service. ~600 new workloads expected; multi-region failover requirement aligns with k0rdent multi-region GA.", "lead": "Jordan Patel" },
+    { "horizon": "LATER · Q2+","horizonColor": "#A88AA0", "title": "ML platform consolidation","body": "Consolidate three internal ML teams onto a shared inference platform. Mirantis to advise on GPU node topology.", "lead": "TBD" }
+  ],
+  "training": {
+    "delivered": [
+      { "session": "MKE upgrade workshop",      "attendees": "12", "csat": "4.8" },
+      { "session": "k0rdent intro & hands-on",  "attendees": "18", "csat": "4.9" },
+      { "session": "Networking / CNI deep-dive","attendees": "9",  "csat": "4.5" }
+    ],
+    "deliveredNote": "CNI session correlated with a 31% drop in networking-related tickets in the following 6 weeks.",
+    "planned": [
+      { "session": "MKE 3.6 → 3.7 upgrade lab",      "target": "Platform team · 10", "date": "Aug 12" },
+      { "session": "Observability bundle preview",   "target": "SRE · 15",           "date": "Sep 04" },
+      { "session": "k0rdent multi-region masterclass","target": "Architects · 6",    "date": "Oct 23" }
+    ],
+    "plannedNote": "Bundled in current contract — no additional spend."
+  },
+  "execSummaryTakeaways": [
+    { "kind": "momentum", "label": "01 · MOMENTUM", "headline": "Usage up across the board.",        "body": "14 clusters (+3), 312 nodes, 1,847 workloads (+412). Dallas DC online May 18; freight-tracking platform live in production." },
+    { "kind": "watch",    "label": "02 · WATCH",    "headline": "Support response softened.",       "body": "96% SLA met (down 2pp). Two P1s exceeded MTTR target; RCAs closed June 12 with shift-coverage changes in flight." },
+    { "kind": "decide",   "label": "03 · DECIDE",   "headline": "k0rdent expansion needs a date.",  "body": "Deferred from Q3 to Q4. Renewal in March 2027 — we'd like a commitment by Q4 close to model into the renewal proposal." }
+  ],
+  "asks": {
+    "fromUs": [
+      { "title": "Sign off on k0rdent UK plan by Oct 15",   "body": "DPIA closure + go/no-go from compliance." },
+      { "title": "Reference for one new logo",              "body": "Logistics or freight prospect — 30-minute call." },
+      { "title": "Confirm Q4 renewal sponsor",              "body": "So our paper goes to the right exec the first time." }
+    ],
+    "fromYou": [
+      { "title": "APAC-hour engineer in place by Sep 30",   "body": "Lifts P1 MTTR back under 3h. Closes Risk 01." },
+      { "title": "MKE 3.7 upgrade runbook draft by Sep 1",  "body": "Before 3.6 EOL pressure builds." },
+      { "title": "Last-mile platform architecture review", "body": "Joint design session before Q1 work starts." }
+    ]
+  },
+  "nextActions": [
+    { "id": "NA-01", "commitment": "P1 MTTR back under 3h target", "owner": "Mirantis Support", "dueDate": "2026-09-30", "successCriteria": "2 consecutive months < 3h", "status": "on-track", "kind": "support" },
+    { "id": "NA-02", "commitment": "k0rdent UK environments live", "owner": "Joint", "dueDate": "2026-12-15", "successCriteria": "2 UK envs in production", "status": "blocked", "kind": "expansion" },
+    { "id": "NA-03", "commitment": "MKE 3.7 upgrade plan signed off", "owner": "Joint", "dueDate": "2026-11-01", "successCriteria": "Staged plan + rollback approved", "status": "not-started", "kind": "platform" },
+    { "id": "NA-04", "commitment": "Renewal proposal delivered", "owner": "Mirantis Sales", "dueDate": "2026-10-31", "successCriteria": "Customer sponsor has paper", "status": "on-track", "kind": "renewal" },
+    { "id": "NA-05", "commitment": "Last-mile platform design review", "owner": "Joint", "dueDate": "2026-08-28", "successCriteria": "Architecture doc + node sizing", "status": "on-track", "kind": "architecture" }
+  ],
+  "previousActions": [
+    { "id": "PA-01", "commitment": "Bring Dallas DC online with MKE", "owner": "Mirantis + Vertex", "dueDate": "2026-05-30", "status": "delivered" },
+    { "id": "PA-02", "commitment": "Migrate freight-tracking to k0rdent Enterprise", "owner": "Vertex", "dueDate": "2026-04-30", "status": "delivered" },
+    { "id": "PA-03", "commitment": "Cut P1 MTTR from 4.2h to under 3h", "owner": "Mirantis", "dueDate": "2026-06-30", "status": "missed", "note": "Landed at 3.4h" },
+    { "id": "PA-04", "commitment": "k0rdent Enterprise expansion to UK envs", "owner": "Vertex", "dueDate": "2026-06-30", "status": "slipped", "note": "Slipped → Q4" }
+  ]
+}

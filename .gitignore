@@ -1,0 +1,38 @@
+# ---- Editor & OS ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# ---- Build output ----
+node_modules/
+dist/
+build/
+
+# ---- Container ----
+# Fonts are fetched at docker build time — don't commit them
+assets/fonts/*.woff2
+!assets/fonts/.gitkeep
+
+# ---- Customer data — NEVER commit ----
+# Per-account QBR data files. Real customer ARR, ticket counts, etc. must
+# live in a private store (not git). Keep this aggressive — easier to
+# undo a false negative than to scrub a leaked secret.
+accounts/
+*.qbr.data.json
+qbr.data.local.json
+draft.json
+
+# ---- Project working folders ----
+uploads/
+screenshots/
+extracted/
+scraps/
+exports/
+
+# ---- Local dev ----
+.env
+.env.local
+*.log

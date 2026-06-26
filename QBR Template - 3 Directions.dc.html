@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="./assets/fonts.css">
+<style>
+  body { font-family: 'Lato', -apple-system, sans-serif; }
+</style>
+</helmet>
+
+<!-- ================== PAGE HEADER ================== -->
+<div style="position:absolute; left:80px; top:0px; width:5920px;">
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; letter-spacing:-1.5px; line-height:1;">Mirantis QBR Template — 3 directions</div>
+  <div style="font-family:'Lato',sans-serif; font-weight:400; font-size:26px; color:#5B5F66; margin-top:18px; max-width:1400px; line-height:1.45;">Same mock customer (Vertex Logistics, Q3 FY26), same three slides, three visual systems. Pick a direction and we'll build out the full ~16-slide template with the tweak sliders wired up.</div>
+</div>
+
+<!-- ================== COLUMN HEADERS ================== -->
+<!-- A header -->
+<div style="position:absolute; left:80px; top:260px; width:1920px;">
+  <div style="display:flex; align-items:baseline; gap:18px;">
+    <div style="font-family:'Overpass',sans-serif; font-weight:900; font-size:48px; color:#3A1A3A; letter-spacing:-0.5px;">A · Executive Brief</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#E03546; font-weight:500;">AUBERGINE + BURGUNDY</div>
+  </div>
+  <div style="font-family:'Lato',sans-serif; font-size:24px; color:#3D4046; margin-top:10px; line-height:1.4; max-width:1700px;">Restrained, classic consulting deck. Deep aubergine title slides, white content slides, thin red ribbon details, dense tables. Best for board-level customer execs and formal renewal reviews.</div>
+</div>
+
+<!-- B header -->
+<div style="position:absolute; left:2080px; top:260px; width:1920px;">
+  <div style="display:flex; align-items:baseline; gap:18px;">
+    <div style="font-family:'Overpass',sans-serif; font-weight:900; font-size:48px; color:#0E1A2E; letter-spacing:-0.5px;">B · Mission Control</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; font-weight:500;">SALES NAVY + CYAN</div>
+  </div>
+  <div style="font-family:'Lato',sans-serif; font-size:24px; color:#3D4046; margin-top:10px; line-height:1.4; max-width:1700px;">Data-room / Grafana feel. Dense KPI tiles, sparklines, mono numerics, traffic-light colors. Best for technical IT leadership, ops VPs, and internal account-health reviews.</div>
+</div>
+
+<!-- C header -->
+<div style="position:absolute; left:4080px; top:260px; width:1920px;">
+  <div style="display:flex; align-items:baseline; gap:18px;">
+    <div style="font-family:'Overpass',sans-serif; font-weight:900; font-size:48px; color:#14161A; letter-spacing:-0.5px;">C · Editorial</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#C73AAE; font-weight:500;">GRADIENT SWATCHES</div>
+  </div>
+  <div style="font-family:'Lato',sans-serif; font-size:24px; color:#3D4046; margin-top:10px; line-height:1.4; max-width:1700px;">Magazine-style storytelling. Bold gradient covers, oversized numerals, pull-quotes from customer sentiment, conversational tone. Best for relationship reviews and customer-success-driven QBRs.</div>
+</div>
+
+<!-- ================== ROW 1: COVER SLIDES ================== -->
+
+<!-- A1 — Cover (Executive Brief) -->
+<div style="position:absolute; left:80px; top:460px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">01 · COVER</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#3A1A3A; position:relative; overflow:hidden;">
+    <!-- thin red top accent -->
+    <div style="position:absolute; top:0; left:0; width:100%; height:8px; background:linear-gradient(90deg, #E03546 0%, #E03546 40%, transparent 40%);"></div>
+    <!-- diagonal red ribbon detail in corner -->
+    <svg style="position:absolute; right:-100px; top:-80px; opacity:0.18;" width="700" height="700" viewBox="0 0 200 200" fill="none">
+      <path d="M 20 100 Q 60 40 100 100 T 180 100" stroke="#E03546" stroke-width="6" fill="none"/>
+      <path d="M 20 100 Q 60 160 100 100 T 180 100" stroke="#E03546" stroke-width="6" fill="none"/>
+    </svg>
+    <!-- Mirantis wordmark top-left -->
+    <div style="position:absolute; top:80px; left:100px; display:flex; align-items:center; gap:18px;">
+      <svg width="56" height="40" viewBox="0 0 100 70" fill="none">
+        <path d="M5 25 Q35 -5 50 35 T95 25" stroke="white" stroke-width="9" fill="none"/>
+        <path d="M5 45 Q35 75 50 35 T95 45" stroke="#E03546" stroke-width="9" fill="none"/>
+      </svg>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:36px; color:white; letter-spacing:3px;">MIRANTIS</div>
+    </div>
+
+    <!-- Eyebrow -->
+    <div style="position:absolute; top:380px; left:100px; font-family:'Lato',sans-serif; font-weight:700; font-size:24px; color:#E0B5D8; letter-spacing:6px;">QUARTERLY BUSINESS REVIEW · Q3 FY2026</div>
+
+    <!-- Title -->
+    <div style="position:absolute; top:430px; left:100px; font-family:'Overpass',sans-serif; font-weight:800; font-size:160px; color:white; letter-spacing:-3px; line-height:1;">Vertex Logistics</div>
+
+    <!-- subtitle -->
+    <div style="position:absolute; top:640px; left:100px; font-family:'Lato',sans-serif; font-weight:400; font-size:36px; color:#D9C4D6; line-height:1.4;">Prepared by Marco Reyes · Technical Account Manager<br/>For Jordan Patel, CTO · Lina Ortega, VP Infrastructure</div>
+
+    <!-- bottom band -->
+    <div style="position:absolute; bottom:0; left:0; width:100%; height:6px; background:#E03546;"></div>
+    <div style="position:absolute; bottom:60px; left:100px; font-family:'JetBrains Mono',monospace; font-size:20px; color:#A88AA0; letter-spacing:1px;">JUNE 24, 2026 · MIRANTIS CONFIDENTIAL</div>
+    <div style="position:absolute; bottom:60px; right:100px; font-family:'JetBrains Mono',monospace; font-size:20px; color:#A88AA0; letter-spacing:1px;">01 / 16</div>
+  </div>
+</div>
+
+<!-- B1 — Cover (Mission Control) -->
+<div style="position:absolute; left:2080px; top:460px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">01 · COVER</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#0E1A2E; position:relative; overflow:hidden;">
+    <!-- subtle grid -->
+    <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(0,201,176,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,176,0.06) 1px, transparent 1px); background-size:80px 80px;"></div>
+    <!-- thin cyan top rule -->
+    <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
+
+    <!-- Top-right Mirantis Sales lockup -->
+    <div style="position:absolute; top:80px; right:100px; display:flex; align-items:center; gap:18px;">
+      <svg width="48" height="34" viewBox="0 0 100 70" fill="none">
+        <path d="M5 25 Q35 -5 50 35 T95 25" stroke="white" stroke-width="9" fill="none"/>
+        <path d="M5 45 Q35 75 50 35 T95 45" stroke="#E03546" stroke-width="9" fill="none"/>
+      </svg>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px; color:white; letter-spacing:2.5px;">MIRANTIS</div>
+      <div style="width:1px; height:36px; background:#3A4661;"></div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:28px; color:#7E8CA8; letter-spacing:5px;">SALES</div>
+    </div>
+
+    <!-- Top-left quarter stamp -->
+    <div style="position:absolute; top:80px; left:100px; font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:2px;">QBR // Q3-FY26 // RUN_2026.06.24</div>
+
+    <!-- Big title -->
+    <div style="position:absolute; top:320px; left:100px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#00C9B0; letter-spacing:3px; margin-bottom:14px;">ACCOUNT</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:140px; color:white; letter-spacing:-2px; line-height:1;">Vertex Logistics</div>
+      <div style="width:140px; height:4px; background:#00C9B0; margin-top:32px;"></div>
+    </div>
+
+    <!-- KPI preview strip -->
+    <div style="position:absolute; bottom:140px; left:100px; right:100px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+      <div style="border:1px solid #2A3A55; padding:28px 32px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">ARR</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">$2.4M</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">▲ +33% YoY</div>
+      </div>
+      <div style="border:1px solid #2A3A55; padding:28px 32px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">CLUSTERS</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">14</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">▲ +3 QoQ</div>
+      </div>
+      <div style="border:1px solid #2A3A55; padding:28px 32px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">SLA MET</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">96%</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#F5A623; margin-top:6px;">▼ -2pp QoQ</div>
+      </div>
+      <div style="border:1px solid #2A3A55; padding:28px 32px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:1.5px;">NPS</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:56px; color:white; line-height:1.1; margin-top:8px;">42</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#00C9B0; margin-top:6px;">▲ +7 QoQ</div>
+      </div>
+    </div>
+
+    <!-- Footer line -->
+    <div style="position:absolute; bottom:50px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;">
+      <div>PREPARED_BY: marco.reyes@mirantis.com</div>
+      <div>CONFIDENTIAL · 01/16</div>
+    </div>
+  </div>
+</div>
+
+<!-- C1 — Cover (Editorial) -->
+<div style="position:absolute; left:4080px; top:460px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">01 · COVER</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); position:relative; overflow:hidden; background:linear-gradient(135deg, #3A1A3A 0%, #6B1F5A 35%, #C73AAE 65%, #00E5D1 100%);">
+    <!-- giant Q3 watermark -->
+    <div style="position:absolute; right:-60px; top:-120px; font-family:'Overpass',sans-serif; font-weight:900; font-size:720px; color:rgba(255,255,255,0.08); letter-spacing:-20px; line-height:1;">Q3</div>
+
+    <!-- Mirantis logo bottom-left -->
+    <div style="position:absolute; bottom:90px; left:100px; display:flex; align-items:center; gap:16px;">
+      <svg width="44" height="32" viewBox="0 0 100 70" fill="none">
+        <path d="M5 25 Q35 -5 50 35 T95 25" stroke="white" stroke-width="9" fill="none"/>
+        <path d="M5 45 Q35 75 50 35 T95 45" stroke="white" stroke-width="9" fill="none"/>
+      </svg>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px; color:white; letter-spacing:3px;">MIRANTIS</div>
+    </div>
+
+    <!-- Eyebrow -->
+    <div style="position:absolute; top:100px; left:100px; font-family:'Lato',sans-serif; font-weight:700; font-size:22px; color:white; letter-spacing:5px;">QUARTERLY BUSINESS REVIEW · Q3 FY26</div>
+
+    <!-- Main title -->
+    <div style="position:absolute; top:380px; left:100px; max-width:1500px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:88px; color:rgba(255,255,255,0.85); letter-spacing:-1px; line-height:1; margin-bottom:14px; font-style:italic;">How we did,</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:white; letter-spacing:-5px; line-height:0.95;">together.</div>
+    </div>
+
+    <!-- subtitle / pair line -->
+    <div style="position:absolute; bottom:200px; left:100px; font-family:'Overpass',sans-serif; font-weight:600; font-size:48px; color:white; letter-spacing:-0.5px;">Vertex Logistics &nbsp;×&nbsp; Mirantis</div>
+    <div style="position:absolute; bottom:160px; left:100px; font-family:'Lato',sans-serif; font-weight:400; font-size:24px; color:rgba(255,255,255,0.7);">June 24, 2026 · Marco Reyes, TAM</div>
+
+    <!-- bottom right page mark -->
+    <div style="position:absolute; bottom:90px; right:100px; font-family:'JetBrains Mono',monospace; font-size:20px; color:rgba(255,255,255,0.6); letter-spacing:2px;">01 / 16</div>
+  </div>
+</div>
+
+<!-- ================== ROW 2: ACCOUNT HEALTH SLIDES ================== -->
+
+<!-- A2 — Account Health (Executive Brief) -->
+<div style="position:absolute; left:80px; top:1640px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">02 · ACCOUNT HEALTH</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:white; position:relative; overflow:hidden;">
+    <!-- top thin red rule -->
+    <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#E03546;"></div>
+
+    <!-- header bar -->
+    <div style="position:absolute; top:60px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:baseline;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#6B7280; letter-spacing:3px;">02 · ACCOUNT HEALTH</div>
+      <div style="font-family:'Lato',sans-serif; font-weight:400; font-size:20px; color:#6B7280;">Vertex Logistics · Q3 FY26</div>
+    </div>
+
+    <!-- Title -->
+    <div style="position:absolute; top:140px; left:100px; font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1;">Account health</div>
+    <div style="position:absolute; top:250px; left:100px; font-family:'Lato',sans-serif; font-weight:400; font-size:32px; color:#5B5F66; max-width:1500px; line-height:1.4;">Composite score across four dimensions. Healthy across adoption and sentiment; commercial dimension softened by deferred expansion conversation.</div>
+
+    <!-- LEFT: Big score -->
+    <div style="position:absolute; top:400px; left:100px; width:600px;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:22px; color:#6B7280; letter-spacing:3px; margin-bottom:20px;">COMPOSITE SCORE</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:280px; color:#3A1A3A; line-height:1; letter-spacing:-8px;">82<span style="font-size:120px; color:#A88AA0; font-weight:400;">/100</span></div>
+      <div style="display:inline-flex; align-items:center; gap:14px; margin-top:30px; padding:14px 28px; background:#EDE3EB; border-left:5px solid #3A1A3A;">
+        <div style="width:14px; height:14px; border-radius:50%; background:#3DAE73;"></div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A;">Healthy</div>
+        <div style="font-family:'Lato',sans-serif; font-weight:400; font-size:24px; color:#6B7280;">— up 4 points QoQ</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: 4 dimensions -->
+    <div style="position:absolute; top:400px; right:100px; width:1020px;">
+      <div style="display:grid; gap:28px;">
+        <!-- Adoption -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A;">Adoption &amp; usage</div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#3DAE73;">88<span style="color:#A0A4AA; font-weight:400; font-size:24px;">/100</span></div>
+          </div>
+          <div style="height:8px; background:#EFEAEE; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:88%; background:#3DAE73;"></div></div>
+          <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:8px;">14 clusters live, all production-tier. Strong cluster growth this quarter.</div>
+        </div>
+        <!-- Support -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A;">Support performance</div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#F5A623;">76<span style="color:#A0A4AA; font-weight:400; font-size:24px;">/100</span></div>
+          </div>
+          <div style="height:8px; background:#EFEAEE; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:76%; background:#F5A623;"></div></div>
+          <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:8px;">96% SLA met. Two P1s exceeded MTTR target — RCA closed June 12.</div>
+        </div>
+        <!-- Sentiment -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A;">Stakeholder sentiment</div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#3DAE73;">91<span style="color:#A0A4AA; font-weight:400; font-size:24px;">/100</span></div>
+          </div>
+          <div style="height:8px; background:#EFEAEE; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:91%; background:#3DAE73;"></div></div>
+          <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:8px;">NPS 42 (industry 30). CTO publicly referenced Mirantis at KubeCon EU.</div>
+        </div>
+        <!-- Commercial -->
+        <div>
+          <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;">
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#14161A;">Commercial trajectory</div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:32px; color:#F5A623;">74<span style="color:#A0A4AA; font-weight:400; font-size:24px;">/100</span></div>
+          </div>
+          <div style="height:8px; background:#EFEAEE; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:74%; background:#F5A623;"></div></div>
+          <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:8px;">Renewal Mar 2027 on track. k0rdent expansion deferred to next quarter.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;">
+      <div>MIRANTIS · CONFIDENTIAL</div>
+      <div>02 / 16</div>
+    </div>
+  </div>
+</div>
+
+<!-- B2 — Account Health (Mission Control) -->
+<div style="position:absolute; left:2080px; top:1640px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">02 · ACCOUNT HEALTH</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#F7F8FB; position:relative; overflow:hidden;">
+    <!-- top stripe -->
+    <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#0E1A2E;"></div>
+
+    <!-- header -->
+    <div style="position:absolute; top:50px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:center;">
+      <div style="display:flex; align-items:center; gap:24px;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; letter-spacing:2px;">// ACCOUNT_HEALTH</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">vertex-logistics · Q3-FY26</div>
+      </div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">refresh: 2026-06-24 09:14 UTC</div>
+    </div>
+
+    <!-- Title row -->
+    <div style="position:absolute; top:110px; left:100px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1;">Account health</div>
+      <div style="display:inline-flex; align-items:center; gap:14px; margin-top:18px; padding:8px 20px; background:#0E1A2E; color:white;">
+        <div style="width:10px; height:10px; border-radius:50%; background:#00C9B0;"></div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:20px; letter-spacing:2px;">STATUS: HEALTHY · 82/100</div>
+      </div>
+    </div>
+
+    <!-- 4 gauge tiles -->
+    <div style="position:absolute; top:340px; left:100px; right:100px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+      <!-- Adoption -->
+      <div style="background:white; padding:36px 32px; border-top:4px solid #00C9B0;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">ADOPTION</div>
+        <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">88</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+        </div>
+        <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:88%; background:#00C9B0;"></div></div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; margin-top:14px;">▲ +6 QoQ</div>
+      </div>
+      <!-- Support -->
+      <div style="background:white; padding:36px 32px; border-top:4px solid #F5A623;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">SUPPORT</div>
+        <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">76</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+        </div>
+        <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:76%; background:#F5A623;"></div></div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#F5A623; margin-top:14px;">▼ -4 QoQ</div>
+      </div>
+      <!-- Sentiment -->
+      <div style="background:white; padding:36px 32px; border-top:4px solid #00C9B0;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">SENTIMENT</div>
+        <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">91</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+        </div>
+        <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:91%; background:#00C9B0;"></div></div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; margin-top:14px;">▲ +9 QoQ</div>
+      </div>
+      <!-- Commercial -->
+      <div style="background:white; padding:36px 32px; border-top:4px solid #F5A623;">
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">COMMERCIAL</div>
+        <div style="display:flex; align-items:baseline; gap:12px; margin-top:18px;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1;">74</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:22px; color:#5C6B85;">/100</div>
+        </div>
+        <div style="height:6px; background:#E8ECF3; margin-top:18px; position:relative;"><div style="position:absolute; left:0; top:0; height:100%; width:74%; background:#F5A623;"></div></div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#F5A623; margin-top:14px;">— flat QoQ</div>
+      </div>
+    </div>
+
+    <!-- Quarterly history -->
+    <div style="position:absolute; bottom:200px; left:100px; right:100px; background:white; padding:36px 40px;">
+      <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:24px;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:26px; color:#0E1A2E;">Quarterly status history</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">last 4 quarters</div>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div style="width:18px; height:18px; border-radius:50%; background:#F5A623;"></div>
+          <div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q4-FY25</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Watch · 71</div></div>
+        </div>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div style="width:18px; height:18px; border-radius:50%; background:#F5A623;"></div>
+          <div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q1-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Watch · 75</div></div>
+        </div>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div style="width:18px; height:18px; border-radius:50%; background:#00C9B0;"></div>
+          <div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q2-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Healthy · 78</div></div>
+        </div>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div style="width:18px; height:18px; border-radius:50%; background:#00C9B0;"></div>
+          <div><div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85;">Q3-FY26</div><div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Healthy · 82</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- footer -->
+    <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;">
+      <div>MIRANTIS // SALES // CONFIDENTIAL</div>
+      <div>02 / 16</div>
+    </div>
+  </div>
+</div>
+
+<!-- C2 — Account Health (Editorial) -->
+<div style="position:absolute; left:4080px; top:1640px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">02 · ACCOUNT HEALTH</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:white; position:relative; overflow:hidden;">
+    <!-- accent dot -->
+    <div style="position:absolute; top:100px; left:100px; display:flex; align-items:center; gap:18px;">
+      <div style="width:18px; height:18px; border-radius:50%; background:#C73AAE;"></div>
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:22px; color:#14161A; letter-spacing:4px;">CHAPTER 02 — HEALTH</div>
+    </div>
+
+    <!-- Headline -->
+    <div style="position:absolute; top:170px; left:100px; max-width:1100px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:60px; color:#14161A; line-height:1; font-style:italic; letter-spacing:-1px;">In a word:</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:#14161A; line-height:0.95; letter-spacing:-5px; margin-top:4px;">Healthy.</div>
+    </div>
+
+    <!-- Big score on right -->
+    <div style="position:absolute; top:170px; right:100px; width:680px; height:540px; background:linear-gradient(135deg, #3A1A3A 0%, #C73AAE 100%); padding:60px; color:white; display:flex; flex-direction:column; justify-content:space-between;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:22px; letter-spacing:4px;">COMPOSITE SCORE</div>
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:320px; line-height:1; letter-spacing:-12px;">82</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:36px; opacity:0.85; margin-top:-12px;">out of 100 · ▲ 4 points QoQ</div>
+      </div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; opacity:0.9; line-height:1.45;">Strongest result in six quarters. Driven by adoption growth and a sentiment lift after the spring KubeCon mention.</div>
+    </div>
+
+    <!-- 4 mini metrics + quote bottom -->
+    <div style="position:absolute; bottom:280px; left:100px; width:1100px; display:grid; grid-template-columns:repeat(2, 1fr); gap:36px 64px;">
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#C73AAE; letter-spacing:3px;">ADOPTION</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; line-height:1; margin-top:6px;">88</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:6px;">14 clusters live</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#C73AAE; letter-spacing:3px;">SUPPORT</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; line-height:1; margin-top:6px;">76</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:6px;">96% SLA met</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#C73AAE; letter-spacing:3px;">SENTIMENT</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; line-height:1; margin-top:6px;">91</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:6px;">NPS 42 (industry 30)</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#C73AAE; letter-spacing:3px;">COMMERCIAL</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; line-height:1; margin-top:6px;">74</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#5B5F66; margin-top:6px;">Renewal on track</div>
+      </div>
+    </div>
+
+    <!-- Pull quote bottom -->
+    <div style="position:absolute; bottom:60px; left:100px; right:100px; padding-top:30px; border-top:2px solid #14161A; display:flex; gap:40px; align-items:flex-start;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#C73AAE; line-height:0.7;">"</div>
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:30px; color:#14161A; line-height:1.35; max-width:1500px; font-style:italic;">Mirantis is the quiet backbone of our delivery org. We hear from them when it matters and not when it doesn't.</div>
+        <div style="font-family:'Lato',sans-serif; font-size:20px; color:#6B7280; margin-top:10px; letter-spacing:1px;">— JORDAN PATEL, CTO, VERTEX LOGISTICS</div>
+      </div>
+    </div>
+
+    <!-- footer corner -->
+    <div style="position:absolute; bottom:24px; right:100px; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8; letter-spacing:1px;">02 / 16</div>
+  </div>
+</div>
+
+<!-- ================== ROW 3: USAGE & ADOPTION SLIDES ================== -->
+
+<!-- A3 — Usage & Adoption (Executive Brief) -->
+<div style="position:absolute; left:80px; top:2820px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">05 · USAGE &amp; ADOPTION</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:white; position:relative; overflow:hidden;">
+    <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#E03546;"></div>
+
+    <!-- header -->
+    <div style="position:absolute; top:60px; left:100px; right:100px; display:flex; justify-content:space-between; align-items:baseline;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:20px; color:#6B7280; letter-spacing:3px;">05 · USAGE &amp; ADOPTION</div>
+      <div style="font-family:'Lato',sans-serif; font-weight:400; font-size:20px; color:#6B7280;">Vertex Logistics · Q3 FY26</div>
+    </div>
+
+    <!-- Title -->
+    <div style="position:absolute; top:140px; left:100px; font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1;">Usage &amp; adoption</div>
+    <div style="position:absolute; top:250px; left:100px; font-family:'Lato',sans-serif; font-weight:400; font-size:32px; color:#5B5F66; max-width:1500px; line-height:1.4;">Production estate grew ~22% this quarter, driven by the Dallas DC build-out and three new staging environments.</div>
+
+    <!-- KPI strip -->
+    <div style="position:absolute; top:400px; left:100px; right:100px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
+      <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">CLUSTERS</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">14</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +3 QoQ · +6 YoY</div>
+      </div>
+      <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">NODES</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">312</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +24 QoQ</div>
+      </div>
+      <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">WORKLOADS</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">1,847</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +412 QoQ</div>
+      </div>
+      <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">ENVIRONMENTS</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">6</div>
+        <div style="font-family:'Lato',sans-serif; font-size:22px; color:#6B7280; margin-top:6px; font-weight:600;">— flat</div>
+      </div>
+    </div>
+
+    <!-- product mix table -->
+    <div style="position:absolute; bottom:90px; left:100px; right:100px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Product mix &amp; entitlement</div>
+      <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif;">
+        <thead>
+          <tr style="border-bottom:2px solid #3A1A3A;">
+            <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">PRODUCT</th>
+            <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">ENTITLEMENT</th>
+            <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">IN USE</th>
+            <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">UTILIZATION</th>
+            <th style="text-align:left; padding:14px 8px; font-weight:700; font-size:20px; color:#3A1A3A; letter-spacing:1px;">TREND</th>
+          </tr>
+        </thead>
+        <tbody style="font-size:22px; color:#14161A;">
+          <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:12px 8px; font-weight:600;">Mirantis Kubernetes Engine</td><td style="padding:12px 8px;">300 nodes</td><td style="padding:12px 8px;">284</td><td style="padding:12px 8px;">95%</td><td style="padding:12px 8px; color:#3DAE73;">▲ +9pp</td></tr>
+          <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:12px 8px; font-weight:600;">Mirantis OpenStack for K8s</td><td style="padding:12px 8px;">120 cores</td><td style="padding:12px 8px;">96</td><td style="padding:12px 8px;">80%</td><td style="padding:12px 8px; color:#3DAE73;">▲ +4pp</td></tr>
+          <tr style="border-bottom:1px solid #EFEAEE;"><td style="padding:12px 8px; font-weight:600;">k0rdent Enterprise</td><td style="padding:12px 8px;">2 environments</td><td style="padding:12px 8px;">2</td><td style="padding:12px 8px;">100%</td><td style="padding:12px 8px; color:#3DAE73;">▲ new</td></tr>
+          <tr><td style="padding:12px 8px; font-weight:600;">Lens (Pro seats)</td><td style="padding:12px 8px;">40 seats</td><td style="padding:12px 8px;">31</td><td style="padding:12px 8px;">78%</td><td style="padding:12px 8px; color:#6B7280;">— flat</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8;">
+      <div>MIRANTIS · CONFIDENTIAL</div>
+      <div>05 / 16</div>
+    </div>
+  </div>
+</div>
+
+<!-- B3 — Usage & Adoption (Mission Control) -->
+<div style="position:absolute; left:2080px; top:2820px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">05 · USAGE &amp; ADOPTION</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#F7F8FB; position:relative; overflow:hidden;">
+    <div style="position:absolute; top:0; left:0; width:100%; height:4px; background:#0E1A2E;"></div>
+
+    <!-- header -->
+    <div style="position:absolute; top:50px; left:100px; right:100px; display:flex; justify-content:space-between;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00A693; letter-spacing:2px;">// USAGE_ADOPTION</div>
+      <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">vertex-logistics · last 90d</div>
+    </div>
+
+    <div style="position:absolute; top:110px; left:100px; font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#0E1A2E; letter-spacing:-1.5px; line-height:1;">Usage &amp; adoption</div>
+
+    <!-- 6 tile grid -->
+    <div style="position:absolute; top:260px; left:100px; right:100px; display:grid; grid-template-columns:repeat(3, 1fr); grid-template-rows:repeat(2, 1fr); gap:32px; height:740px;">
+
+      <!-- Clusters -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">CLUSTERS</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00A693;">▲ +3</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:120px; color:#0E1A2E; line-height:1; margin-top:16px;">14</div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,45 30,42 60,40 90,35 120,30 150,20 200,10" stroke="#00C9B0" stroke-width="3" fill="none"/><polyline points="0,45 30,42 60,40 90,35 120,30 150,20 200,10 200,60 0,60" fill="rgba(0,201,176,0.15)"/></svg>
+      </div>
+
+      <!-- Nodes -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">NODES</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00A693;">▲ +24</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:120px; color:#0E1A2E; line-height:1; margin-top:16px;">312</div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,50 30,48 60,42 90,40 120,28 150,22 200,12" stroke="#00C9B0" stroke-width="3" fill="none"/><polyline points="0,50 30,48 60,42 90,40 120,28 150,22 200,12 200,60 0,60" fill="rgba(0,201,176,0.15)"/></svg>
+      </div>
+
+      <!-- Workloads -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">WORKLOADS</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00A693;">▲ +412</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:120px; color:#0E1A2E; line-height:1; margin-top:16px;">1,847</div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,55 30,50 60,42 90,30 120,28 150,18 200,8" stroke="#00C9B0" stroke-width="3" fill="none"/><polyline points="0,55 30,50 60,42 90,30 120,28 150,18 200,8 200,60 0,60" fill="rgba(0,201,176,0.15)"/></svg>
+      </div>
+
+      <!-- P1 tickets -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">P1 TICKETS / Q</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00A693;">▼ -2</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:120px; color:#0E1A2E; line-height:1; margin-top:16px;">4</div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,15 30,18 60,20 90,28 120,30 150,38 200,42" stroke="#00C9B0" stroke-width="3" fill="none"/><polyline points="0,15 30,18 60,20 90,28 120,30 150,38 200,42 200,60 0,60" fill="rgba(0,201,176,0.15)"/></svg>
+      </div>
+
+      <!-- Uptime -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">UPTIME</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00A693;">▲ +0.04</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#0E1A2E; line-height:1; margin-top:16px;">99.94<span style="font-size:48px;">%</span></div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,30 30,25 60,28 90,18 120,20 150,12 200,10" stroke="#00C9B0" stroke-width="3" fill="none"/><polyline points="0,30 30,25 60,28 90,18 120,20 150,12 200,10 200,60 0,60" fill="rgba(0,201,176,0.15)"/></svg>
+      </div>
+
+      <!-- Capacity -->
+      <div style="background:white; padding:32px; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1.5px;">CAPACITY USED</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#F5A623;">▲ +5pp</div>
+        </div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:120px; color:#0E1A2E; line-height:1; margin-top:16px;">67<span style="font-size:64px;">%</span></div>
+        <div style="flex:1;"></div>
+        <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="none"><polyline points="0,40 30,38 60,35 90,30 120,28 150,22 200,18" stroke="#F5A623" stroke-width="3" fill="none"/><polyline points="0,40 30,38 60,35 90,30 120,28 150,22 200,18 200,60 0,60" fill="rgba(245,166,35,0.15)"/></svg>
+      </div>
+    </div>
+
+    <div style="position:absolute; bottom:40px; left:100px; right:100px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:16px; color:#5C6B85; letter-spacing:1px;">
+      <div>MIRANTIS // SALES // CONFIDENTIAL</div>
+      <div>05 / 16</div>
+    </div>
+  </div>
+</div>
+
+<!-- C3 — Usage & Adoption (Editorial) -->
+<div style="position:absolute; left:4080px; top:2820px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">05 · USAGE &amp; ADOPTION</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:white; position:relative; overflow:hidden;">
+    <!-- accent dot -->
+    <div style="position:absolute; top:100px; left:100px; display:flex; align-items:center; gap:18px;">
+      <div style="width:18px; height:18px; border-radius:50%; background:#F5D400;"></div>
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:22px; color:#14161A; letter-spacing:4px;">CHAPTER 05 — BY THE NUMBERS</div>
+    </div>
+
+    <div style="position:absolute; top:170px; left:100px;">
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:110px; color:#14161A; letter-spacing:-2.5px; line-height:1;">A bigger footprint,</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:110px; color:#14161A; font-style:italic; letter-spacing:-2.5px; line-height:1; margin-top:4px;">quietly built.</div>
+    </div>
+
+    <!-- 4 huge numerals as 2x2 grid -->
+    <div style="position:absolute; top:480px; left:100px; right:100px; display:grid; grid-template-columns:1fr 1fr; gap:80px 100px;">
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:#14161A; line-height:0.9; letter-spacing:-6px;">14<span style="font-size:80px; color:#C73AAE; font-weight:300;">clusters</span></div>
+        <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; line-height:1.4; margin-top:14px; max-width:560px;">Three more than last quarter, all in production. The Dallas DC came online in May.</div>
+      </div>
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:#14161A; line-height:0.9; letter-spacing:-6px;">312<span style="font-size:80px; color:#C73AAE; font-weight:300; margin-left:24px;">nodes</span></div>
+        <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; line-height:1.4; margin-top:14px; max-width:560px;">About the size of a small city's IT fleet. 24 added this quarter, mostly in EU-WEST.</div>
+      </div>
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:#14161A; line-height:0.9; letter-spacing:-6px;">1,847<span style="display:block; font-size:60px; color:#C73AAE; font-weight:300; margin-top:8px;">workloads in production</span></div>
+        <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; line-height:1.4; margin-top:14px; max-width:560px;">+412 new this quarter. The freight-tracking platform alone added 187.</div>
+      </div>
+      <div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:200px; color:#14161A; line-height:0.9; letter-spacing:-6px;">99.94<span style="font-size:120px;">%</span></div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:60px; color:#C73AAE; line-height:1; font-style:italic; margin-top:-4px;">uptime, all envs</div>
+        <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; line-height:1.4; margin-top:14px; max-width:560px;">Above the contracted 99.9% line. Two short blips, both recovered inside the SLA.</div>
+      </div>
+    </div>
+
+    <div style="position:absolute; bottom:24px; right:100px; font-family:'JetBrains Mono',monospace; font-size:16px; color:#9CA0A8; letter-spacing:1px;">05 / 16</div>
+  </div>
+</div>
+
+<!-- ================== DATA INPUT + TWEAKS MOCKUP ================== -->
+
+<div style="position:absolute; left:80px; top:4060px; width:5920px;">
+  <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#14161A; letter-spacing:-1px; line-height:1;">How the template gets filled in</div>
+  <div style="font-family:'Lato',sans-serif; font-size:24px; color:#5B5F66; margin-top:14px; max-width:1500px; line-height:1.45;">Three approaches to data input — independent of the visual direction you pick. The Tweaks panel runs the global dials (aggression, support emphasis, length, etc.); slide content is either filled by form, by paste-JSON, or inline.</div>
+</div>
+
+<!-- Option 1: Sidebar form -->
+<div style="position:absolute; left:80px; top:4260px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">DATA INPUT · OPTION 1 — TWEAKS PANEL + INLINE EDIT</div>
+  <div style="width:1920px; height:1080px; box-shadow:0 1px 3px rgba(0,0,0,.08); background:white; position:relative; overflow:hidden; display:flex;">
+
+    <!-- Slide preview area -->
+    <div style="flex:1; background:#F2F0F2; padding:60px; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+      <div style="width:1100px; height:618px; background:#3A1A3A; box-shadow:0 4px 24px rgba(0,0,0,.25); position:relative; overflow:hidden;">
+        <div style="position:absolute; top:0; left:0; width:100%; height:5px; background:linear-gradient(90deg, #E03546 40%, transparent 40%);"></div>
+        <div style="position:absolute; top:50px; left:60px; font-family:'Lato',sans-serif; font-weight:700; font-size:14px; color:#E0B5D8; letter-spacing:3px;">QUARTERLY BUSINESS REVIEW · Q3 FY2026</div>
+        <div style="position:absolute; top:220px; left:60px; font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:white; letter-spacing:-2px; line-height:1; outline:2px dashed #00C9B0; outline-offset:8px;">Vertex Logistics</div>
+        <div style="position:absolute; top:340px; left:60px; font-family:'Lato',sans-serif; font-size:22px; color:#D9C4D6;">Prepared by Marco Reyes · Technical Account Manager</div>
+        <div style="position:absolute; bottom:36px; left:60px; font-family:'JetBrains Mono',monospace; font-size:13px; color:#A88AA0; letter-spacing:1px;">JUNE 24, 2026</div>
+      </div>
+      <div style="margin-top:24px; font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; text-align:center; max-width:900px; line-height:1.4;">Click any text to edit directly. The dashed cyan outline is the active edit target.</div>
+    </div>
+
+    <!-- Tweaks panel -->
+    <div style="width:480px; background:#1A1B1F; color:white; padding:40px 32px; display:flex; flex-direction:column; gap:28px; overflow:hidden;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px;">Tweaks</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6B7280; letter-spacing:1px;">QBR · v0.3</div>
+      </div>
+
+      <!-- Customer -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6B7280; letter-spacing:2px; margin-bottom:10px;">CUSTOMER</div>
+        <div style="background:#26272B; padding:14px 16px; font-family:'Lato',sans-serif; font-size:18px; border-left:2px solid #00C9B0;">Vertex Logistics</div>
+        <div style="background:#26272B; padding:14px 16px; font-family:'Lato',sans-serif; font-size:18px; margin-top:8px;">Q3 FY26 · ARR $2.4M</div>
+      </div>
+
+      <!-- Sliders -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6B7280; letter-spacing:2px; margin-bottom:12px;">DIALS</div>
+        <!-- Sales aggression slider -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:14px; margin-bottom:8px;"><span>Sales aggression</span><span style="color:#00C9B0;">3 / 5</span></div>
+          <div style="position:relative; height:6px; background:#26272B; border-radius:3px;"><div style="position:absolute; left:0; top:0; height:100%; width:60%; background:#00C9B0; border-radius:3px;"></div><div style="position:absolute; left:60%; top:-5px; width:16px; height:16px; border-radius:50%; background:white; transform:translateX(-50%);"></div></div>
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:12px; color:#6B7280; margin-top:6px;"><span>Check-in</span><span>Expansion push</span></div>
+        </div>
+        <!-- Support emphasis -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:14px; margin-bottom:8px;"><span>Support emphasis</span><span style="color:#00C9B0;">4 / 5</span></div>
+          <div style="position:relative; height:6px; background:#26272B; border-radius:3px;"><div style="position:absolute; left:0; top:0; height:100%; width:80%; background:#00C9B0; border-radius:3px;"></div><div style="position:absolute; left:80%; top:-5px; width:16px; height:16px; border-radius:50%; background:white; transform:translateX(-50%);"></div></div>
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:12px; color:#6B7280; margin-top:6px;"><span>Light</span><span>Deep SLA detail</span></div>
+        </div>
+        <!-- Technical depth -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:14px; margin-bottom:8px;"><span>Technical depth</span><span style="color:#00C9B0;">2 / 5</span></div>
+          <div style="position:relative; height:6px; background:#26272B; border-radius:3px;"><div style="position:absolute; left:0; top:0; height:100%; width:40%; background:#00C9B0; border-radius:3px;"></div><div style="position:absolute; left:40%; top:-5px; width:16px; height:16px; border-radius:50%; background:white; transform:translateX(-50%);"></div></div>
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:12px; color:#6B7280; margin-top:6px;"><span>Exec</span><span>Engineer</span></div>
+        </div>
+        <!-- Length -->
+        <div style="margin-bottom:20px;">
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:14px; margin-bottom:8px;"><span>Length</span><span style="color:#00C9B0;">16 slides</span></div>
+          <div style="position:relative; height:6px; background:#26272B; border-radius:3px;"><div style="position:absolute; left:0; top:0; height:100%; width:55%; background:#00C9B0; border-radius:3px;"></div><div style="position:absolute; left:55%; top:-5px; width:16px; height:16px; border-radius:50%; background:white; transform:translateX(-50%);"></div></div>
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:12px; color:#6B7280; margin-top:6px;"><span>8</span><span>25+</span></div>
+        </div>
+        <!-- Risk framing -->
+        <div>
+          <div style="display:flex; justify-content:space-between; font-family:'Lato',sans-serif; font-size:14px; margin-bottom:8px;"><span>Risk framing</span><span style="color:#00C9B0;">Candid</span></div>
+          <div style="display:flex; gap:6px;">
+            <div style="flex:1; padding:8px; background:#26272B; font-family:'Lato',sans-serif; font-size:12px; text-align:center;">Positive</div>
+            <div style="flex:1; padding:8px; background:#26272B; font-family:'Lato',sans-serif; font-size:12px; text-align:center; border:1px solid #00C9B0;">Balanced</div>
+            <div style="flex:1; padding:8px; background:#00C9B0; color:#0E1A2E; font-family:'Lato',sans-serif; font-size:12px; text-align:center; font-weight:700;">Candid</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connect -->
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6B7280; letter-spacing:2px; margin-bottom:10px;">DATA SOURCE</div>
+        <div style="background:#26272B; padding:14px 16px; font-family:'Lato',sans-serif; font-size:15px; display:flex; align-items:center; gap:10px;"><div style="width:8px; height:8px; border-radius:50%; background:#3DAE73;"></div>Salesforce · Vertex · synced 14m ago</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Option 2: Cover form -->
+<div style="position:absolute; left:2080px; top:4260px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">DATA INPUT · OPTION 2 — INTAKE SLIDE 0</div>
+  <div style="width:1920px; height:1080px; box-sizing:border-box; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#F5F5F7; position:relative; overflow:hidden; padding:80px 100px;">
+    <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#E03546; letter-spacing:4px; margin-bottom:14px;">SLIDE 00 · REMOVE BEFORE PRESENTING</div>
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; color:#14161A; letter-spacing:-1.5px; line-height:1;">QBR intake form</div>
+    <div style="font-family:'Lato',sans-serif; font-size:24px; color:#5B5F66; margin-top:12px;">Fill these in once; they populate every downstream slide.</div>
+
+    <!-- form grid -->
+    <div style="margin-top:50px; display:grid; grid-template-columns:1fr 1fr; gap:30px 50px;">
+      <!-- col 1 -->
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">CUSTOMER NAME</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">Vertex Logistics</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">QUARTER</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">Q3 FY2026</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">ARR</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">$2,400,000</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">RENEWAL DATE</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">2027-03-15</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">CLUSTERS / NODES / WORKLOADS</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">14 · 312 · 1,847</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">P1 TICKETS / SLA %</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">4 · 96%</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">NPS</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">42</div>
+      </div>
+      <div>
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px; margin-bottom:8px;">PRODUCTS IN PLAY</div>
+        <div style="background:white; border:1px solid #D6D7DC; padding:16px 20px; font-family:'Overpass',sans-serif; font-weight:600; font-size:28px;">MKE, MOSK, k0rdent, Lens</div>
+      </div>
+    </div>
+
+    <!-- Import row -->
+    <div style="position:absolute; bottom:60px; left:100px; right:100px; display:flex; gap:24px; align-items:center;">
+      <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px;">OR IMPORT</div>
+      <div style="background:white; border:1px solid #D6D7DC; padding:14px 22px; font-family:'Lato',sans-serif; font-size:18px;">↑ Paste Salesforce JSON</div>
+      <div style="background:white; border:1px solid #D6D7DC; padding:14px 22px; font-family:'Lato',sans-serif; font-size:18px;">↑ Upload CSV</div>
+      <div style="background:white; border:1px solid #D6D7DC; padding:14px 22px; font-family:'Lato',sans-serif; font-size:18px;">⟳ Sync from AppSheet</div>
+      <div style="flex:1;"></div>
+      <div style="background:#3A1A3A; color:white; padding:18px 32px; font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; letter-spacing:1px;">Generate deck →</div>
+    </div>
+  </div>
+</div>
+
+<!-- Option 3: Bind to data file -->
+<div style="position:absolute; left:4080px; top:4260px; width:1920px;">
+  <div data-drags-parent="1" style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#6B7280; padding-bottom:10px; letter-spacing:0.5px;">DATA INPUT · OPTION 3 — BIND TO DATA FILE</div>
+  <div style="width:1920px; height:1080px; box-sizing:border-box; box-shadow:0 1px 3px rgba(0,0,0,.08); background:#0E1A2E; position:relative; overflow:hidden; padding:80px 100px; color:white;">
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:3px; margin-bottom:14px;">// QBR.DATA.JSON</div>
+    <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:72px; letter-spacing:-1.5px; line-height:1;">Bind to a data file</div>
+    <div style="font-family:'Lato',sans-serif; font-size:24px; color:#7E8CA8; margin-top:12px; max-width:1500px; line-height:1.4;">For TAMs comfortable with a structured file — paste Salesforce export, hit save, deck rebinds. Includes a "how to format your data" reference slide for the team.</div>
+
+    <!-- code block -->
+    <div style="margin-top:50px; background:#070D1A; border:1px solid #1F2A44; padding:36px 40px; font-family:'JetBrains Mono',monospace; font-size:20px; line-height:1.55; color:#C8D0E0;">
+<span style="color:#7E8CA8;">// vertex-q3fy26.json — drop next to the deck</span><br/>
+{<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"customer"</span>: { <span style="color:#00C9B0;">"name"</span>: <span style="color:#F5D400;">"Vertex Logistics"</span>, <span style="color:#00C9B0;">"tier"</span>: <span style="color:#F5D400;">"Strategic"</span> },<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"quarter"</span>: <span style="color:#F5D400;">"Q3 FY26"</span>,<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"arr"</span>: { <span style="color:#00C9B0;">"current"</span>: <span style="color:#C73AAE;">2400000</span>, <span style="color:#00C9B0;">"prev"</span>: <span style="color:#C73AAE;">1800000</span> },<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"usage"</span>: { <span style="color:#00C9B0;">"clusters"</span>: <span style="color:#C73AAE;">14</span>, <span style="color:#00C9B0;">"nodes"</span>: <span style="color:#C73AAE;">312</span>, <span style="color:#00C9B0;">"workloads"</span>: <span style="color:#C73AAE;">1847</span> },<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"support"</span>: { <span style="color:#00C9B0;">"p1"</span>: <span style="color:#C73AAE;">4</span>, <span style="color:#00C9B0;">"slaMet"</span>: <span style="color:#C73AAE;">0.96</span> },<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"nps"</span>: <span style="color:#C73AAE;">42</span>,<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"renewal"</span>: <span style="color:#F5D400;">"2027-03-15"</span>,<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"products"</span>: [<span style="color:#F5D400;">"MKE"</span>, <span style="color:#F5D400;">"MOSK"</span>, <span style="color:#F5D400;">"k0rdent"</span>, <span style="color:#F5D400;">"Lens"</span>],<br/>
+&nbsp;&nbsp;<span style="color:#00C9B0;">"asks"</span>: [...]<br/>
+}
+    </div>
+
+    <!-- Pros -->
+    <div style="position:absolute; bottom:80px; left:100px; right:100px; display:grid; grid-template-columns:repeat(3, 1fr); gap:32px;">
+      <div style="border-top:2px solid #00C9B0; padding-top:18px;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#00C9B0; letter-spacing:2px;">UPSIDE</div>
+        <div style="font-family:'Lato',sans-serif; font-size:20px; color:white; margin-top:8px; line-height:1.4;">Version-controllable. Sales ops can template per-customer files. AI agents can write it.</div>
+      </div>
+      <div style="border-top:2px solid #F5A623; padding-top:18px;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#F5A623; letter-spacing:2px;">TRADE-OFF</div>
+        <div style="font-family:'Lato',sans-serif; font-size:20px; color:white; margin-top:8px; line-height:1.4;">Higher learning curve for TAMs who haven't seen JSON before.</div>
+      </div>
+      <div style="border-top:2px solid #C73AAE; padding-top:18px;">
+        <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#C73AAE; letter-spacing:2px;">GOOD FOR</div>
+        <div style="font-family:'Lato',sans-serif; font-size:20px; color:white; margin-top:8px; line-height:1.4;">Bulk generation (board pack for top 20 accounts) and AI-assisted drafting.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ================== FOOTER NOTE ================== -->
+
+<div style="position:absolute; left:80px; top:5460px; width:5920px;">
+  <div style="border-top:1px solid #D6D7DC; padding-top:30px; display:grid; grid-template-columns:1fr 1fr 1fr; gap:60px;">
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#14161A; letter-spacing:1px;">What stays the same across A / B / C</div>
+      <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; margin-top:10px; line-height:1.5;">Section order, mock data, tweak dial behavior. Only the visual system changes per direction. We can also mix-and-match — e.g. Editorial covers + Mission Control content slides.</div>
+    </div>
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#14161A; letter-spacing:1px;">Open questions for you</div>
+      <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; margin-top:10px; line-height:1.5;">Which direction feels right? Any reaction to the data-input options? Should I add a "talk track" / speaker-notes generator that responds to the dials too?</div>
+    </div>
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#14161A; letter-spacing:1px;">Next step</div>
+      <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5B5F66; margin-top:10px; line-height:1.5;">Pick a direction (or a hybrid) and I'll build the full ~16-slide template with all 7 dials wired up. About one turn of work.</div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+</body>
+</html>

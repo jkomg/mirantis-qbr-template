@@ -1,0 +1,1 @@
+# keep the fonts dir tracked in git even though woff2 files are gitignored

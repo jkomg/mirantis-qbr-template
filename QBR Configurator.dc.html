@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="./assets/fonts.css">
+</helmet>
+
+<!-- ============================================================ -->
+<!-- PAGE FRAME                                                   -->
+<!-- ============================================================ -->
+<div style="position:absolute; left:0; top:0; width:1920px; min-height:1280px; background:#F2F4F8; font-family:'Lato',sans-serif;">
+
+  <!-- Top bar -->
+  <div style="background:#0E1A2E; color:white; padding:24px 60px; display:flex; align-items:center; justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:20px;">
+      <svg width="58" height="38" viewBox="0 0 200 130" fill="none"><path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/></svg>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px; letter-spacing:2.5px;">MIRANTIS</div>
+      <div style="width:1px; height:30px; background:#3A4661;"></div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:22px; color:#7E8CA8; letter-spacing:3px;">QBR CONFIGURATOR</div>
+    </div>
+    <div style="display:flex; align-items:center; gap:14px;">
+      <sc-if value="{{ savedRecently }}" hint-placeholder-val="{{ false }}">
+        <div style="display:inline-flex; align-items:center; gap:10px; padding:8px 16px; background:rgba(61,174,115,0.15); color:#3DAE73; font-family:'JetBrains Mono',monospace; font-size:14px; letter-spacing:1.5px;">
+          <div style="width:8px; height:8px; border-radius:50%; background:#3DAE73;"></div>SAVED
+        </div>
+      </sc-if>
+      <a href="QBR Template.dc.html" style="padding:14px 24px; background:#00C9B0; color:#0E1A2E; font-family:'Overpass',sans-serif; font-weight:700; font-size:18px; text-decoration:none; letter-spacing:1px;">Open deck →</a>
+    </div>
+  </div>
+
+  <!-- Body: 2-col -->
+  <div style="display:grid; grid-template-columns:1.5fr 1fr; gap:40px; padding:40px 60px;">
+
+    <!-- ========== LEFT: Form ========== -->
+    <div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#0E1A2E; letter-spacing:-1px; line-height:1;">Set up the deck</div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:10px; max-width:900px; line-height:1.4;">Fill these in once. The deck reads from your draft and updates every bound slide. The dials in the deck's Tweaks panel still let you swap framing per-presentation.</div>
+
+      <!-- SECTION: Import from data source -->
+      <div style="margin-top:24px; padding:24px 28px; background:#0E1A2E; color:white;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00C9B0; letter-spacing:2px;">// IMPORT FROM DATA SOURCE</div>
+            <sc-if value="{{ importedRecently }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(61,174,115,0.18); color:#3DAE73; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>IMPORTED
+              </div>
+            </sc-if>
+          </div>
+          <div style="font-family:'Lato',sans-serif; font-size:14px; color:#7E8CA8;">Paste a Salesforce report JSON, a flat object, or a full <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0;">qbr.data.json</span>.</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:24px;">
+          <textarea value="{{ importText }}" onInput="{{ onImportTextChange }}" rows="6" placeholder='{ "Account.Name": "Acme Corp", "ARR": 3500000, "RenewalDate": "2027-06-30", "P1_Count__c": 2, "SLA_Met__c": 98 }' style="padding:14px 16px; font-family:'JetBrains Mono',monospace; font-size:14px; background:#070D1A; color:#C8D0E0; border:1px solid #1F2A44; outline:none; resize:vertical; line-height:1.5;"></textarea>
+          <div>
+            <div style="font-family:'Lato',sans-serif; font-size:13px; color:#7E8CA8; line-height:1.5;">
+              <b style="color:white;">Recognized field names</b> (any of these map):<br/>
+              <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0; font-size:12px;">Account.Name</span>, ARR / ARR_Prior, Renewal_Date__c, P1_Count__c, SLA_Met__c, CSAT__c, NPS__c, Owner.Name, telemetry.clusters/nodes/workloads.
+            </div>
+            <button onClick="{{ onImport }}" style="margin-top:14px; padding:12px 22px; font-family:'Overpass',sans-serif; font-weight:700; font-size:15px; background:#00C9B0; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px; width:100%;">Map &amp; merge into form</button>
+            <div style="margin-top:10px; font-family:'Lato',sans-serif; font-size:13px; color:#5C6B85; line-height:1.4;">Mapped fields overwrite the form; unmapped fields stay as you typed them.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: Customer & meeting -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#3A1A3A;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Customer &amp; meeting</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">CUSTOMER NAME</span>
+            <input type="text" data-field="customer.name" value="{{ form.customer.name }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">ACCOUNT TIER</span>
+            <select data-field="customer.tier" value="{{ form.customer.tier }}" onChange="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="Strategic">Strategic</option>
+              <option value="Enterprise">Enterprise</option>
+              <option value="Commercial">Commercial</option>
+              <option value="SMB">SMB</option>
+            </select>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">INDUSTRY</span>
+            <input type="text" data-field="customer.industry" value="{{ form.customer.industry }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">QUARTER</span>
+            <input type="text" data-field="quarter" value="{{ form.quarter }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PREPARED BY</span>
+            <input type="text" data-field="preparedBy" value="{{ form.preparedBy }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PREP'D BY EMAIL</span>
+            <input type="text" data-field="preparedByEmail" value="{{ form.preparedByEmail }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PRESENTATION DATE</span>
+            <input type="date" data-field="presentationDate" value="{{ form.presentationDate }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NEXT QBR LABEL</span>
+            <input type="text" data-field="nextQbr.label" value="{{ form.nextQbr.label }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NEXT QBR DATE</span>
+            <input type="date" data-field="nextQbr.date" value="{{ form.nextQbr.date }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION: Commercial -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#E03546;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Commercial</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">ARR CURRENT ($)</span>
+            <input type="number" data-field="commercial.arr.current" value="{{ form.commercial.arr.current }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">ARR PRIOR ($)</span>
+            <input type="number" data-field="commercial.arr.prior" value="{{ form.commercial.arr.prior }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">RENEWAL DATE</span>
+            <input type="date" data-field="commercial.renewalDate" value="{{ form.commercial.renewalDate }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION: Usage -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#00C9B0;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Usage &amp; adoption</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">CLUSTERS</span>
+            <input type="number" data-field="usage.clusters" value="{{ form.usage.clusters }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">Δ CLUSTERS</span>
+            <input type="number" data-field="usage.clustersDelta" value="{{ form.usage.clustersDelta }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NODES</span>
+            <input type="number" data-field="usage.nodes" value="{{ form.usage.nodes }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">WORKLOADS</span>
+            <input type="number" data-field="usage.workloads" value="{{ form.usage.workloads }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION: Support -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#F5A623;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Support &amp; sentiment</div>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">P1 COUNT</span>
+            <input type="number" data-field="support.p1Count" value="{{ form.support.p1Count }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">SLA MET (%)</span>
+            <input type="number" data-field="support.slaMetPct" value="{{ form.support.slaMetPct }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">Δ SLA (pp)</span>
+            <input type="number" data-field="support.slaDeltaPp" value="{{ form.support.slaDeltaPp }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">P1 MTTR (h)</span>
+            <input type="number" step="0.1" data-field="support.p1MttrHours" value="{{ form.support.p1MttrHours }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">CSAT (/5)</span>
+            <input type="number" step="0.1" data-field="support.csat" value="{{ form.support.csat }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NPS</span>
+            <input type="number" data-field="nps.score" value="{{ form.nps.score }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">NPS INDUSTRY</span>
+            <input type="number" data-field="nps.industry" value="{{ form.nps.industry }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">Δ NPS</span>
+            <input type="number" data-field="nps.delta" value="{{ form.nps.delta }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'JetBrains Mono',monospace; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION: Products & stakeholders -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#7B4E7B;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Products &amp; stakeholders</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PRODUCTS (comma-separated)</span>
+            <input type="text" data-field="productsText" value="{{ form.productsText }}" onInput="{{ onFieldChange }}" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">STAKEHOLDERS (one per line, "Name, Title")</span>
+            <textarea data-field="stakeholdersText" value="{{ form.stakeholdersText }}" onInput="{{ onFieldChange }}" rows="3" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:18px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical;"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <!-- SECTION: Exec Summary takeaways -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#0E1A2E;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Executive summary — takeaways</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Exec Summary slide (3 tiles, color-coded by kind)</div>
+        </div>
+        <sc-for list="{{ form.execSummaryTakeaways }}" as="row" hint-placeholder-count="3">
+          <div style="margin-bottom:14px; padding:14px 16px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:0.9fr 1.4fr 2fr 40px; gap:10px;">
+            <select data-field="execSummaryTakeaways[].kind" data-index="{{ $index }}" value="{{ row.kind }}" onChange="{{ onESChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1.5px;">
+              <option value="momentum">MOMENTUM (cyan)</option>
+              <option value="watch">WATCH (amber)</option>
+              <option value="decide">DECIDE (red)</option>
+            </select>
+            <input type="text" data-field="execSummaryTakeaways[].label" data-index="{{ $index }}" value="{{ row.label }}" onInput="{{ onESChange }}" placeholder="Eyebrow label (e.g. 01 · MOMENTUM)" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1.5px;"/>
+            <input type="text" data-field="execSummaryTakeaways[].headline" data-index="{{ $index }}" value="{{ row.headline }}" onInput="{{ onESChange }}" placeholder="Headline" style="padding:10px 12px; font-family:'Overpass',sans-serif; font-weight:600; font-size:16px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onESRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:4; grid-row:1 / span 2;">×</button>
+            <textarea data-field="execSummaryTakeaways[].body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onESChange }}" rows="2" placeholder="Body" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical; grid-column:1 / span 3;"></textarea>
+          </div>
+        </sc-for>
+        <button onClick="{{ onESAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add takeaway</button>
+      </div>
+
+      <!-- SECTION: Asks -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#14161A;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Asks (both directions)</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Asks slide</div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px;">
+          <!-- From us to you -->
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <div style="width:10px; height:10px; background:#3A1A3A;"></div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#3A1A3A; letter-spacing:1.5px; font-weight:700;">FROM US TO YOU</div>
+            </div>
+            <sc-for list="{{ form.asks.fromUs }}" as="row" hint-placeholder-count="3">
+              <div style="margin-bottom:10px; padding:12px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:1fr 40px; gap:8px;">
+                <input type="text" data-field="title" data-index="{{ $index }}" value="{{ row.title }}" onInput="{{ onAskUsChange }}" placeholder="Title" style="padding:9px 11px; font-family:'Overpass',sans-serif; font-weight:600; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+                <button data-index="{{ $index }}" onClick="{{ onAskUsRemove }}" style="padding:8px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:2; grid-row:1 / span 2;">×</button>
+                <textarea data-field="body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onAskUsChange }}" rows="2" placeholder="Body" style="padding:9px 11px; font-family:'Lato',sans-serif; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical;"></textarea>
+              </div>
+            </sc-for>
+            <button onClick="{{ onAskUsAdd }}" style="padding:9px 14px; font-family:'Lato',sans-serif; font-weight:700; font-size:14px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add ask</button>
+          </div>
+          <!-- From you to us -->
+          <div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+              <div style="width:10px; height:10px; background:#E03546;"></div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#E03546; letter-spacing:1.5px; font-weight:700;">FROM YOU TO US</div>
+            </div>
+            <sc-for list="{{ form.asks.fromYou }}" as="row" hint-placeholder-count="3">
+              <div style="margin-bottom:10px; padding:12px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:1fr 40px; gap:8px;">
+                <input type="text" data-field="title" data-index="{{ $index }}" value="{{ row.title }}" onInput="{{ onAskYouChange }}" placeholder="Title" style="padding:9px 11px; font-family:'Overpass',sans-serif; font-weight:600; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+                <button data-index="{{ $index }}" onClick="{{ onAskYouRemove }}" style="padding:8px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:2; grid-row:1 / span 2;">×</button>
+                <textarea data-field="body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onAskYouChange }}" rows="2" placeholder="Body" style="padding:9px 11px; font-family:'Lato',sans-serif; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical;"></textarea>
+              </div>
+            </sc-for>
+            <button onClick="{{ onAskYouAdd }}" style="padding:9px 14px; font-family:'Lato',sans-serif; font-weight:700; font-size:14px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add ask</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION: Product mix -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#A88AA0;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Product mix &amp; entitlement</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Usage &amp; Adoption slide</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 0.7fr 0.8fr 1fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>PRODUCT</div><div>ENTITLEMENT</div><div>IN USE</div><div>UTIL %</div><div>TREND</div><div></div>
+        </div>
+        <sc-for list="{{ form.productMix }}" as="row" hint-placeholder-count="4">
+          <div style="display:grid; grid-template-columns:2fr 1fr 0.7fr 0.8fr 1fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="productMix[].product" data-index="{{ $index }}" value="{{ row.product }}" onInput="{{ onPMChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="productMix[].entitlement" data-index="{{ $index }}" value="{{ row.entitlement }}" onInput="{{ onPMChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="productMix[].inUse" data-index="{{ $index }}" value="{{ row.inUse }}" onInput="{{ onPMChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="number" data-field="productMix[].utilizationPct" data-index="{{ $index }}" value="{{ row.utilizationPct }}" onInput="{{ onPMChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="productMix[].trend" data-index="{{ $index }}" value="{{ row.trend }}" onInput="{{ onPMChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onPMRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onPMAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add product</button>
+      </div>
+
+      <!-- SECTION: Incidents -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#E03546;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Incidents &amp; RCAs</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Incidents slide</div>
+        </div>
+        <div style="display:grid; grid-template-columns:0.8fr 0.6fr 2.2fr 0.7fr 0.8fr 1.6fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>DATE</div><div>SEV</div><div>SUMMARY</div><div>DURATION</div><div>RCA</div><div>ACTION TAKEN</div><div></div>
+        </div>
+        <sc-for list="{{ form.incidents }}" as="row" hint-placeholder-count="3">
+          <div style="display:grid; grid-template-columns:0.8fr 0.6fr 2.2fr 0.7fr 0.8fr 1.6fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="date" data-field="incidents[].date" data-index="{{ $index }}" value="{{ row.date }}" onInput="{{ onIncChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <select data-field="incidents[].severity" data-index="{{ $index }}" value="{{ row.severity }}" onChange="{{ onIncChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="P1">P1</option><option value="P2">P2</option><option value="P3">P3</option><option value="P4">P4</option>
+            </select>
+            <input type="text" data-field="incidents[].summary" data-index="{{ $index }}" value="{{ row.summary }}" onInput="{{ onIncChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="incidents[].duration" data-index="{{ $index }}" value="{{ row.duration }}" onInput="{{ onIncChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <select data-field="incidents[].rcaStatus" data-index="{{ $index }}" value="{{ row.rcaStatus }}" onChange="{{ onIncChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:13px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="CLOSED">CLOSED</option><option value="OPEN">OPEN</option><option value="INVESTIGATING">INVESTIGATING</option>
+            </select>
+            <input type="text" data-field="incidents[].action" data-index="{{ $index }}" value="{{ row.action }}" onInput="{{ onIncChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onIncRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onIncAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add incident</button>
+        <label style="display:flex; flex-direction:column; gap:6px; margin-top:14px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PATTERN NOTE (callout below the table)</span>
+          <textarea data-field="incidentsPattern" value="{{ form.incidentsPattern }}" onInput="{{ onFieldChange }}" rows="2" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:16px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical;"></textarea>
+        </label>
+      </div>
+
+      <!-- SECTION: Wins -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#3DAE73;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Wins this quarter</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Wins slide (3 cards)</div>
+        </div>
+        <sc-for list="{{ form.wins }}" as="row" hint-placeholder-count="3">
+          <div style="margin-bottom:14px; padding:14px 16px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:1fr 2fr 40px; gap:10px;">
+            <input type="text" data-field="wins[].kind" data-index="{{ $index }}" value="{{ row.kind }}" onInput="{{ onWinChange }}" placeholder="KIND (e.g. PRODUCTION)" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1.5px; grid-column:1;"/>
+            <input type="text" data-field="wins[].headline" data-index="{{ $index }}" value="{{ row.headline }}" onInput="{{ onWinChange }}" placeholder="Headline" style="padding:10px 12px; font-family:'Overpass',sans-serif; font-weight:600; font-size:16px; border:1px solid #D6D7DC; background:white; outline:none; grid-column:2;"/>
+            <button data-index="{{ $index }}" onClick="{{ onWinRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:3; grid-row:1 / span 3;">×</button>
+            <textarea data-field="wins[].body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onWinChange }}" rows="2" placeholder="Body — what happened" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical; grid-column:1 / span 2;"></textarea>
+            <input type="text" data-field="wins[].metric" data-index="{{ $index }}" value="{{ row.metric }}" onInput="{{ onWinChange }}" placeholder="Metric (e.g. 187 workloads · 0 rollbacks)" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none; grid-column:1 / span 2;"/>
+          </div>
+        </sc-for>
+        <button onClick="{{ onWinAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add win</button>
+      </div>
+
+      <!-- SECTION: Risks -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#F5A623;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Risks &amp; blockers</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Risks slide (3 cards)</div>
+        </div>
+        <sc-for list="{{ form.risks }}" as="row" hint-placeholder-count="3">
+          <div style="margin-bottom:14px; padding:14px 16px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:0.7fr 0.7fr 2fr 40px; gap:10px;">
+            <select data-field="risks[].level" data-index="{{ $index }}" value="{{ row.level }}" onChange="{{ onRiskChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1.5px;">
+              <option value="high">HIGH</option><option value="med">MED</option><option value="low">LOW</option>
+            </select>
+            <input type="text" data-field="risks[].id" data-index="{{ $index }}" value="{{ row.id }}" onInput="{{ onRiskChange }}" placeholder="ID" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="risks[].title" data-index="{{ $index }}" value="{{ row.title }}" onInput="{{ onRiskChange }}" placeholder="Title" style="padding:10px 12px; font-family:'Overpass',sans-serif; font-weight:600; font-size:16px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onRiskRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:4; grid-row:1 / span 3;">×</button>
+            <textarea data-field="risks[].body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onRiskChange }}" rows="2" placeholder="Body" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical; grid-column:1 / span 3;"></textarea>
+            <input type="text" data-field="risks[].owner" data-index="{{ $index }}" value="{{ row.owner }}" onInput="{{ onRiskChange }}" placeholder="Owner" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="risks[].dueDate" data-index="{{ $index }}" value="{{ row.dueDate }}" onInput="{{ onRiskChange }}" placeholder="Due" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="risks[].action" data-index="{{ $index }}" value="{{ row.action }}" onInput="{{ onRiskChange }}" placeholder="Action" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+          </div>
+        </sc-for>
+        <button onClick="{{ onRiskAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add risk</button>
+      </div>
+
+      <!-- SECTION: Previous-quarter actions -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#5B4357;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Previous-quarter commitments</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Goals Recap slide</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2.5fr 1fr 1fr 1fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>COMMITMENT</div><div>OWNER</div><div>DUE DATE</div><div>STATUS</div><div></div>
+        </div>
+        <sc-for list="{{ form.previousActions }}" as="row" hint-placeholder-count="4">
+          <div style="display:grid; grid-template-columns:2.5fr 1fr 1fr 1fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="previousActions[].commitment" data-index="{{ $index }}" value="{{ row.commitment }}" onInput="{{ onPAChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="previousActions[].owner" data-index="{{ $index }}" value="{{ row.owner }}" onInput="{{ onPAChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="date" data-field="previousActions[].dueDate" data-index="{{ $index }}" value="{{ row.dueDate }}" onInput="{{ onPAChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <select data-field="previousActions[].status" data-index="{{ $index }}" value="{{ row.status }}" onChange="{{ onPAChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="delivered">delivered</option><option value="missed">missed</option><option value="slipped">slipped</option>
+            </select>
+            <button data-index="{{ $index }}" onClick="{{ onPARemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onPAAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add commitment</button>
+      </div>
+
+      <!-- SECTION: Next-quarter actions -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#3DAE73;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Next-quarter commitments</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— shown on Next Quarter Goals + Asks Tracker slides</div>
+        </div>
+        <!-- Header row -->
+        <div style="display:grid; grid-template-columns:2.5fr 1fr 1fr 1.4fr 1fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>COMMITMENT</div><div>OWNER</div><div>DUE DATE</div><div>SUCCESS</div><div>STATUS</div><div></div>
+        </div>
+        <sc-for list="{{ form.nextActions }}" as="row" hint-placeholder-count="5">
+          <div style="display:grid; grid-template-columns:2.5fr 1fr 1fr 1.4fr 1fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="nextActions[].commitment" data-index="{{ $index }}" value="{{ row.commitment }}" onInput="{{ onActionChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="nextActions[].owner" data-index="{{ $index }}" value="{{ row.owner }}" onInput="{{ onActionChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="date" data-field="nextActions[].dueDate" data-index="{{ $index }}" value="{{ row.dueDate }}" onInput="{{ onActionChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="nextActions[].successCriteria" data-index="{{ $index }}" value="{{ row.successCriteria }}" onInput="{{ onActionChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <select data-field="nextActions[].status" data-index="{{ $index }}" value="{{ row.status }}" onChange="{{ onActionChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="on-track">on-track</option>
+              <option value="at-risk">at-risk</option>
+              <option value="blocked">blocked</option>
+              <option value="not-started">not-started</option>
+            </select>
+            <button data-index="{{ $index }}" onClick="{{ onActionRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onActionAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add commitment</button>
+      </div>
+
+      <!-- SECTION: Expansions -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#5DE4D2;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Expansion opportunities</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Renewal slide waterfall</div>
+        </div>
+        <div style="display:grid; grid-template-columns:2fr 1fr 1fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>EXPANSION NAME</div><div>VALUE ($)</div><div>QUARTER</div><div></div>
+        </div>
+        <sc-for list="{{ form.commercial.expansions }}" as="row" hint-placeholder-count="2">
+          <div style="display:grid; grid-template-columns:2fr 1fr 1fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="name" data-index="{{ $index }}" value="{{ row.name }}" onInput="{{ onExpChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="number" data-field="valueUSD" data-index="{{ $index }}" value="{{ row.valueUSD }}" onInput="{{ onExpChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="quarter" data-index="{{ $index }}" value="{{ row.quarter }}" onInput="{{ onExpChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onExpRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onExpAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add expansion</button>
+      </div>
+
+      <!-- SECTION: Mirantis Roadmap -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#3A1A3A;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Mirantis roadmap</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Mirantis Roadmap slide. Lane = row, Col 1 = nearer quarter, Col 2 = further.</div>
+        </div>
+        <div style="display:grid; grid-template-columns:0.9fr 0.5fr 1.5fr 2fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">
+          <div>LANE</div><div>COL</div><div>TITLE</div><div>BODY</div><div></div>
+        </div>
+        <sc-for list="{{ form.mirantisRoadmap }}" as="row" hint-placeholder-count="6">
+          <div style="display:grid; grid-template-columns:0.9fr 0.5fr 1.5fr 2fr 40px; gap:10px; margin-bottom:8px;">
+            <select data-field="mirantisRoadmap[].lane" data-index="{{ $index }}" value="{{ row.lane }}" onChange="{{ onMRChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1px;">
+              <option value="PRODUCT">PRODUCT</option><option value="PLATFORM">PLATFORM</option><option value="SERVICES">SERVICES</option>
+            </select>
+            <select data-field="mirantisRoadmap[].col" data-index="{{ $index }}" value="{{ row.col }}" onChange="{{ onMRChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none;">
+              <option value="1">1</option><option value="2">2</option>
+            </select>
+            <input type="text" data-field="mirantisRoadmap[].title" data-index="{{ $index }}" value="{{ row.title }}" onInput="{{ onMRChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="mirantisRoadmap[].body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onMRChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onMRRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onMRAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add roadmap item</button>
+      </div>
+
+      <!-- SECTION: Customer Roadmap -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#7B4E7B;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Customer roadmap</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Your Roadmap slide (3 horizons)</div>
+        </div>
+        <sc-for list="{{ form.customerRoadmap }}" as="row" hint-placeholder-count="3">
+          <div style="margin-bottom:14px; padding:14px 16px; background:white; border:1px solid #D6D7DC; display:grid; grid-template-columns:1fr 2fr 1fr 40px; gap:10px;">
+            <input type="text" data-field="customerRoadmap[].horizon" data-index="{{ $index }}" value="{{ row.horizon }}" onInput="{{ onCRChange }}" placeholder="NOW · Q4 / NEXT · Q1 / LATER" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:14px; border:1px solid #D6D7DC; background:white; outline:none; letter-spacing:1.5px;"/>
+            <input type="text" data-field="customerRoadmap[].title" data-index="{{ $index }}" value="{{ row.title }}" onInput="{{ onCRChange }}" placeholder="Initiative title" style="padding:10px 12px; font-family:'Overpass',sans-serif; font-weight:600; font-size:16px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="customerRoadmap[].lead" data-index="{{ $index }}" value="{{ row.lead }}" onInput="{{ onCRChange }}" placeholder="Lead name" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onCRRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer; grid-column:4; grid-row:1 / span 2;">×</button>
+            <textarea data-field="customerRoadmap[].body" data-index="{{ $index }}" value="{{ row.body }}" onInput="{{ onCRChange }}" rows="2" placeholder="Body" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none; resize:vertical; grid-column:1 / span 3;"></textarea>
+          </div>
+        </sc-for>
+        <button onClick="{{ onCRAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add horizon</button>
+      </div>
+
+      <!-- SECTION: Training -->
+      <div style="margin-top:36px;">
+        <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px;">
+          <div style="width:10px; height:24px; background:#00C9B0;"></div>
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:24px; color:#0E1A2E;">Training &amp; enablement</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#5C6B85; font-style:italic;">— Training slide</div>
+        </div>
+
+        <!-- Delivered -->
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:8px;">DELIVERED THIS QUARTER</div>
+        <div style="display:grid; grid-template-columns:2.5fr 1fr 0.6fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:6px;">
+          <div>SESSION</div><div>ATTENDEES</div><div>CSAT</div><div></div>
+        </div>
+        <sc-for list="{{ form.training.delivered }}" as="row" hint-placeholder-count="3">
+          <div style="display:grid; grid-template-columns:2.5fr 1fr 0.6fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="session" data-index="{{ $index }}" value="{{ row.session }}" onInput="{{ onTrainingDelChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="attendees" data-index="{{ $index }}" value="{{ row.attendees }}" onInput="{{ onTrainingDelChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="csat" data-index="{{ $index }}" value="{{ row.csat }}" onInput="{{ onTrainingDelChange }}" style="padding:10px 12px; font-family:'JetBrains Mono',monospace; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onTrainingDelRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onTrainingDelAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add delivered session</button>
+        <label style="display:flex; flex-direction:column; gap:6px; margin-top:14px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">DELIVERED NOTE (italic line under the table)</span>
+          <input type="text" data-field="deliveredNote" value="{{ form.training.deliveredNote }}" onInput="{{ onTrainingNoteChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+        </label>
+
+        <!-- Planned -->
+        <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-top:24px; margin-bottom:8px;">PLANNED NEXT QUARTER</div>
+        <div style="display:grid; grid-template-columns:2.2fr 1.5fr 0.7fr 40px; gap:10px; padding:0 8px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#5C6B85; letter-spacing:1.5px; font-weight:700; margin-bottom:6px;">
+          <div>SESSION</div><div>TARGET AUDIENCE</div><div>DATE</div><div></div>
+        </div>
+        <sc-for list="{{ form.training.planned }}" as="row" hint-placeholder-count="3">
+          <div style="display:grid; grid-template-columns:2.2fr 1.5fr 0.7fr 40px; gap:10px; margin-bottom:8px;">
+            <input type="text" data-field="session" data-index="{{ $index }}" value="{{ row.session }}" onInput="{{ onTrainingPlChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="target" data-index="{{ $index }}" value="{{ row.target }}" onInput="{{ onTrainingPlChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <input type="text" data-field="date" data-index="{{ $index }}" value="{{ row.date }}" onInput="{{ onTrainingPlChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+            <button data-index="{{ $index }}" onClick="{{ onTrainingPlRemove }}" style="padding:10px; font-family:'JetBrains Mono',monospace; font-size:16px; border:1px solid #D6D7DC; background:white; color:#E03546; cursor:pointer;">×</button>
+          </div>
+        </sc-for>
+        <button onClick="{{ onTrainingPlAdd }}" style="margin-top:6px; padding:10px 18px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; border:1px dashed #5C6B85; background:transparent; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">+ Add planned session</button>
+        <label style="display:flex; flex-direction:column; gap:6px; margin-top:14px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">PLANNED NOTE (callout below the planned table)</span>
+          <input type="text" data-field="plannedNote" value="{{ form.training.plannedNote }}" onInput="{{ onTrainingNoteChange }}" style="padding:10px 12px; font-family:'Lato',sans-serif; font-size:15px; border:1px solid #D6D7DC; background:white; outline:none;"/>
+        </label>
+      </div>
+
+      <!-- SECTION: Slides to include -->
+      <div style="margin-top:36px; padding:24px 28px; background:#F7F8FB; border:1px solid #D6D7DC;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+          <div style="display:flex; align-items:center; gap:14px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#0E1A2E; letter-spacing:2px;">// SLIDES TO INCLUDE</div>
+            <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#5C6B85; letter-spacing:1.5px;">{{ sectionsOnCount }} / {{ sectionsTotal }} ON</div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button onClick="{{ onSectionsAllOn }}" style="padding:6px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; background:white; border:1px solid #D6D7DC; color:#0E1A2E; cursor:pointer; letter-spacing:1px;">ALL ON</button>
+            <button onClick="{{ onSectionsAllOff }}" style="padding:6px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; background:white; border:1px solid #D6D7DC; color:#5C6B85; cursor:pointer; letter-spacing:1px;">ALL OFF</button>
+          </div>
+        </div>
+        <div style="font-family:'Lato',sans-serif; font-size:14px; color:#5C6B85; margin-bottom:14px; line-height:1.5;">Cover, Agenda, Support Performance, and Closing always render. The Length dial in Tweaks hides additional sections for the compact view; toggles here override on top of that (turning a slide off here keeps it off at every Length).</div>
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px 24px;">
+          <sc-for list="{{ sectionList }}" as="s" hint-placeholder-count="16">
+            <label style="display:flex; align-items:center; gap:10px; padding:8px 12px; background:white; border:1px solid #D6D7DC; cursor:pointer; font-family:'Lato',sans-serif; font-size:15px; color:#0E1A2E;">
+              <input type="checkbox" data-key="{{ s.key }}" checked="{{ s.checked }}" onChange="{{ onSectionToggle }}" style="width:18px; height:18px; accent-color:#00C9B0; cursor:pointer; flex-shrink:0;"/>
+              <span>{{ s.label }}</span>
+            </label>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- Save bar -->
+      <div style="margin-top:48px; padding:24px 28px; background:#0E1A2E; color:white; display:flex; align-items:center; gap:20px;">
+        <div style="flex:1;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px;">Ready when you are.</div>
+          <div style="font-family:'Lato',sans-serif; font-size:16px; color:#7E8CA8; margin-top:4px;">Save writes to your browser. Download writes <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0;">qbr.data.json</span> next to the deck so the file is the source of truth.</div>
+        </div>
+        <button onClick="{{ onClear }}" style="padding:14px 20px; font-family:'Lato',sans-serif; font-weight:700; font-size:15px; background:transparent; border:1px solid #5C6B85; color:#7E8CA8; cursor:pointer; letter-spacing:1px;">Clear draft</button>
+        <button onClick="{{ onDownload }}" style="padding:14px 22px; font-family:'Overpass',sans-serif; font-weight:700; font-size:17px; background:white; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px;">↓ Download JSON</button>
+        <button onClick="{{ onSave }}" style="padding:14px 26px; font-family:'Overpass',sans-serif; font-weight:700; font-size:17px; background:#00C9B0; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px;">Save draft</button>
+      </div>
+    </div>
+
+    <!-- ========== RIGHT: Live preview ========== -->
+    <div>
+      <div style="position:sticky; top:24px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px;">
+          <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:#0E1A2E;">Live preview</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px;">COVER · 1920×1080 @ 50%</div>
+        </div>
+
+        <!-- Cover preview at 50% scale -->
+        <div style="width:100%; aspect-ratio:16/9; background:#0E1A2E; color:white; position:relative; overflow:hidden; font-family:'Lato',sans-serif; box-shadow:0 4px 24px rgba(0,0,0,.15);">
+          <div style="position:absolute; inset:0; background-image:linear-gradient(rgba(0,201,176,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,176,0.06) 1px, transparent 1px); background-size:40px 40px;"></div>
+          <div style="position:absolute; top:0; left:0; width:120px; height:2px; background:#00C9B0;"></div>
+          <div style="position:absolute; top:32px; left:40px; font-family:'JetBrains Mono',monospace; font-size:10px; color:#00C9B0; letter-spacing:2px;">QBR // {{ form.quarter }} // {{ presentationDateFmt }}</div>
+          <div style="position:absolute; top:32px; right:40px; display:flex; align-items:center; gap:8px;">
+            <svg width="24" height="16" viewBox="0 0 200 130" fill="none"><path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/><path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/></svg>
+            <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:13px; color:white; letter-spacing:1.5px;">MIRANTIS</div>
+            <div style="width:1px; height:14px; background:#3A4661;"></div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:400; font-size:13px; color:#7E8CA8; letter-spacing:2px;">SALES</div>
+          </div>
+          <div style="position:absolute; top:130px; left:40px;">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#00C9B0; letter-spacing:2px; margin-bottom:8px;">ACCOUNT</div>
+            <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:68px; color:white; letter-spacing:-1.5px; line-height:1;">{{ form.customer.name }}</div>
+            <div style="width:60px; height:2px; background:#00C9B0; margin-top:14px;"></div>
+          </div>
+          <div style="position:absolute; bottom:64px; left:40px; right:40px; display:grid; grid-template-columns:repeat(4, 1fr); gap:12px;">
+            <div style="border:1px solid #2A3A55; padding:10px 12px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#7E8CA8; letter-spacing:1px;">ARR</div>
+              <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:white; line-height:1.1; margin-top:3px;">{{ arrCurrentFmt }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#00C9B0; margin-top:2px;">{{ arrTrendStr }}</div>
+            </div>
+            <div style="border:1px solid #2A3A55; padding:10px 12px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#7E8CA8; letter-spacing:1px;">CLUSTERS</div>
+              <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:white; line-height:1.1; margin-top:3px;">{{ form.usage.clusters }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#00C9B0; margin-top:2px;">{{ clustersTrendStr }}</div>
+            </div>
+            <div style="border:1px solid #2A3A55; padding:10px 12px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#7E8CA8; letter-spacing:1px;">SLA MET</div>
+              <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:white; line-height:1.1; margin-top:3px;">{{ form.support.slaMetPct }}%</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#F5A623; margin-top:2px;">{{ slaTrendStr }}</div>
+            </div>
+            <div style="border:1px solid #2A3A55; padding:10px 12px;">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#7E8CA8; letter-spacing:1px;">NPS</div>
+              <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:22px; color:white; line-height:1.1; margin-top:3px;">{{ form.nps.score }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:9px; color:#00C9B0; margin-top:2px;">{{ npsTrendStr }}</div>
+            </div>
+          </div>
+          <div style="position:absolute; bottom:20px; left:40px; right:40px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:9px; color:#5C6B85; letter-spacing:1px;">
+            <div>PREPARED_BY: {{ form.preparedBy }}</div><div>CONFIDENTIAL · 01/19</div>
+          </div>
+        </div>
+
+        <!-- Bound-slide list -->
+        <div style="margin-top:24px; padding:20px 24px; background:white; border:1px solid #D6D7DC;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#5C6B85; letter-spacing:1.5px; font-weight:700;">SLIDES BOUND TO YOUR DATA</div>
+          <div style="margin-top:12px; display:grid; grid-template-columns:auto 1fr; gap:8px 14px; font-family:'Lato',sans-serif; font-size:15px;">
+            <div style="color:#3DAE73;">●</div><div>Cover — customer name, KPI strip</div>
+            <div style="color:#3DAE73;">●</div><div>All slide headers — customer, quarter</div>
+            <div style="color:#3DAE73;">●</div><div>Goals Recap — previous commitments table</div>
+            <div style="color:#3DAE73;">●</div><div>Usage &amp; Adoption — product mix table</div>
+            <div style="color:#3DAE73;">●</div><div>Incidents — full incident table + pattern</div>
+            <div style="color:#3DAE73;">●</div><div>Wins — 3 win cards</div>
+            <div style="color:#3DAE73;">●</div><div>Risks — 3 risk cards</div>
+            <div style="color:#3DAE73;">●</div><div>Next Quarter Goals — next actions table</div>
+            <div style="color:#3DAE73;">●</div><div>Asks Tracker — status dashboard</div>
+            <div style="color:#3DAE73;">●</div><div>Closing — next QBR date, TAM email</div>
+            <div style="color:#3DAE73;">●</div><div>Renewal — expansions waterfall</div>
+            <div style="color:#3DAE73;">●</div><div>Mirantis Roadmap — by lane × quarter</div>
+            <div style="color:#3DAE73;">●</div><div>Customer Roadmap — 3 horizons</div>
+            <div style="color:#3DAE73;">●</div><div>Training — delivered + planned tables</div>
+            <div style="color:#3DAE73;">●</div><div>Exec Summary — 3 takeaway tiles</div>
+            <div style="color:#3DAE73;">●</div><div>Asks — both directions (from us / from you)</div>
+          </div>
+        </div>
+
+        <!-- Source mode -->
+        <div style="margin-top:14px; padding:14px 20px; background:rgba(0,201,176,0.08); border-left:4px solid #00C9B0; font-family:'Lato',sans-serif; font-size:15px; color:#0E1A2E; line-height:1.4;">
+          <b>How it flows:</b> Save writes to <span style="font-family:'JetBrains Mono',monospace; color:#00A693;">localStorage.qbr_data_draft</span>. The deck reads localStorage first, then <span style="font-family:'JetBrains Mono',monospace; color:#00A693;">./qbr.data.json</span>, then built-in fallbacks. Tweaks panel still wins for last-minute overrides.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: &quot;100%&quot;, &quot;height&quot;: &quot;100%&quot; }
+}">
+class Component extends DCLogic {
+  state = {
+    form: this.loadInitial(),
+    savedAt: null,
+    importText: '',
+    importedAt: null,
+  };
+
+  loadInitial() {
+    // Try localStorage; fall back to demo values
+    try {
+      const stashed = localStorage.getItem('qbr_data_draft');
+      if (stashed) {
+        const parsed = JSON.parse(stashed);
+        return this.hydrate(parsed);
+      }
+    } catch (e) {}
+    return this.hydrate(null);
+  }
+
+  // Canonical list of toggle-able slides — order matches the deck.
+  // 'always:true' slides are not in the list (Cover, Agenda, Closing, Data Source, Support — these are structural).
+  static SLIDE_TOGGLES = [
+    { key: 'execSummary',     label: 'Executive Summary' },
+    { key: 'accountHealth',   label: 'Account Health' },
+    { key: 'goalsRecap',      label: 'Goals Recap (prior commitments)' },
+    { key: 'usage',           label: 'Usage & Adoption' },
+    { key: 'supportDeepDive', label: 'Support Deep Dive (only when dial = deep)' },
+    { key: 'incidents',       label: 'Incidents & RCAs' },
+    { key: 'wins',            label: 'Wins' },
+    { key: 'risks',           label: 'Risks' },
+    { key: 'mirantisRoadmap', label: 'Mirantis Roadmap' },
+    { key: 'customerRoadmap', label: 'Customer Roadmap' },
+    { key: 'renewal',         label: 'Renewal & Expansion' },
+    { key: 'training',        label: 'Training & Enablement' },
+    { key: 'asks',            label: 'Asks (from us / from you)' },
+    { key: 'nextQuarter',     label: 'Next Quarter Goals' },
+    { key: 'asksTracker',     label: 'Asks Tracker' },
+    { key: 'appendix',        label: 'Appendix' },
+  ];
+
+  defaultSections() {
+    const out = {};
+    Component.SLIDE_TOGGLES.forEach(s => { out[s.key] = true; });
+    return out;
+  }
+
+  // Take a stored object (which may be missing fields) and ensure all paths exist
+  hydrate(d) {
+    d = d || {};
+    const sections = Object.assign(this.defaultSections(), d.sections || {});
+    return {
+      _meta: d._meta || { schemaVersion: 'qbr-2026.06', lastUpdated: new Date().toISOString(), source: 'configurator' },
+      sections,
+      customer: {
+        name: d.customer?.name ?? 'Vertex Logistics',
+        tier: d.customer?.tier ?? 'Strategic',
+        industry: d.customer?.industry ?? 'Logistics & freight',
+        stakeholders: d.customer?.stakeholders ?? [
+          { name: 'Jordan Patel', title: 'CTO' },
+          { name: 'Lina Ortega', title: 'VP Infrastructure' },
+        ],
+      },
+      quarter: d.quarter ?? 'Q3 FY26',
+      preparedBy: d.preparedBy ?? 'Marco Reyes, TAM',
+      preparedByEmail: d.preparedByEmail ?? 'marco.reyes@mirantis.com',
+      presentationDate: d.presentationDate ?? '2026-06-24',
+      nextQbr: { label: d.nextQbr?.label ?? 'Q4 FY26 review', date: d.nextQbr?.date ?? '2026-09-25' },
+      commercial: {
+        arr: { current: d.commercial?.arr?.current ?? 2400000, prior: d.commercial?.arr?.prior ?? 1800000, yoyPct: d.commercial?.arr?.yoyPct ?? 33 },
+        renewalDate: d.commercial?.renewalDate ?? '2027-03-15',
+        renewalSponsor: d.commercial?.renewalSponsor ?? 'TBD — confirm in meeting',
+        expansions: d.commercial?.expansions ?? [],
+      },
+      usage: {
+        clusters: d.usage?.clusters ?? 14, clustersDelta: d.usage?.clustersDelta ?? 3,
+        nodes: d.usage?.nodes ?? 312, nodesDelta: d.usage?.nodesDelta ?? 24,
+        workloads: d.usage?.workloads ?? 1847, workloadsDelta: d.usage?.workloadsDelta ?? 412,
+        environments: d.usage?.environments ?? 6,
+        uptime: d.usage?.uptime ?? 99.94,
+      },
+      support: {
+        ticketsTotal: d.support?.ticketsTotal ?? 87,
+        p1Count: d.support?.p1Count ?? 4, p1Delta: d.support?.p1Delta ?? -2,
+        slaMetPct: d.support?.slaMetPct ?? 96, slaDeltaPp: d.support?.slaDeltaPp ?? -2,
+        p1MttrHours: d.support?.p1MttrHours ?? 3.4, p1MttrTargetHours: d.support?.p1MttrTargetHours ?? 3.0,
+        csat: d.support?.csat ?? 4.6,
+      },
+      nps: { score: d.nps?.score ?? 42, industry: d.nps?.industry ?? 30, delta: d.nps?.delta ?? 7 },
+      products: d.products ?? ['MKE', 'MOSK', 'k0rdent Enterprise', 'Lens'],
+      // String shadow for editing — sync on save
+      productsText: (d.products ?? ['MKE', 'MOSK', 'k0rdent Enterprise', 'Lens']).join(', '),
+      stakeholdersText: ((d.customer?.stakeholders ?? [
+        { name: 'Jordan Patel', title: 'CTO' },
+        { name: 'Lina Ortega', title: 'VP Infrastructure' },
+      ]).map(s => `${s.name}, ${s.title}`).join('\n')),
+      nextActions: d.nextActions ?? [
+        { id: 'NA-01', commitment: 'P1 MTTR back under 3h target', owner: 'Mirantis Support', dueDate: '2026-09-30', successCriteria: '2 consecutive months < 3h', status: 'on-track', kind: 'support' },
+        { id: 'NA-02', commitment: 'k0rdent UK environments live', owner: 'Joint', dueDate: '2026-12-15', successCriteria: '2 UK envs in production', status: 'blocked', kind: 'expansion' },
+        { id: 'NA-03', commitment: 'MKE 3.7 upgrade plan signed off', owner: 'Joint', dueDate: '2026-11-01', successCriteria: 'Staged plan + rollback approved', status: 'not-started', kind: 'platform' },
+        { id: 'NA-04', commitment: 'Renewal proposal delivered', owner: 'Mirantis Sales', dueDate: '2026-10-31', successCriteria: 'Customer sponsor has paper', status: 'on-track', kind: 'renewal' },
+        { id: 'NA-05', commitment: 'Last-mile platform design review', owner: 'Joint', dueDate: '2026-08-28', successCriteria: 'Architecture doc + node sizing', status: 'on-track', kind: 'architecture' },
+      ],
+      previousActions: d.previousActions ?? [
+        { id: 'PA-01', commitment: 'Bring Dallas DC online with MKE', owner: 'Mirantis + Vertex', dueDate: '2026-05-30', status: 'delivered' },
+        { id: 'PA-02', commitment: 'Migrate freight-tracking to k0rdent Enterprise', owner: 'Vertex', dueDate: '2026-04-30', status: 'delivered' },
+        { id: 'PA-03', commitment: 'Cut P1 MTTR from 4.2h to under 3h', owner: 'Mirantis', dueDate: '2026-06-30', status: 'missed' },
+        { id: 'PA-04', commitment: 'k0rdent Enterprise expansion to UK envs', owner: 'Vertex', dueDate: '2026-06-30', status: 'slipped' },
+      ],
+      productMix: d.productMix ?? [
+        { product: 'Mirantis Kubernetes Engine', entitlement: '300 nodes', inUse: '284', utilizationPct: 95, trend: '▲ +9pp' },
+        { product: 'Mirantis OpenStack for K8s', entitlement: '120 cores', inUse: '96', utilizationPct: 80, trend: '▲ +4pp' },
+        { product: 'k0rdent Enterprise', entitlement: '2 environments', inUse: '2', utilizationPct: 100, trend: '▲ new' },
+        { product: 'Lens (Pro seats)', entitlement: '40 seats', inUse: '31', utilizationPct: 78, trend: '— flat' },
+      ],
+      incidents: d.incidents ?? [
+        { id: 'INC-01', date: '2026-04-14', severity: 'P1', summary: 'EU-WEST ingress controller crash loop', duration: '2h 14m', rcaStatus: 'CLOSED', action: 'Pinned ingress version; nightly canary added' },
+        { id: 'INC-02', date: '2026-05-02', severity: 'P1', summary: 'etcd leader election storm — Dallas DC', duration: '4h 12m', rcaStatus: 'CLOSED', action: 'Disk class upgraded; etcd tuned' },
+      ],
+      incidentsPattern: d.incidentsPattern ?? 'Pattern: three of the four P1s traced to capacity / throughput limits at infrastructure boundaries.',
+      wins: d.wins ?? [
+        { kind: 'PRODUCTION', headline: 'Freight platform live on k0rdent', body: '187 new workloads migrated. Cutover took 6 hours against a 12-hour window.', metric: '187 workloads · 0 rollbacks' },
+        { kind: 'INFRASTRUCTURE', headline: 'Dallas DC online ahead of plan', body: 'Three new MKE clusters bootstrapped in 18 days.', metric: '3 clusters · 12 days early' },
+        { kind: 'SENTIMENT', headline: 'CTO referenced us at KubeCon EU', body: 'Jordan Patel\u2019s session named MKE specifically.', metric: 'NPS +9 · 2 inbound leads' },
+      ],
+      risks: d.risks ?? [
+        { id: 'R-01', level: 'high', title: 'P1 MTTR trending wrong', body: 'Two of four P1s exceeded the 3h target.', owner: 'Mirantis Support Ops', dueDate: 'Q4 close', action: 'Add APAC-hour engineer' },
+        { id: 'R-02', level: 'med', title: 'k0rdent UK expansion slip', body: 'Originally Q3, deferred to Q4 pending data-residency review.', owner: 'Vertex Infra', dueDate: 'Oct 15', action: 'DPIA sign-off then schedule' },
+        { id: 'R-03', level: 'med', title: 'MKE 3.7 upgrade window', body: '3.6 reaches EOL Feb 2027.', owner: 'Joint', dueDate: 'Plan by Nov 1', action: 'Stage in non-prod first' },
+      ],
+      mirantisRoadmap: d.mirantisRoadmap ?? [
+        { lane: 'PRODUCT',  col: 1, title: 'MKE 3.7 GA', body: 'k8s 1.31, longer LTS window' },
+        { lane: 'PRODUCT',  col: 2, title: 'Lens 7', body: 'SSO refresh, audit log export' },
+        { lane: 'PLATFORM', col: 1, title: 'Observability bundle', body: 'Bundled Loki + Tempo + Prom' },
+        { lane: 'SERVICES', col: 1, title: 'OpsCare APAC-hour add-on', body: 'Directly addresses Risk 01' },
+      ],
+      customerRoadmap: d.customerRoadmap ?? [
+        { horizon: 'NOW · Q4',   horizonColor: '#3A1A3A', title: 'UK data-residency build', body: 'k0rdent rollout to UK envs after DPIA closes.', lead: 'Lina Ortega' },
+        { horizon: 'NEXT · Q1',  horizonColor: '#7B4E7B', title: 'Last-mile platform v2', body: 'Real-time routing service.', lead: 'Jordan Patel' },
+        { horizon: 'LATER · Q2+',horizonColor: '#A88AA0', title: 'ML platform consolidation', body: 'Consolidate three internal ML teams.', lead: 'TBD' },
+      ],
+      execSummaryTakeaways: d.execSummaryTakeaways ?? [
+        { kind: 'momentum', label: '01 · MOMENTUM', headline: 'Usage up across the board.', body: '14 clusters (+3), 312 nodes, 1,847 workloads (+412).' },
+        { kind: 'watch',    label: '02 · WATCH',    headline: 'Support response softened.', body: '96% SLA met (down 2pp).' },
+        { kind: 'decide',   label: '03 · DECIDE',   headline: 'k0rdent expansion needs a date.', body: 'Deferred from Q3 to Q4.' },
+      ],
+      asks: d.asks ?? {
+        fromUs: [
+          { title: 'Sign off on k0rdent UK plan by Oct 15', body: 'DPIA closure + go/no-go from compliance.' },
+          { title: 'Reference for one new logo', body: 'Logistics or freight prospect — 30-minute call.' },
+          { title: 'Confirm Q4 renewal sponsor', body: 'So our paper goes to the right exec the first time.' },
+        ],
+        fromYou: [
+          { title: 'APAC-hour engineer in place by Sep 30', body: 'Lifts P1 MTTR back under 3h. Closes Risk 01.' },
+          { title: 'MKE 3.7 upgrade runbook draft by Sep 1', body: 'Before 3.6 EOL pressure builds.' },
+          { title: 'Last-mile platform architecture review', body: 'Joint design session before Q1 work starts.' },
+        ],
+      },
+      training: d.training ?? {
+        delivered: [
+          { session: 'MKE upgrade workshop', attendees: '12', csat: '4.8' },
+          { session: 'k0rdent intro & hands-on', attendees: '18', csat: '4.9' },
+          { session: 'Networking / CNI deep-dive', attendees: '9', csat: '4.5' },
+        ],
+        deliveredNote: 'CNI session correlated with a 31% drop in networking-related tickets.',
+        planned: [
+          { session: 'MKE 3.6 → 3.7 upgrade lab', target: 'Platform team · 10', date: 'Aug 12' },
+          { session: 'Observability bundle preview', target: 'SRE · 15', date: 'Sep 04' },
+        ],
+        plannedNote: 'Bundled in current contract — no additional spend.',
+      },
+    };
+  }
+
+  // Generic array-row mutators
+  arrayRowChange(arrName, idx, field, value) {
+    this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      if (next[arrName] && next[arrName][idx]) next[arrName][idx][field] = value;
+      return { form: next, savedAt: null };
+    });
+  }
+  arrayRowAdd(arrName, template) {
+    this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      if (!next[arrName]) next[arrName] = [];
+      next[arrName].push(template);
+      return { form: next, savedAt: null };
+    });
+  }
+  arrayRowRemove(arrName, idx) {
+    this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next[arrName].splice(idx, 1);
+      return { form: next, savedAt: null };
+    });
+  }
+
+  setPath(obj, path, val) {
+    // dotted path setter
+    const parts = path.split('.');
+    let cur = obj;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (cur[parts[i]] == null || typeof cur[parts[i]] !== 'object') cur[parts[i]] = {};
+      cur = cur[parts[i]];
+    }
+    cur[parts[parts.length - 1]] = val;
+  }
+
+  // Build the JSON payload to persist (clean up shadow text fields)
+  serialize(form) {
+    const out = { ...form };
+    // products: comma-separated → array
+    out.products = (form.productsText || '').split(',').map(s => s.trim()).filter(Boolean);
+    delete out.productsText;
+    // stakeholders: lines → [{name,title}]
+    out.customer = { ...form.customer };
+    out.customer.stakeholders = (form.stakeholdersText || '').split('\n').map(line => {
+      const [name, ...rest] = line.split(',');
+      return name && name.trim() ? { name: name.trim(), title: rest.join(',').trim() } : null;
+    }).filter(Boolean);
+    delete out.stakeholdersText;
+    // Stamp lastUpdated
+    out._meta = { ...(out._meta || {}), lastUpdated: new Date().toISOString() };
+    return out;
+  }
+
+  // Compute YoY % from current/prior
+  yoyPct(form) {
+    const c = form.commercial?.arr?.current;
+    const p = form.commercial?.arr?.prior;
+    if (!c || !p) return form.commercial?.arr?.yoyPct ?? 0;
+    return Math.round(((c - p) / p) * 100);
+  }
+
+  fmtMoney(n) {
+    if (n == null || isNaN(n)) return '—';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(n % 1e6 === 0 ? 1 : 1).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return '$' + (n / 1e3).toFixed(0) + 'K';
+    return '$' + n;
+  }
+
+  fmtDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); }
+    catch { return iso; }
+  }
+
+  renderVals() {
+    const form = this.state.form;
+
+    const onSectionToggle = (e) => {
+      const key = e.target.dataset.key;
+      const checked = e.target.checked;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.sections = next.sections || {};
+        next.sections[key] = checked;
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const onSectionsAll = (val) => () => {
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.sections = next.sections || {};
+        Component.SLIDE_TOGGLES.forEach(s => { next.sections[s.key] = val; });
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const sectionList = Component.SLIDE_TOGGLES.map(s => ({
+      key: s.key,
+      label: s.label,
+      checked: form.sections?.[s.key] !== false,
+    }));
+    const sectionsOnCount = sectionList.filter(s => s.checked).length;
+
+    const onFieldChange = (e) => {
+      const path = e.target.dataset.field;
+      let val = e.target.value;
+      if (e.target.type === 'number') val = val === '' ? '' : Number(val);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        this.setPath(next, path, val);
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const onActionChange = (e) => {
+      const field = e.target.dataset.field.replace('nextActions[].', '');
+      const idx = Number(e.target.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (next.nextActions[idx]) next.nextActions[idx][field] = e.target.value;
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const onActionAdd = () => {
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        const n = next.nextActions.length + 1;
+        next.nextActions.push({
+          id: 'NA-' + String(n).padStart(2, '0'),
+          commitment: '', owner: '', dueDate: '', successCriteria: '', status: 'not-started', kind: 'other',
+        });
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const onActionRemove = (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.nextActions.splice(idx, 1);
+        return { form: next, savedAt: null };
+      });
+    };
+
+    // Generic row handlers — each section wires arrName + field
+    const makeRowChange = (arrName) => (e) => {
+      const idx = Number(e.target.dataset.index);
+      const field = e.target.dataset.field.replace(arrName + '[].', '');
+      this.arrayRowChange(arrName, idx, field, e.target.value);
+    };
+    const makeRowRemove = (arrName) => (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.arrayRowRemove(arrName, idx);
+    };
+
+    const onIncChange = makeRowChange('incidents');
+    const onIncRemove = makeRowRemove('incidents');
+    const onIncAdd = () => this.arrayRowAdd('incidents', { id: 'INC-' + String((this.state.form.incidents?.length || 0) + 1).padStart(2,'0'), date: '', severity: 'P1', summary: '', duration: '', rcaStatus: 'CLOSED', action: '' });
+
+    const onWinChange = makeRowChange('wins');
+    const onWinRemove = makeRowRemove('wins');
+    const onWinAdd = () => this.arrayRowAdd('wins', { kind: 'PRODUCTION', headline: '', body: '', metric: '' });
+
+    const onRiskChange = makeRowChange('risks');
+    const onRiskRemove = makeRowRemove('risks');
+    const onRiskAdd = () => this.arrayRowAdd('risks', { id: 'R-' + String((this.state.form.risks?.length || 0) + 1).padStart(2,'0'), level: 'med', title: '', body: '', owner: '', dueDate: '', action: '' });
+
+    const onPMChange = makeRowChange('productMix');
+    const onPMRemove = makeRowRemove('productMix');
+    const onPMAdd = () => this.arrayRowAdd('productMix', { product: '', entitlement: '', inUse: '', utilizationPct: 0, trend: '— flat' });
+
+    const onPAChange = makeRowChange('previousActions');
+    const onPARemove = makeRowRemove('previousActions');
+    const onPAAdd = () => this.arrayRowAdd('previousActions', { id: 'PA-' + String((this.state.form.previousActions?.length || 0) + 1).padStart(2,'0'), commitment: '', owner: '', dueDate: '', status: 'delivered' });
+
+    // Mirantis Roadmap
+    const onMRChange = makeRowChange('mirantisRoadmap');
+    const onMRRemove = makeRowRemove('mirantisRoadmap');
+    const onMRAdd = () => this.arrayRowAdd('mirantisRoadmap', { lane: 'PRODUCT', col: 1, title: '', body: '' });
+
+    // Customer Roadmap
+    const onCRChange = makeRowChange('customerRoadmap');
+    const onCRRemove = makeRowRemove('customerRoadmap');
+    const onCRAdd = () => this.arrayRowAdd('customerRoadmap', { horizon: 'LATER · Q2+', horizonColor: '#A88AA0', title: '', body: '', lead: '' });
+
+    // Training: nested arrays
+    const onTrainingDelChange = (e) => {
+      const idx = Number(e.target.dataset.index);
+      const field = e.target.dataset.field;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (!next.training) next.training = { delivered: [], planned: [] };
+        if (next.training.delivered[idx]) next.training.delivered[idx][field] = e.target.value;
+        return { form: next, savedAt: null };
+      });
+    };
+    const onTrainingDelAdd = () => this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next.training = next.training || { delivered: [], planned: [] };
+      next.training.delivered.push({ session: '', attendees: '', csat: '' });
+      return { form: next, savedAt: null };
+    });
+    const onTrainingDelRemove = (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.training.delivered.splice(idx, 1);
+        return { form: next, savedAt: null };
+      });
+    };
+    const onTrainingPlChange = (e) => {
+      const idx = Number(e.target.dataset.index);
+      const field = e.target.dataset.field;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (!next.training) next.training = { delivered: [], planned: [] };
+        if (next.training.planned[idx]) next.training.planned[idx][field] = e.target.value;
+        return { form: next, savedAt: null };
+      });
+    };
+    const onTrainingPlAdd = () => this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next.training = next.training || { delivered: [], planned: [] };
+      next.training.planned.push({ session: '', target: '', date: '' });
+      return { form: next, savedAt: null };
+    });
+    const onTrainingPlRemove = (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.training.planned.splice(idx, 1);
+        return { form: next, savedAt: null };
+      });
+    };
+    const onTrainingNoteChange = (e) => {
+      const field = e.target.dataset.field;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (!next.training) next.training = { delivered: [], planned: [] };
+        next.training[field] = e.target.value;
+        return { form: next, savedAt: null };
+      });
+    };
+
+    // Exec Summary takeaways
+    const onESChange = makeRowChange('execSummaryTakeaways');
+    const onESRemove = makeRowRemove('execSummaryTakeaways');
+    const onESAdd = () => this.arrayRowAdd('execSummaryTakeaways', { kind: 'momentum', label: '', headline: '', body: '' });
+
+    // Asks (nested)
+    const onAskChange = (col) => (e) => {
+      const idx = Number(e.target.dataset.index);
+      const field = e.target.dataset.field;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (!next.asks) next.asks = { fromUs: [], fromYou: [] };
+        if (next.asks[col][idx]) next.asks[col][idx][field] = e.target.value;
+        return { form: next, savedAt: null };
+      });
+    };
+    const onAskAdd = (col) => () => this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next.asks = next.asks || { fromUs: [], fromYou: [] };
+      next.asks[col].push({ title: '', body: '' });
+      return { form: next, savedAt: null };
+    });
+    const onAskRemove = (col) => (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.asks[col].splice(idx, 1);
+        return { form: next, savedAt: null };
+      });
+    };
+    const onAskUsChange = onAskChange('fromUs');
+    const onAskUsAdd = onAskAdd('fromUs');
+    const onAskUsRemove = onAskRemove('fromUs');
+    const onAskYouChange = onAskChange('fromYou');
+    const onAskYouAdd = onAskAdd('fromYou');
+    const onAskYouRemove = onAskRemove('fromYou');
+
+    // Expansions (commercial.expansions)
+    const onExpChange = (e) => {
+      const idx = Number(e.target.dataset.index);
+      const field = e.target.dataset.field;
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        if (!next.commercial.expansions) next.commercial.expansions = [];
+        if (next.commercial.expansions[idx]) {
+          next.commercial.expansions[idx][field] = (field === 'valueUSD') ? Number(e.target.value) : e.target.value;
+        }
+        return { form: next, savedAt: null };
+      });
+    };
+    const onExpAdd = () => this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next.commercial.expansions = next.commercial.expansions || [];
+      next.commercial.expansions.push({ name: '', valueUSD: 0, quarter: '' });
+      return { form: next, savedAt: null };
+    });
+    const onExpRemove = (e) => {
+      const idx = Number(e.currentTarget.dataset.index);
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.commercial.expansions.splice(idx, 1);
+        return { form: next, savedAt: null };
+      });
+    };
+
+    const onSave = () => {
+      const payload = this.serialize(this.state.form);
+      try {
+        localStorage.setItem('qbr_data_draft', JSON.stringify(payload, null, 2));
+        this.setState({ savedAt: Date.now() });
+      } catch (e) {
+        alert('Could not save: ' + e.message);
+      }
+    };
+
+    const onClear = () => {
+      if (!confirm('Clear the saved draft? The deck will fall back to qbr.data.json or built-in demo values.')) return;
+      try { localStorage.removeItem('qbr_data_draft'); } catch (e) {}
+      this.setState({ form: this.hydrate(null), savedAt: null });
+    };
+
+    const onDownload = () => {
+      const payload = this.serialize(this.state.form);
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'qbr.data.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+
+    // ---- PASTE IMPORT ----
+    // Map a Salesforce-export-style flat object to our schema.
+    // This is intentionally lenient — fields the TAM hasn't filled stay as defaults.
+    const sfImport = (raw) => {
+      const next = JSON.parse(JSON.stringify(this.state.form));
+      // Direct path mappings — supports both dotted SF report field names and our schema names
+      const pick = (...keys) => keys.map(k => raw[k]).find(v => v != null);
+      // Customer
+      const cn = pick('Account.Name', 'AccountName', 'customer.name', 'customerName', 'name');
+      if (cn) next.customer.name = cn;
+      const tier = pick('Account.Tier__c', 'tier', 'AccountTier', 'customer.tier');
+      if (tier) next.customer.tier = tier;
+      // Commercial
+      const arr = pick('Account.ARR__c', 'ARR', 'arr', 'commercial.arr.current');
+      if (arr != null) next.commercial.arr.current = Number(arr);
+      const arrPrior = pick('Account.ARR_Prior__c', 'ARR_Prior', 'arrPrior', 'commercial.arr.prior');
+      if (arrPrior != null) next.commercial.arr.prior = Number(arrPrior);
+      const renewal = pick('Account.Renewal_Date__c', 'RenewalDate', 'renewalDate', 'commercial.renewalDate');
+      if (renewal) next.commercial.renewalDate = String(renewal).slice(0, 10);
+      // Quarter / TAM
+      const q = pick('Quarter', 'quarter');
+      if (q) next.quarter = q;
+      const tam = pick('Owner.Name', 'OwnerName', 'TAM', 'preparedBy');
+      if (tam) next.preparedBy = tam;
+      const tamEmail = pick('Owner.Email', 'OwnerEmail', 'preparedByEmail');
+      if (tamEmail) next.preparedByEmail = tamEmail;
+      // Usage telemetry (Datadog-style flat fields)
+      const clusters = pick('telemetry.clusters', 'Clusters__c', 'clusters');
+      if (clusters != null) next.usage.clusters = Number(clusters);
+      const nodes = pick('telemetry.nodes', 'Nodes__c', 'nodes');
+      if (nodes != null) next.usage.nodes = Number(nodes);
+      const workloads = pick('telemetry.workloads', 'Workloads__c', 'workloads');
+      if (workloads != null) next.usage.workloads = Number(workloads);
+      // Support
+      const slaMet = pick('support.slaMetPct', 'SLA_Met__c', 'slaMetPct');
+      if (slaMet != null) next.support.slaMetPct = Number(slaMet);
+      const p1 = pick('support.p1Count', 'P1_Count__c', 'p1Count');
+      if (p1 != null) next.support.p1Count = Number(p1);
+      const csat = pick('support.csat', 'CSAT__c', 'csat');
+      if (csat != null) next.support.csat = Number(csat);
+      // NPS
+      const nps = pick('nps.score', 'NPS__c', 'nps');
+      if (nps != null) next.nps.score = Number(nps);
+      // Whole-document override — if the paste IS our full schema, take everything
+      if (raw.customer && raw.commercial && raw.usage) {
+        return this.hydrate(raw);
+      }
+      return next;
+    };
+
+    const onImport = () => {
+      const text = (this.state.importText || '').trim();
+      if (!text) {
+        alert('Paste a Salesforce report JSON / CSV row or a full qbr.data.json payload first.');
+        return;
+      }
+      let raw;
+      try {
+        raw = JSON.parse(text);
+      } catch (e) {
+        alert('Could not parse — expected JSON. Error: ' + e.message);
+        return;
+      }
+      try {
+        const merged = sfImport(Array.isArray(raw) ? raw[0] : raw);
+        this.setState({ form: merged, importText: '', importedAt: Date.now() });
+      } catch (e) {
+        alert('Import failed: ' + e.message);
+      }
+    };
+
+    const onImportTextChange = (e) => {
+      this.setState({ importText: e.target.value });
+    };
+
+    // Preview helpers
+    const arrCurrentFmt = this.fmtMoney(form.commercial?.arr?.current);
+    const yoy = this.yoyPct(form);
+    const arrTrendStr = (yoy >= 0 ? '▲ +' : '▼ ') + yoy + '% YoY';
+    const sla = form.support?.slaDeltaPp ?? 0;
+    const slaTrendStr = (sla >= 0 ? '▲ +' : '▼ ') + sla + 'pp QoQ';
+    const cd = form.usage?.clustersDelta ?? 0;
+    const clustersTrendStr = (cd >= 0 ? '▲ +' : '▼ ') + cd + ' QoQ';
+    const nd = form.nps?.delta ?? 0;
+    const npsTrendStr = (nd >= 0 ? '▲ +' : '▼ ') + nd + ' QoQ';
+    const presentationDateFmt = (form.presentationDate || '').replace(/-/g, '.');
+
+    return {
+      form,
+      onFieldChange, onActionChange, onActionAdd, onActionRemove,
+      onIncChange, onIncAdd, onIncRemove,
+      onWinChange, onWinAdd, onWinRemove,
+      onRiskChange, onRiskAdd, onRiskRemove,
+      onPMChange, onPMAdd, onPMRemove,
+      onPAChange, onPAAdd, onPARemove,
+      onMRChange, onMRAdd, onMRRemove,
+      onCRChange, onCRAdd, onCRRemove,
+      onTrainingDelChange, onTrainingDelAdd, onTrainingDelRemove,
+      onTrainingPlChange, onTrainingPlAdd, onTrainingPlRemove,
+      onTrainingNoteChange,
+      onExpChange, onExpAdd, onExpRemove,
+      onESChange, onESAdd, onESRemove,
+      onAskUsChange, onAskUsAdd, onAskUsRemove,
+      onAskYouChange, onAskYouAdd, onAskYouRemove,
+      onSave, onClear, onDownload,
+      onSectionToggle, onSectionsAllOn: onSectionsAll(true), onSectionsAllOff: onSectionsAll(false),
+      sectionList, sectionsOnCount, sectionsTotal: Component.SLIDE_TOGGLES.length,
+      onImport, onImportTextChange,
+      importText: this.state.importText || '',
+      importedRecently: this.state.importedAt && (Date.now() - this.state.importedAt < 8000),
+      savedRecently: this.state.savedAt && (Date.now() - this.state.savedAt < 8000),
+      arrCurrentFmt, arrTrendStr, slaTrendStr, clustersTrendStr, npsTrendStr,
+      presentationDateFmt,
+    };
+  }
+}
+</script>
+</body>
+</html>

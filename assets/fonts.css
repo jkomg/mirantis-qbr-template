@@ -1,0 +1,110 @@
+/* Mirantis QBR Template — local font definitions
+ * --------------------------------------------------------
+ * Self-hosted Overpass, Lato, and JetBrains Mono. The HTML
+ * declares these as the first family in each font stack; if
+ * the woff2 files are not present (e.g. running outside the
+ * Docker container), the browser silently falls back to the
+ * system font in the same stack. Either way, zero external
+ * network requests.
+ *
+ * To populate the woff2 files locally, run:
+ *   bash scripts/fetch-fonts.sh
+ * (the Dockerfile runs this automatically during build.)
+ */
+
+/* ---- Overpass — headings, KPI numbers ---- */
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./fonts/overpass-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/overpass-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./fonts/overpass-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/overpass-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url('./fonts/overpass-800.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Overpass';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./fonts/overpass-900.woff2') format('woff2');
+}
+
+/* ---- Lato — body copy ---- */
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('./fonts/lato-300.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/lato-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/lato-700.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Lato';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url('./fonts/lato-900.woff2') format('woff2');
+}
+
+/* ---- JetBrains Mono — code, KPI footers, monospace UI ---- */
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-500.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('./fonts/jetbrains-mono-700.woff2') format('woff2');
+}

@@ -1,0 +1,19 @@
+# docker-compose.yml — Mirantis QBR Template
+# Run:    docker compose up --build
+# Visit:  http://localhost:8080
+# Stop:   docker compose down  (data is ephemeral; nothing persists)
+
+services:
+  qbr:
+    build: .
+    image: mirantis-qbr-template:local
+    container_name: mirantis-qbr
+    ports:
+      - "8080:8080"
+    # No volume mounts — anything saved inside the container disappears
+    # when it stops. Customer data lives only in your browser's
+    # localStorage and in any JSON files you explicitly download.
+    restart: "no"
+    # Tighten the network surface: container can be reached but cannot
+    # phone home. Comment out if you need to install packages live.
+    # network_mode: "none"   # uncomment for fully air-gapped
