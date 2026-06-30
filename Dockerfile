@@ -37,8 +37,9 @@ COPY ["scripts/mirantis-qbr-sync.js",     "/usr/share/nginx/html/scripts/miranti
 # Copy the locally-fetched fonts on top of assets/
 COPY --from=fonts /work/assets/fonts /usr/share/nginx/html/assets/fonts
 
-# Small landing page so the bare URL doesn't 404
+# Small landing page + docs viewer so the bare URL doesn't 404
 COPY docker/index.html /usr/share/nginx/html/index.html
+COPY docker/docs.html  /usr/share/nginx/html/docs.html
 
 # Tighten nginx for a private/local context: no upstream connections,
 # directory listing on, sensible MIME types, big-payload tolerant for JSON.
