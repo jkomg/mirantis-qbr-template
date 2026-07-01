@@ -14,8 +14,8 @@
     ]
   },
   "quarter": "Q3 FY26",
-  "preparedBy": "Marco Reyes, TAM",
-  "preparedByEmail": "marco.reyes@mirantis.com",
+  "preparedBy": "Alex Morgan, TAM",
+  "preparedByEmail": "tam@example.com",
   "presentationDate": "2026-06-24",
   "nextQbr": { "label": "Q4 FY26 review", "date": "2026-09-25" },
   "commercial": {

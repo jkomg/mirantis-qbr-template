@@ -9,7 +9,7 @@
  *        --out ./accounts/vertex-q3fy26.json
  *
  * Env vars required:
- *   SF_LOGIN_URL          e.g. https://mirantis.my.salesforce.com
+ *   SF_LOGIN_URL          e.g. https://your-org.my.salesforce.com
  *   SF_CLIENT_ID          OAuth connected app client id
  *   SF_CLIENT_SECRET
  *   SF_USERNAME           service-account username

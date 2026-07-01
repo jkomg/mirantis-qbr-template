@@ -130,7 +130,7 @@
       <pre style="margin:0; font-family:'JetBrains Mono',monospace; font-size:14px; line-height:1.55; color:#C8D0E0; white-space:pre-wrap;">{
   "customer":   { name, tier, stakeholders:[{name,title}] },
   "quarter":    "Q3 FY26",
-  "preparedBy": "Marco Reyes, TAM",
+  "preparedBy": "Alex Morgan, TAM",
   "commercial": { arr:{current,prior,yoyPct},
                   renewalDate, expansions:[…] },
   "usage":      { clusters, nodes, workloads,
@@ -1181,7 +1181,7 @@ class Component extends DCLogic {
     // Props ALWAYS win over JSON — TAM can override per-deck via Tweaks panel
     const customer = this.props.customer ?? d.customer?.name ?? 'Vertex Logistics';
     const quarter = this.props.quarter ?? d.quarter ?? 'Q3 FY26';
-    const preparedBy = this.props.preparedBy ?? d.preparedBy ?? 'Marco Reyes, TAM';
+    const preparedBy = this.props.preparedBy ?? d.preparedBy ?? 'Alex Morgan, TAM';
 
     // Helpers
     const fmtMoney = (n) => {
@@ -1206,7 +1206,7 @@ class Component extends DCLogic {
     const renewalDate = fmtDate(d.commercial?.renewalDate || '2027-03-15');
     const nextQbrLabel = d.nextQbr?.label ?? 'Q4 FY26 review';
     const nextQbrDate = fmtDate(d.nextQbr?.date || '2026-09-25');
-    const preparedByEmail = d.preparedByEmail ?? 'marco.reyes@mirantis.com';
+    const preparedByEmail = d.preparedByEmail ?? 'tam@example.com';
     const products = (d.products || ['MKE','MOSK','k0rdent Enterprise','Lens']).join(' · ');
     const stakeholdersText = (d.customer?.stakeholders || [{name:'Jordan Patel',title:'CTO'},{name:'Lina Ortega',title:'VP Infrastructure'}])
       .map(s => s.name + ', ' + s.title).join(' · ');

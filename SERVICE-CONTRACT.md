@@ -11,7 +11,7 @@ The QBR Template deck loads its data from a stable URL keyed by account ID. TAMs
 ## Endpoint
 
 ```
-GET https://qbr-data.mirantis-internal/v1/accounts/{accountId}/{quarter}.json
+GET https://qbr-data.example-internal/v1/accounts/{accountId}/{quarter}.json
 
 Examples:
   GET /v1/accounts/0014x000123abc/Q3-FY26.json     // specific quarter
@@ -19,7 +19,7 @@ Examples:
   GET /v1/accounts/0014x000123abc/preview.json     // live SF snapshot
 ```
 
-**Headers**: `Authorization: Bearer <mirantis-sso-token>` — locked to `@mirantis.com` domain. CORS allowed for the deck's hosted origin only.
+**Headers**: `Authorization: Bearer <org-sso-token>` — locked to your corporate email domain (e.g. `@example.com`). CORS allowed for the deck's hosted origin only.
 
 **Cache**: `Cache-Control: max-age=300` on `latest.json` and per-quarter files; `no-cache` on `preview.json`.
 
@@ -94,7 +94,7 @@ Use exactly the schema in `qbr.data.json`. Fields the service can't fill must be
 The deck takes a `dataFile` tweak. The service-hosted version of the deck sets it to:
 
 ```html
-<x-import name="QBR Template" data-file="https://qbr-data.mirantis-internal/v1/accounts/{{ accountId }}/latest.json">
+<x-import name="QBR Template" data-file="https://qbr-data.example-internal/v1/accounts/{{ accountId }}/latest.json">
 ```
 
 For the TAM-pasted path (Architecture A), the Configurator's "Import from data source" panel accepts any of these:

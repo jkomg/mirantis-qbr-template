@@ -19,7 +19,7 @@ The TAM still fills in usage telemetry, support metrics, incidents, wins, risks,
 Copy `.env.example` to `.env` at the project root and fill in:
 
 ```
-SF_USERNAME=tam-bot@mirantis.com
+SF_USERNAME=service-account@example.com
 SF_PASSWORD=<service account password>
 SF_SECURITY_TOKEN=<from SF Setup → Reset Security Token>
 SF_DOMAIN=login          # or 'test' for a sandbox

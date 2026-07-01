@@ -7,7 +7,7 @@ CLI usage:
         --out /data/accounts/vertex-q3fy26.json
 
 Required env vars:
-    SF_USERNAME             service account username (e.g. tam-bot@mirantis.com)
+    SF_USERNAME             service account username (e.g. service-account@example.com)
     SF_PASSWORD             account password (no token suffix)
     SF_SECURITY_TOKEN       security token (Setup → My Personal Information → Reset)
     SF_DOMAIN               'login' (production) or 'test' (sandbox). Default: login
