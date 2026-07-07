@@ -17,6 +17,43 @@ The sidecar (`sf-sync` on port 8081) holds each user's OAuth tokens in a **signe
 
 ---
 
+## Don't have App Manager? (most TAMs won't)
+
+**App Manager is not available to standard Salesforce users.** Creating a Connected App requires a Salesforce **admin** or someone with **Customize Application** / **Manage Connected Apps** permission.
+
+**You cannot complete OAuth setup yourself** without those keys. Your path:
+
+1. **Send the IT request below** to whoever owns Salesforce at Mirantis (RevOps, IT, Salesforce admin).
+2. **While you wait**, use **Paste import** in the Configurator (export a Report JSON from Salesforce) — no integration needed.
+3. **Optional interim:** if IT allows password + security token for your user, set `SF_AUTH_MODE=password` in `.env` with your own username/password/token (see [Password flow](#password-flow-cli--legacy) in `sf-sync/README.md`). Many enterprise orgs block this.
+
+### Copy-paste request for IT / RevOps
+
+```
+Subject: Connected App for Mirantis QBR Template (local OAuth)
+
+We need a Salesforce Connected App so TAMs can pull account data into the
+QBR deck with their own login (no shared service password).
+
+Please create a Connected App with:
+  • Name: Mirantis QBR Template (or similar)
+  • Callback URL: http://localhost:8081/oauth/callback
+  • OAuth scopes: api, refresh_token (offline_access)
+  • Permitted users: [all TAMs who run QBRs] — self-authorize OR
+    admin-pre-authorized via permission set
+
+Please send back (via password manager, not email if possible):
+  • Consumer Key
+  • Consumer Secret
+  • Whether this is production (login) or sandbox (test)
+
+Setup doc for admins: SALESFORCE-OAUTH-SETUP.md in the mirantis-qbr-template repo.
+```
+
+Who to ask: your **Salesforce org owner**, **RevOps**, or **IT service desk** — whoever approved other internal Salesforce integrations.
+
+---
+
 ## Part 1 — IT: Create the Connected App (one-time)
 
 You need a Salesforce admin (or someone with **Manage Connected Apps** permission).
