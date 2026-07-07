@@ -11,6 +11,7 @@ WORKDIR /app
 COPY sf-sync/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY sf-sync/oauth.py   /app/oauth.py
 COPY sf-sync/sync.py    /app/sync.py
 COPY sf-sync/server.py  /app/server.py
 

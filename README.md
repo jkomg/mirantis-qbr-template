@@ -15,6 +15,8 @@ docker compose up --build
 
 See [`LOCAL-SETUP.md`](./LOCAL-SETUP.md) for the no-Docker path and the air-gapped configuration.
 
+**Pull live from Salesforce:** see [`SALESFORCE-OAUTH-SETUP.md`](./SALESFORCE-OAUTH-SETUP.md) — IT creates a Connected App once; each TAM connects with their own login.
+
 ---
 
 ## What's in the box
@@ -27,6 +29,8 @@ See [`LOCAL-SETUP.md`](./LOCAL-SETUP.md) for the no-Docker path and the air-gapp
 | `assets/fonts.css` + `scripts/fetch-fonts.sh` | Self-hosted Overpass / Lato / JetBrains Mono. Docker build fetches woff2 files; runtime serves them locally. |
 | `Dockerfile` + `docker-compose.yml` + `docker/` | Container scaffold — nginx:alpine, two-stage build, no mounted volumes (data ephemeral). |
 | `scripts/mirantis-qbr-sync.js` | CLI scaffold for the Salesforce → JSON pull (hand to RevOps). |
+| `sf-sync/` | Salesforce sidecar — OAuth login + **Pull from Salesforce** in the Configurator. |
+| `SALESFORCE-OAUTH-SETUP.md` | Step-by-step Connected App + per-TAM OAuth setup. |
 | `AUTOMATION.md`, `SERVICE-CONTRACT.md`, `LOCAL-SETUP.md` | Architecture docs. Read them before opening a PR that changes data flow. |
 
 ---

@@ -6,14 +6,21 @@ CLI usage:
     python sync.py --account "Vertex Logistics" --quarter "Q3 FY26" \\
         --out /data/accounts/vertex-q3fy26.json
 
-Required env vars:
-    SF_USERNAME             service account username (e.g. service-account@example.com)
-    SF_PASSWORD             account password (no token suffix)
-    SF_SECURITY_TOKEN       security token (Setup → My Personal Information → Reset)
-    SF_DOMAIN               'login' (production) or 'test' (sandbox). Default: login
+Auth (pick one — server prefers OAuth when Connected App creds are set):
+
+    OAuth (per-user login in the Configurator):
+        SF_CONSUMER_KEY         Connected App consumer key
+        SF_CONSUMER_SECRET      Connected App consumer secret
+        SF_REDIRECT_URI         default http://localhost:8081/oauth/callback
+        SF_AUTH_MODE            auto | oauth | password  (default: auto)
+
+    Password (CLI / shared service account):
+        SF_USERNAME             service account username
+        SF_PASSWORD             account password (no token suffix)
+        SF_SECURITY_TOKEN       security token
+        SF_DOMAIN               'login' (production) or 'test' (sandbox)
 
 Optional:
-    SF_CONSUMER_KEY / SF_CONSUMER_SECRET   (for OAuth bearer flow — not used in v1)
     OUTPUT_DIR              where to write JSON. Default /data/accounts
 
 Schema:
@@ -38,7 +45,7 @@ SCHEMA_VERSION = "qbr-2026.06"
 # ---------------------------------------------------------------------------
 # Salesforce connection
 # ---------------------------------------------------------------------------
-def connect() -> Salesforce:
+def connect_password() -> Salesforce:
     user = os.environ.get("SF_USERNAME")
     pwd = os.environ.get("SF_PASSWORD")
     token = os.environ.get("SF_SECURITY_TOKEN")
@@ -48,6 +55,16 @@ def connect() -> Salesforce:
             "Missing env vars. Set SF_USERNAME, SF_PASSWORD, SF_SECURITY_TOKEN."
         )
     return Salesforce(username=user, password=pwd, security_token=token, domain=domain)
+
+
+def connect_from_tokens(access_token: str, instance_url: str) -> Salesforce:
+    """Build a Salesforce client from an OAuth access token (web session)."""
+    return Salesforce(instance_url=instance_url, session_id=access_token)
+
+
+def connect() -> Salesforce:
+    """CLI entry point — always uses password auth from env."""
+    return connect_password()
 
 
 # ---------------------------------------------------------------------------

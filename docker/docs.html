@@ -151,6 +151,7 @@
     </div>
     <nav>
       <a href="?doc=LOCAL-SETUP" id="nav-setup">Setup</a>
+      <a href="?doc=SALESFORCE-OAUTH-SETUP" id="nav-sf-oauth">Salesforce OAuth</a>
       <a href="?doc=AUTOMATION" id="nav-automation">Automation</a>
       <a href="?doc=SERVICE-CONTRACT" id="nav-service">Service contract</a>
       <a href="./" class="back">← Back</a>
@@ -162,9 +163,10 @@
   <script>
     const BASE = location.pathname.includes('/docker/') ? '../' : '/';
     const DOCS = {
-      'LOCAL-SETUP':      { file: BASE + 'LOCAL-SETUP.md',      nav: 'nav-setup',      title: 'Local Setup' },
-      'AUTOMATION':       { file: BASE + 'AUTOMATION.md',       nav: 'nav-automation', title: 'Automation' },
-      'SERVICE-CONTRACT': { file: BASE + 'SERVICE-CONTRACT.md', nav: 'nav-service',    title: 'Service Contract' },
+      'LOCAL-SETUP':           { file: BASE + 'LOCAL-SETUP.md',           nav: 'nav-setup',      title: 'Local Setup' },
+      'SALESFORCE-OAUTH-SETUP': { file: BASE + 'SALESFORCE-OAUTH-SETUP.md', nav: 'nav-sf-oauth',   title: 'Salesforce OAuth' },
+      'AUTOMATION':            { file: BASE + 'AUTOMATION.md',            nav: 'nav-automation', title: 'Automation' },
+      'SERVICE-CONTRACT':      { file: BASE + 'SERVICE-CONTRACT.md',      nav: 'nav-service',    title: 'Service Contract' },
     };
 
     const params = new URLSearchParams(location.search);

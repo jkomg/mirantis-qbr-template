@@ -76,12 +76,22 @@
           <div style="display:flex; align-items:center; gap:10px;">
             <sc-if value="{{ sidecarStatus === 'ok' }}" hint-placeholder-val="{{ false }}">
               <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(61,174,115,0.18); color:#3DAE73; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
-                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>SIDECAR READY
+                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>{{ sfAuthMode === 'oauth' ? 'CONNECTED' : 'SIDECAR READY' }}
+              </div>
+            </sc-if>
+            <sc-if value="{{ sidecarStatus === 'oauth-needed' }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(0,201,176,0.15); color:#00C9B0; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#00C9B0;"></div>LOGIN REQUIRED
               </div>
             </sc-if>
             <sc-if value="{{ sidecarStatus === 'no-creds' }}" hint-placeholder-val="{{ false }}">
               <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(245,166,35,0.15); color:#F5A623; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
                 <div style="width:6px; height:6px; border-radius:50%; background:#F5A623;"></div>MISSING CREDS
+              </div>
+            </sc-if>
+            <sc-if value="{{ sidecarStatus === 'not-configured' }}" hint-placeholder-val="{{ false }}">
+              <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(245,166,35,0.15); color:#F5A623; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
+                <div style="width:6px; height:6px; border-radius:50%; background:#F5A623;"></div>NOT CONFIGURED
               </div>
             </sc-if>
             <sc-if value="{{ sidecarStatus === 'unreachable' }}" hint-placeholder-val="{{ false }}">
@@ -92,9 +102,29 @@
           </div>
         </div>
         <div style="font-family:'Lato',sans-serif; font-size:13px; color:#7E8CA8; margin-bottom:14px; line-height:1.5;">
-          Runs as a sidecar on port 8081. Pulls Account, Opportunities, Assets, and Contacts from Salesforce and merges them into the form. Usage, support metrics, incidents, wins, risks, and asks still need the TAM's input.
-          See <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0; font-size:12px;">sf-sync/README.md</span> for setup.
+          Runs as a sidecar on port 8081. Each TAM connects with their own Salesforce login (OAuth). Pulls Account, Opportunities, Assets, and Contacts and merges them into the form. Usage, support metrics, incidents, wins, risks, and asks still need the TAM's input.
+          See <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0; font-size:12px;">SALESFORCE-OAUTH-SETUP.md</span> for Connected App setup.
         </div>
+        <sc-if value="{{ sfAuthMode === 'oauth' }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px; padding:12px 14px; background:#0E1A2E; border:1px solid #1F2A44;">
+            <sc-if value="{{ sfConnectedUser }}" hint-placeholder-val="{{ '' }}">
+              <div style="font-family:'Lato',sans-serif; font-size:14px; color:#C8D0E0;">
+                Connected as <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0;">{{ sfConnectedUser }}</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ !sfConnectedUser }}" hint-placeholder-val="{{ true }}">
+              <div style="font-family:'Lato',sans-serif; font-size:14px; color:#7E8CA8;">Sign in with your Salesforce account to pull account data.</div>
+            </sc-if>
+            <div style="display:flex; gap:8px; flex-shrink:0;">
+              <sc-if value="{{ !sfConnectedUser }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ onSfConnect }}" style="padding:10px 16px; font-family:'Overpass',sans-serif; font-weight:700; font-size:14px; background:#00C9B0; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px;">Connect to Salesforce</button>
+              </sc-if>
+              <sc-if value="{{ sfConnectedUser }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ onSfDisconnect }}" style="padding:10px 16px; font-family:'JetBrains Mono',monospace; font-size:12px; background:transparent; border:1px solid #3A4661; color:#7E8CA8; cursor:pointer; letter-spacing:1px;">Disconnect</button>
+              </sc-if>
+            </div>
+          </div>
+        </sc-if>
         <div style="display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px;">
           <label style="display:flex; flex-direction:column; gap:6px;">
             <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1.5px; font-weight:700;">SALESFORCE ACCOUNT NAME (exact match)</span>
@@ -738,11 +768,117 @@ class Component extends DCLogic {
     importText: '',
     importedAt: null,
     sfAccount: '',
-    sidecarStatus: null,   // null | 'checking' | 'ok' | 'no-creds' | 'unreachable'
+    sidecarStatus: null,   // null | 'ok' | 'oauth-needed' | 'no-creds' | 'not-configured' | 'unreachable'
     sidecarChecking: false,
+    sfAuthMode: null,      // null | 'oauth' | 'password' | 'none'
+    sfConnectedUser: '',
     sfPulling: false,
     sfPulledAt: null,
     sfPullError: '',
+  };
+
+  componentDidMount() {
+    const params = new URLSearchParams(window.location.search);
+    const sfParam = params.get('sf');
+    const sfMsg = params.get('msg');
+    if (sfParam === 'connected') {
+      this.setState({ sfPullError: '' });
+    } else if (sfParam === 'error') {
+      this.setState({ sfPullError: sfMsg ? decodeURIComponent(sfMsg) : 'Salesforce login failed.' });
+    }
+    if (sfParam) {
+      const clean = window.location.pathname + window.location.hash;
+      window.history.replaceState({}, '', clean);
+    }
+    this.onSidecarCheck();
+  }
+
+  static SIDECAR = 'http://localhost:8081';
+
+  sfFetch(path, opts = {}) {
+    return fetch(Component.SIDECAR + path, { credentials: 'include', ...opts });
+  }
+
+  mapSidecarHealth(j) {
+    if (j.authMode === 'oauth') {
+      if (!j.oauthConfigured) return 'not-configured';
+      return j.connected ? 'ok' : 'oauth-needed';
+    }
+    if (j.authMode === 'password') return j.ready ? 'ok' : 'no-creds';
+    return j.oauthConfigured ? 'oauth-needed' : 'not-configured';
+  }
+
+  onSfAccountChange = (e) => {
+    this.setState({ sfAccount: e.target.value, sfPullError: '' });
+  };
+
+  onSidecarCheck = async () => {
+    this.setState({ sidecarChecking: true, sfPullError: '' });
+    try {
+      const r = await this.sfFetch('/health', { signal: AbortSignal.timeout(5000) });
+      const j = await r.json();
+      this.setState({
+        sidecarChecking: false,
+        sidecarStatus: this.mapSidecarHealth(j),
+        sfAuthMode: j.authMode || 'none',
+        sfConnectedUser: j.connected ? (j.username || '') : '',
+      });
+    } catch {
+      this.setState({
+        sidecarChecking: false,
+        sidecarStatus: 'unreachable',
+        sfAuthMode: null,
+        sfConnectedUser: '',
+      });
+    }
+  };
+
+  onSfConnect = () => {
+    window.location.href = Component.SIDECAR + '/oauth/login';
+  };
+
+  onSfDisconnect = async () => {
+    try {
+      await this.sfFetch('/oauth/logout', { method: 'POST' });
+    } catch (_) {}
+    this.setState({ sfConnectedUser: '', sfPullError: '' });
+    this.onSidecarCheck();
+  };
+
+  onSfPull = async () => {
+    const account = (this.state.sfAccount || '').trim();
+    if (!account) {
+      this.setState({ sfPullError: 'Enter a Salesforce Account name first.' });
+      return;
+    }
+    if (this.state.sfAuthMode === 'oauth' && !this.state.sfConnectedUser) {
+      this.setState({ sfPullError: 'Connect to Salesforce first.' });
+      return;
+    }
+    this.setState({ sfPulling: true, sfPullError: '', sfPulledAt: null });
+    try {
+      const r = await this.sfFetch('/pull', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ account, quarter: this.state.form.quarter }),
+        signal: AbortSignal.timeout(30000),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        this.setState({
+          sfPulling: false,
+          sfPullError: j.error || 'Pull failed (HTTP ' + r.status + ')',
+          sidecarStatus: r.status === 401 ? 'oauth-needed' : this.state.sidecarStatus,
+          sfConnectedUser: r.status === 401 ? '' : this.state.sfConnectedUser,
+        });
+        return;
+      }
+      const merged = this.hydrate(j.payload);
+      this.setState({ sfPulling: false, sfPulledAt: Date.now(), sfPullError: '', form: merged, sidecarStatus: 'ok' });
+    } catch (err) {
+      const msg = err.name === 'TimeoutError' ? 'Sidecar timed out (30 s). Is it running?' : 'Sidecar unreachable — run `docker compose up`.';
+      this.setState({ sfPulling: false, sfPullError: msg, sidecarStatus: 'unreachable' });
+    }
   };
 
   loadInitial() {
@@ -1338,61 +1474,22 @@ class Component extends DCLogic {
     const npsTrendStr = (nd >= 0 ? '▲ +' : '▼ ') + nd + ' QoQ';
     const presentationDateFmt = (form.presentationDate || '').replace(/-/g, '.');
 
-    // ---- SALESFORCE SIDECAR ----
-    const SIDECAR = 'http://localhost:8081';
-
-    const onSfAccountChange = (e) => {
-      this.setState({ sfAccount: e.target.value, sfPullError: '' });
-    };
-
-    const onSidecarCheck = async () => {
-      this.setState({ sidecarChecking: true, sidecarStatus: 'checking', sfPullError: '' });
-      try {
-        const r = await fetch(SIDECAR + '/health', { signal: AbortSignal.timeout(5000) });
-        const j = await r.json();
-        this.setState({ sidecarChecking: false, sidecarStatus: j.ready ? 'ok' : 'no-creds' });
-      } catch {
-        this.setState({ sidecarChecking: false, sidecarStatus: 'unreachable' });
-      }
-    };
-
-    const onSfPull = async () => {
-      const account = (this.state.sfAccount || '').trim();
-      if (!account) {
-        this.setState({ sfPullError: 'Enter a Salesforce Account name first.' });
-        return;
-      }
-      this.setState({ sfPulling: true, sfPullError: '', sfPulledAt: null });
-      try {
-        const r = await fetch(SIDECAR + '/pull', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ account, quarter: this.state.form.quarter }),
-          signal: AbortSignal.timeout(30000),
-        });
-        const j = await r.json();
-        if (!r.ok) {
-          this.setState({ sfPulling: false, sfPullError: j.error || 'Pull failed (HTTP ' + r.status + ')' });
-          return;
-        }
-        const merged = this.hydrate(j.payload);
-        this.setState({ sfPulling: false, sfPulledAt: Date.now(), sfPullError: '', form: merged, sidecarStatus: 'ok' });
-      } catch (err) {
-        const msg = err.name === 'TimeoutError' ? 'Sidecar timed out (30 s). Is it running?' : 'Sidecar unreachable — run `docker compose up`.';
-        this.setState({ sfPulling: false, sfPullError: msg, sidecarStatus: 'unreachable' });
-      }
-    };
-
     return {
       form,
       sfAccount: this.state.sfAccount,
       sidecarStatus: this.state.sidecarStatus,
       sidecarChecking: this.state.sidecarChecking,
+      sfAuthMode: this.state.sfAuthMode,
+      sfConnectedUser: this.state.sfConnectedUser,
       sfPulling: this.state.sfPulling,
       sfPulledAt: this.state.sfPulledAt,
       sfPulledRecently: this.state.sfPulledAt && (Date.now() - this.state.sfPulledAt < 12000),
       sfPullError: this.state.sfPullError || '',
-      onSfAccountChange, onSidecarCheck, onSfPull,
+      onSfAccountChange: this.onSfAccountChange,
+      onSidecarCheck: this.onSidecarCheck,
+      onSfConnect: this.onSfConnect,
+      onSfDisconnect: this.onSfDisconnect,
+      onSfPull: this.onSfPull,
       onFieldChange, onActionChange, onActionAdd, onActionRemove,
       onIncChange, onIncAdd, onIncRemove,
       onWinChange, onWinAdd, onWinRemove,

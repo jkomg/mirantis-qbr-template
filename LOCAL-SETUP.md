@@ -48,6 +48,7 @@ You can skip `fetch-fonts.sh` — the deck falls back to system fonts (Helvetica
 
 1. Open `http://localhost:8080/` → click **Configurator**
 2. Either:
+   - **Pull from Salesforce:** connect with your own SF login (see [`SALESFORCE-OAUTH-SETUP.md`](./SALESFORCE-OAUTH-SETUP.md))
    - **Paste-import:** SF Report JSON, flat object, or full `qbr.data.json` into the Import panel
    - **Type directly:** Customer name, ARR, support metrics, narrative (wins/risks/asks)
 3. In **Slides to include**, turn off any sections that don't apply this quarter
@@ -73,6 +74,19 @@ To load a specific file, set the deck's `dataFile` tweak in the Tweaks panel: `.
 
 ---
 
+## Pull from Salesforce (OAuth)
+
+The `sf-sync` sidecar (port 8081) lets each TAM connect with **their own** Salesforce login — no shared password in `.env`.
+
+1. IT creates a Connected App (one-time) — full walkthrough: [`SALESFORCE-OAUTH-SETUP.md`](./SALESFORCE-OAUTH-SETUP.md)
+2. Copy `.env.example` → `.env`, add `SF_CONSUMER_KEY` and `SF_CONSUMER_SECRET`
+3. `docker compose up --build`
+4. Configurator → **Connect to Salesforce** → **Pull from Salesforce**
+
+Technical details: [`sf-sync/README.md`](./sf-sync/README.md).
+
+---
+
 ## What's in the container
 
 - `QBR Configurator.dc.html` — the intake form
@@ -80,6 +94,7 @@ To load a specific file, set the deck's `dataFile` tweak in the Tweaks panel: `.
 - `assets/` — logo, fonts (woff2), shared CSS
 - `qbr.data.json` — built-in demo values (Vertex Logistics)
 - `scripts/mirantis-qbr-sync.js` — SF integration scaffold (for your RevOps team)
+- `SALESFORCE-OAUTH-SETUP.md` — Connected App + per-TAM OAuth setup
 - `AUTOMATION.md`, `SERVICE-CONTRACT.md` — architecture docs
 
 ---

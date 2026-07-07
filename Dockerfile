@@ -32,6 +32,7 @@ COPY ["assets/",                          "/usr/share/nginx/html/assets/"]
 COPY ["AUTOMATION.md",                    "/usr/share/nginx/html/"]
 COPY ["SERVICE-CONTRACT.md",              "/usr/share/nginx/html/"]
 COPY ["LOCAL-SETUP.md",                   "/usr/share/nginx/html/"]
+COPY ["SALESFORCE-OAUTH-SETUP.md",        "/usr/share/nginx/html/"]
 COPY ["scripts/mirantis-qbr-sync.js",     "/usr/share/nginx/html/scripts/mirantis-qbr-sync.js"]
 
 # Copy the locally-fetched fonts on top of assets/
