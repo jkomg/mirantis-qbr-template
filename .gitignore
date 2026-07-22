@@ -36,3 +36,4 @@ exports/
 .env
 .env.local
 *.log
+.aider*
