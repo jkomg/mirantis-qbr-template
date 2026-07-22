@@ -350,7 +350,7 @@
     <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">From {{ customer }} Q2 FY26 QBR</div>
   </div>
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">What we committed last QBR</div>
-  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:18px;">Four commitments. Three delivered, one slipped.</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:18px;">{{ goalsRecapSummary }}</div>
 
   <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif; margin-top:50px;">
     <thead>
@@ -457,28 +457,28 @@
   <div style="margin-top:50px; display:grid; grid-template-columns:repeat(5, 1fr); gap:24px;">
     <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#6B7280; letter-spacing:2px;">TICKETS</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">87</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ ticketsTotal }}</div>
       <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:6px;">total this Q</div>
     </div>
     <div style="border-top:3px solid #E03546; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#C0303E; letter-spacing:2px;">P1</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">4</div>
-      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">▼ -2 QoQ</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ p1Count }}</div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">{{ p1TrendStr }}</div>
     </div>
     <div style="border-top:3px solid #F5A623; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#B57515; letter-spacing:2px;">SLA MET</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">96<span style="font-size:48px;">%</span></div>
-      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">▼ -2pp QoQ</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ slaMet }}<span style="font-size:48px;">%</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">{{ slaTrendStr }}</div>
     </div>
     <div style="border-top:3px solid #F5A623; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#B57515; letter-spacing:2px;">P1 MTTR</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">3.4<span style="font-size:48px;">h</span></div>
-      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">target 3.0h</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ p1MttrHours }}<span style="font-size:48px;">h</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">target {{ p1MttrTarget }}h</div>
     </div>
     <div style="border-top:3px solid #3DAE73; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#1F7D52; letter-spacing:2px;">CSAT</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">4.6<span style="font-size:48px;">/5</span></div>
-      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">▲ +0.2 QoQ</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ csat }}<span style="font-size:48px;">/5</span></div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#3DAE73; margin-top:6px;">{{ csatTrendStr }}</div>
     </div>
   </div>
 
@@ -487,19 +487,17 @@
     <div>
       <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Ticket volume by severity</div>
       <div style="display:flex; flex-direction:column; gap:14px;">
-        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P1 — Production down</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">4</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:5%; background:#E03546;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P2 — Degraded</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">19</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:22%; background:#F5A623;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P3 — Functional</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">42</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:48%; background:#7B4E7B;"></div></div></div>
-        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">P4 — Question / how-to</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">22</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:25%; background:#A88AA0;"></div></div></div>
+        <sc-for list="{{ sevBreakdown }}" as="s" hint-placeholder-count="4">
+        <div><div style="display:flex; justify-content:space-between; margin-bottom:6px;"><div style="font-family:'Lato',sans-serif; font-weight:600; font-size:22px;">{{ s.label }}</div><div style="font-family:'JetBrains Mono',monospace; font-size:20px;">{{ s.count }}</div></div><div style="height:14px; background:#F4EFF1;"><div style="height:100%; width:{{ s.pctWidth }}%; background:{{ s.color }};"></div></div></div>
+        </sc-for>
       </div>
     </div>
     <div>
       <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:28px; color:#3A1A3A; margin-bottom:18px;">Where the time goes</div>
       <div style="display:flex; flex-direction:column; gap:18px;">
-        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">38%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Networking / CNI questions — most still resolve in &lt; 1h</div></div>
-        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">24%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Upgrade &amp; lifecycle — MKE 3.7 path planning</div></div>
-        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">19%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Storage — PV reclaim and CSI driver behavior</div></div>
-        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">19%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">Other — auth, observability, custom helm</div></div>
+        <sc-for list="{{ timeSpent }}" as="t" hint-placeholder-count="4">
+        <div style="display:flex; gap:18px; align-items:flex-start;"><div style="font-family:'JetBrains Mono',monospace; font-size:26px; color:#3A1A3A; font-weight:700; min-width:80px;">{{ t.pct }}%</div><div style="font-family:'Lato',sans-serif; font-size:22px; color:#14161A; line-height:1.4;">{{ t.label }}</div></div>
+        </sc-for>
       </div>
     </div>
   </div>
@@ -602,7 +600,7 @@
     <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · {{ quarter }}</div>
   </div>
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Incidents &amp; RCAs</div>
-  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px;">Four P1s opened this quarter. All resolved within SLA total resolution; two exceeded MTTR target. All RCAs closed.</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px;">{{ incidentsSummary }}</div>
 
   <table style="width:100%; border-collapse:collapse; font-family:'Lato',sans-serif; margin-top:50px;">
     <thead>
@@ -675,13 +673,13 @@
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Risks &amp; blockers</div>
 
   <sc-if value="{{ rfPositive }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three items on the radar. Each has an owner and a path to closed — none are blocking renewal.</div>
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">{{ risksSummaryPositive }}</div>
   </sc-if>
   <sc-if value="{{ rfBalanced }}" hint-placeholder-val="{{ true }}">
-    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three open items. Two are on us, one is a joint dependency. We need agreement on owners and dates before we leave the room.</div>
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">{{ risksSummaryBalanced }}</div>
   </sc-if>
   <sc-if value="{{ rfCandid }}" hint-placeholder-val="{{ false }}">
-    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three items that could materially affect the renewal conversation if they're not closed by Q4. Calling them out early so we can resource them now, not in February.</div>
+    <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">{{ risksSummaryCandid }}</div>
   </sc-if>
 
   <div style="margin-top:50px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
@@ -781,7 +779,7 @@
     <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">As of June 2026 review</div>
   </div>
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Where {{ customer }} is heading</div>
-  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Three initiatives we're tracking on your side. Edit during the meeting if priorities have shifted.</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">{{ customerRoadmapSummary }}</div>
 
   <div style="margin-top:50px; display:grid; grid-template-columns:repeat(3, 1fr); gap:36px;">
     <sc-for list="{{ customerRoadmap }}" as="item" hint-placeholder-count="3">
@@ -806,7 +804,7 @@
   <div style="position:absolute; top:0; left:0; width:240px; height:4px; background:#00C9B0;"></div>
   <div style="display:flex; justify-content:space-between; align-items:baseline;">
     <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#00C9B0; letter-spacing:3px;">// 11 · RENEWAL &amp; EXPANSION</div>
-    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">{{ customer }} · renews 2027-03-15</div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#5C6B85;">{{ customer }} · renews {{ renewalDate }}</div>
   </div>
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; letter-spacing:-1.5px; line-height:1; margin-top:18px;">Renewal &amp; expansion</div>
 
@@ -815,7 +813,7 @@
     <div>
       <div style="font-family:'JetBrains Mono',monospace; font-size:18px; color:#7E8CA8; letter-spacing:2px; margin-bottom:14px;">ARR PATH · CURRENT → RENEWAL</div>
       <div style="display:flex; align-items:flex-end; gap:18px; height:340px;">
-        <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px;">$2.4M</div><div style="width:100%; background:#00C9B0; height:280px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#0E1A2E; letter-spacing:1px;">CURRENT</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#7E8CA8;">Today</div></div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px;">{{ arrCurrent }}</div><div style="width:100%; background:#00C9B0; height:280px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#0E1A2E; letter-spacing:1px;">CURRENT</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#7E8CA8;">Today</div></div>
         <div style="font-family:'Overpass',sans-serif; font-weight:300; font-size:40px; color:#5C6B85; padding-bottom:140px;">+</div>
         <sc-for list="{{ expansions }}" as="exp" hint-placeholder-count="2">
           <div style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:10px;"><div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:28px;">{{ exp.valueFmt }}</div><div style="width:100%; background:#5DE4D2; height:{{ exp.barHeight }}px; display:flex; align-items:flex-end; justify-content:center; padding-bottom:14px; box-sizing:border-box;"><div style="font-family:'JetBrains Mono',monospace; font-size:13px; color:#0E1A2E; letter-spacing:1px;">{{ exp.name }}</div></div><div style="font-family:'Lato',sans-serif; font-size:18px; color:#7E8CA8;">{{ exp.quarter }}</div></div>
@@ -829,11 +827,11 @@
     <div style="display:flex; flex-direction:column; gap:24px;">
       <div style="border-top:2px solid #00C9B0; padding-top:18px;">
         <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">RENEWAL WINDOW</div>
-        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">Mar 15, 2027 · 9 months out</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">{{ renewalDate }}</div>
       </div>
       <div style="border-top:2px solid #00C9B0; padding-top:18px;">
         <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">BASE RENEWAL</div>
-        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">$2.4M (flat) — locked path</div>
+        <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:36px; margin-top:4px;">{{ arrCurrent }} (flat) — locked path</div>
       </div>
       <div style="border-top:2px solid #00C9B0; padding-top:18px;">
         <div style="font-family:'JetBrains Mono',monospace; font-size:16px; color:#7E8CA8; letter-spacing:2px;">EXPANSION CANDIDATES</div>
@@ -961,7 +959,7 @@
     <div style="font-family:'Lato',sans-serif; font-size:18px; color:#5C6B85;">{{ customer }} · Q4 FY26</div>
   </div>
   <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:88px; color:#3A1A3A; letter-spacing:-1.5px; line-height:1; margin-top:18px;">What we'll do next quarter</div>
-  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">Five commitments. Reviewed live next QBR.</div>
+  <div style="font-family:'Lato',sans-serif; font-size:26px; color:#5B5F66; margin-top:14px; max-width:1600px; line-height:1.4;">{{ nextActionsSummary }}</div>
 
   <div style="margin-top:40px; border-top:2px solid #3A1A3A;">
     <!-- Header row -->
@@ -1203,6 +1201,30 @@ class Component extends DCLogic {
     const slaDelta = d.support?.slaDeltaPp ?? -2;
     const nps = d.nps?.score ?? 42;
     const npsDelta = d.nps?.delta ?? 7;
+    // Support Performance slide — previously hardcoded to the demo mockup values
+    // regardless of loaded data; bound here the same way the KPI strip above is.
+    const ticketsTotal = d.support?.ticketsTotal ?? 87;
+    const p1Count = d.support?.p1Count ?? 4;
+    const p1Delta = d.support?.p1Delta ?? -2;
+    const p1MttrHours = d.support?.p1MttrHours ?? 3.4;
+    const p1MttrTarget = d.support?.p1MttrTargetHours ?? 3.0;
+    const csat = d.support?.csat ?? 4.6;
+    const csatDelta = d.support?.csatDelta ?? 0.2;
+    const p1MttrTargetFmt = Number(p1MttrTarget).toFixed(1);
+    const sevCounts = d.support?.ticketsBySeverity ?? { p1: 4, p2: 19, p3: 42, p4: 22 };
+    const sevTotal = Math.max(1, (sevCounts.p1 || 0) + (sevCounts.p2 || 0) + (sevCounts.p3 || 0) + (sevCounts.p4 || 0));
+    const sevBreakdown = [
+      { key: 'p1', label: 'P1 — Production down', color: '#E03546' },
+      { key: 'p2', label: 'P2 — Degraded', color: '#F5A623' },
+      { key: 'p3', label: 'P3 — Functional', color: '#7B4E7B' },
+      { key: 'p4', label: 'P4 — Question / how-to', color: '#A88AA0' },
+    ].map(s => ({ ...s, count: sevCounts[s.key] || 0, pctWidth: Math.round(((sevCounts[s.key] || 0) / sevTotal) * 100) }));
+    const timeSpent = (d.support?.timeSpent?.length ? d.support.timeSpent : [
+      { pct: 38, label: 'Networking / CNI questions — most still resolve in < 1h' },
+      { pct: 24, label: 'Upgrade & lifecycle — MKE 3.7 path planning' },
+      { pct: 19, label: 'Storage — PV reclaim and CSI driver behavior' },
+      { pct: 19, label: 'Other — auth, observability, custom helm' },
+    ]);
     const renewalDate = fmtDate(d.commercial?.renewalDate || '2027-03-15');
     const nextQbrLabel = d.nextQbr?.label ?? 'Q4 FY26 review';
     const nextQbrDate = fmtDate(d.nextQbr?.date || '2026-09-25');
@@ -1321,6 +1343,29 @@ class Component extends DCLogic {
     const asksFromUs = d.asks?.fromUs || [];
     const asksFromYou = d.asks?.fromYou || [];
 
+    // Slide intro sentences — previously static copy (e.g. "Four commitments. Three
+    // delivered, one slipped.") that quoted the Vertex Logistics demo counts no matter
+    // what data was actually loaded, so a real account with a different number of rows
+    // showed a summary sentence that contradicted the table right below it.
+    const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+    const paDeliveredCount = previousActions.filter(a => a.status === 'delivered').length;
+    const goalsRecapSummary = previousActions.length === 0
+      ? 'No prior commitments on record.'
+      : `${plural(previousActions.length, 'commitment')} · ${paDeliveredCount} delivered`;
+    const incP1Count = incidents.filter(i => i.severity === 'P1').length;
+    const incAllRcaClosed = incidents.length > 0 && incidents.every(i => i.rcaStatus === 'CLOSED');
+    const incidentsSummary = incidents.length === 0
+      ? 'No incidents recorded this period.'
+      : `${plural(incidents.length, 'incident')} this period` +
+        (incP1Count ? ` · ${plural(incP1Count, 'P1')}` : '') +
+        (incAllRcaClosed ? ' · all RCAs closed' : '');
+    const risksCount = risks.length;
+    const risksSummaryPositive = `${plural(risksCount, 'item')} on the radar. Each has an owner and a path to closed — none are blocking renewal.`;
+    const risksSummaryBalanced = `${plural(risksCount, 'open item')} requiring agreement on owners and dates before we leave the room.`;
+    const risksSummaryCandid = `${plural(risksCount, 'item')} that could materially affect the renewal conversation if they're not closed by Q4. Calling them out early so we can resource them now, not in February.`;
+    const customerRoadmapSummary = `${plural(customerRoadmap.length, 'initiative')} we're tracking on your side. Edit during the meeting if priorities have shifted.`;
+    const nextActionsSummary = `${plural(nextActions.length, 'commitment')}. Reviewed live next QBR.`;
+
     // Counts for the tracker dashboard tile
     const naCount = nextActions.length;
     const naOnTrack = nextActions.filter(a => a.status === 'on-track').length;
@@ -1423,6 +1468,8 @@ class Component extends DCLogic {
       renewalDate, nextQbrLabel, nextQbrDate, preparedByEmail, products, stakeholdersText,
       nextActions, previousActions,
       naCount, naOnTrack, naAtRisk, naBlocked, naNotStarted,
+      goalsRecapSummary, incidentsSummary, risksSummaryPositive, risksSummaryBalanced, risksSummaryCandid,
+      customerRoadmapSummary, nextActionsSummary,
       incidents, incidentsPattern, wins, risks, productMix, expansions,
       renewalTotalFmt, expansionTotalFmt,
       roadmapProductQ4, roadmapProductQ1, roadmapPlatformQ4, roadmapPlatformQ1, roadmapServicesQ4, roadmapServicesQ1,
@@ -1437,6 +1484,10 @@ class Component extends DCLogic {
       npsTrendStr: (npsDelta >= 0 ? '▲ +' : '▼ ') + npsDelta + ' QoQ',
       clustersTrendStr: (clustersDelta >= 0 ? '▲ +' : '▼ ') + clustersDelta + ' QoQ',
       arrTrendStr: '▲ +' + arrYoy + '% YoY',
+      ticketsTotal, p1Count, p1MttrHours, csat, sevBreakdown, timeSpent,
+      p1MttrTarget: p1MttrTargetFmt,
+      p1TrendStr: (p1Delta <= 0 ? '▼ ' : '▲ +') + p1Delta + ' QoQ',
+      csatTrendStr: (csatDelta >= 0 ? '▲ +' : '▼ ') + csatDelta + ' QoQ',
       seLight: se === 'light',
       seNotLight: se !== 'light',
       seDeep: se === 'deep',
