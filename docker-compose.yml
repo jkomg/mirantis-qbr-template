@@ -1,11 +1,16 @@
 # docker-compose.yml — Mirantis QBR Template
 # Run:    docker compose up --build
-# Visit:  http://localhost:8080  (deck + configurator)
+# Visit:  http://localhost:8080  (deck + configurator + SLA report)
 #         http://localhost:8081  (sf-sync sidecar health)
 # Stop:   docker compose down
 #
 # SF credentials: copy .env.example → .env and fill in before `docker compose up`.
 # The sf-sync service won't start without a valid .env but the deck runs fine without it.
+#
+# SLA Performance Report reads ./accounts/*.json (gitignored, real customer
+# data) via a read-only bind mount — populate that folder locally before
+# `docker compose up` if you want it to show real accounts instead of an
+# empty portfolio.
 
 services:
   qbr:
@@ -14,9 +19,14 @@ services:
     container_name: mirantis-qbr
     ports:
       - "8080:8080"
-    # No volume mounts — anything saved inside the container disappears
-    # when it stops. Customer data lives only in your browser's
+    # accounts/ is read-only and bind-mounted, not baked into the image —
+    # the SLA Performance Report reads accounts/*.json via nginx's directory
+    # listing (autoindex, see docker/nginx.conf). Nothing else is mounted:
+    # anything saved elsewhere inside the container disappears when it
+    # stops. Configurator/Deck data still lives only in your browser's
     # localStorage and in any JSON files you explicitly download.
+    volumes:
+      - ./accounts:/usr/share/nginx/html/accounts:ro
     restart: "no"
     # Tighten the network surface: container can be reached but cannot
     # phone home. Comment out if you need to install packages live.

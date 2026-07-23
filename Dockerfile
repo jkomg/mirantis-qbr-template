@@ -24,6 +24,7 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copy the deck + configurator + data + assets
 COPY ["QBR Configurator.dc.html",         "/usr/share/nginx/html/"]
 COPY ["QBR Template.dc.html",             "/usr/share/nginx/html/"]
+COPY ["SLA Performance Report.html",      "/usr/share/nginx/html/"]
 COPY ["QBR Template - 3 Directions.dc.html", "/usr/share/nginx/html/"]
 COPY ["deck-stage.js",                    "/usr/share/nginx/html/"]
 COPY ["support.js",                       "/usr/share/nginx/html/"]
