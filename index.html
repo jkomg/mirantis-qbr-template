@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Mirantis QBR Template</title>
+  <title>Mirantis QBR Tools</title>
   <link rel="stylesheet" href="./assets/fonts.css">
   <style>
     * { box-sizing: border-box; }
@@ -19,7 +19,7 @@
     }
     .frame {
       width: 100%;
-      max-width: 920px;
+      max-width: 1040px;
     }
     .grid {
       position: absolute;
@@ -46,7 +46,7 @@
     h1 {
       font-family: 'Overpass', system-ui, sans-serif;
       font-weight: 800;
-      font-size: 72px;
+      font-size: 64px;
       line-height: 1.05;
       letter-spacing: -1.5px;
       margin: 0 0 20px;
@@ -62,19 +62,23 @@
       font-size: 20px;
       line-height: 1.45;
       color: #C8D0E0;
-      max-width: 720px;
-      margin-bottom: 56px;
+      max-width: 760px;
+      margin-bottom: 48px;
     }
     .cards {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 20px;
       margin-bottom: 48px;
+      align-items: stretch;
     }
+    @media (max-width: 760px) { .cards { grid-template-columns: 1fr; } }
     .card {
+      display: flex;
+      flex-direction: column;
       background: rgba(255,255,255,0.04);
       border: 1px solid #2A3A55;
-      padding: 28px;
+      padding: 30px;
       text-decoration: none;
       color: white;
       transition: background 0.15s, border-color 0.15s;
@@ -94,16 +98,35 @@
       font-family: 'Overpass', system-ui, sans-serif;
       font-weight: 700;
       font-size: 28px;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .card .desc {
       font-size: 15px;
-      color: #7E8CA8;
-      line-height: 1.45;
+      color: #C8D0E0;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .card .sub {
+      margin-top: auto;
+      padding-top: 16px;
+      border-top: 1px solid #1F2A44;
+    }
+    .card .sub + .sub { margin-top: 0; padding-top: 12px; border-top: none; }
+    .card .sub-label {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 10.5px;
+      color: #5C6B85;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+    }
+    .card .sub-value {
+      font-size: 13.5px;
+      color: #93A0BE;
+      line-height: 1.5;
     }
     .meta {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-columns: 1fr 1fr;
       gap: 16px;
       padding-top: 28px;
       border-top: 1px solid #1F2A44;
@@ -153,34 +176,46 @@
         <path d="M10 35 C 50 -10, 90 110, 140 60 S 175 30, 190 50" stroke="white" stroke-width="14" stroke-linecap="round" fill="none"/>
         <path d="M10 95 C 50 140, 90 20, 140 70 S 175 100, 190 80" stroke="#E03546" stroke-width="14" stroke-linecap="round" fill="none"/>
       </svg>
-      <div>MIRANTIS · QBR · LOCAL <span class="badge">EPHEMERAL</span></div>
+      <div>MIRANTIS · LOCAL <span class="badge">EPHEMERAL</span></div>
     </div>
 
-    <div class="tag">// QBR TEMPLATE · DOCKER</div>
-    <h1>Quarterly Business Review.</h1>
-    <p class="lede">Configure the deck, run live with real customer data on your machine, then export to PPTX. Container is offline — nothing leaves your network.</p>
+    <div class="tag">// TAM TOOLS · DOCKER</div>
+    <h1>Two tools. Pick one.</h1>
+    <p class="lede">Both run offline against data on your machine — nothing leaves your network, and neither tool phones home. They serve different jobs and read data differently; each card below says how.</p>
 
     <div class="cards">
       <a class="card" href="./QBR%20Configurator.dc.html">
-        <div class="step">01 · CONFIGURE</div>
-        <div class="name">Configurator →</div>
-        <div class="desc">Paste from Salesforce, fill in narrative, toggle slides on/off. Saves to your browser only.</div>
+        <div class="step">QBR DECK BUILDER</div>
+        <div class="name">Configurator → Deck →</div>
+        <div class="desc">Turns one account's data into an 18-slide Quarterly Business Review — exec summary, health, usage, incidents, wins, risks, roadmap, and renewal math — ready to present or export to PPTX.</div>
+        <div class="sub">
+          <div class="sub-label">HOW TO USE</div>
+          <div class="sub-value">Start in the Configurator: paste a Salesforce export or type values in by hand, toggle slides on/off, then open the Deck. Its Tweaks panel adjusts tone, length, and framing per meeting.</div>
+        </div>
+        <div class="sub">
+          <div class="sub-label">DATA &amp; EPHEMERALITY</div>
+          <div class="sub-value">Your draft lives only in this browser's localStorage. Nothing is written to disk unless you explicitly click Download — close the tab without saving and it's gone.</div>
+        </div>
       </a>
-      <a class="card" href="./QBR%20Template.dc.html">
-        <div class="step">02 · PRESENT</div>
-        <div class="name">Deck →</div>
-        <div class="desc">Reads from your draft. Use the Tweaks panel for the dials (length, tone, sales aggression).</div>
+      <a class="card" href="./perf-report.html">
+        <div class="step">SLA PERFORMANCE REPORT</div>
+        <div class="name">Portfolio → Account detail →</div>
+        <div class="desc">Aggregates support-ticket history across every account into one portfolio view — severity lifecycle (what's SLA-bound vs. not), resolution time, recurring themes — then lets you click into any account for its full ticket history.</div>
+        <div class="sub">
+          <div class="sub-label">HOW TO USE</div>
+          <div class="sub-value">Open it directly, no setup step. Click any account row to drill in; click a column header to re-sort. Reload the page any time to re-read the latest data.</div>
+        </div>
+        <div class="sub">
+          <div class="sub-label">DATA &amp; EPHEMERALITY</div>
+          <div class="sub-value">Reads accounts/*.json live, fresh, on every load — a read-only mount, nothing cached or written back by the app. It has no memory between visits; update a file and reload to see the change.</div>
+        </div>
       </a>
     </div>
 
     <div class="meta">
       <div class="meta-item">
-        <div class="label">DATA STORAGE</div>
-        <div class="value">localStorage + downloadable JSON. No volumes mounted.</div>
-      </div>
-      <div class="meta-item">
         <div class="label">EXTERNAL REQUESTS</div>
-        <div class="value">Zero. Fonts self-hosted; deck does not phone home.</div>
+        <div class="value">Zero from either tool. Fonts are self-hosted; nothing here phones home.</div>
       </div>
       <div class="meta-item">
         <div class="label">DOCS</div>
