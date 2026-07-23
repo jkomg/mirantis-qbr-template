@@ -1,0 +1,731 @@
+<meta charset="utf-8">
+<title>SLA &amp; Service Performance — Mirantis Support Portfolio</title>
+<style>
+  :root {
+    color-scheme: light;
+    --surface-page: #F7F8FB;
+    --surface-card: #FFFFFF;
+    --surface-hero: #0E1A2E;
+    --surface-hero-card: rgba(255,255,255,0.06);
+    --border: #E3E7EF;
+    --border-strong: #D3D9E6;
+    --text-primary: #14161A;
+    --text-secondary: #5C6B85;
+    --text-muted: #9AA1B0;
+    --text-on-hero: #F2F4F8;
+    --text-on-hero-muted: #8FA0C2;
+    --accent: #00A996;
+    --accent-bg: #00C9B0;
+    --accent-soft: rgba(0,201,176,0.12);
+    --plum: #3A1A3A;
+    --status-good: #0ca30c;
+    --status-warning: #fab219;
+    --status-serious: #ec835a;
+    --status-critical: #d03b3b;
+    --shadow-card: 0 1px 2px rgba(20,22,26,0.05), 0 6px 16px -8px rgba(20,22,26,0.10);
+    --font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --surface-page: #0E1A2E; --surface-card: #152238; --surface-hero: #0A1421;
+      --surface-hero-card: rgba(255,255,255,0.05);
+      --border: #223251; --border-strong: #2C3E62;
+      --text-primary: #F2F4F8; --text-secondary: #93A0BE; --text-muted: #6B7A99;
+      --text-on-hero: #F2F4F8; --text-on-hero-muted: #7E8FB4;
+      --accent: #2FE0C8; --accent-bg: #00C9B0; --accent-soft: rgba(47,224,200,0.12);
+      --plum: #C9A8C4;
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.2), 0 8px 20px -10px rgba(0,0,0,0.4);
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --surface-page: #0E1A2E; --surface-card: #152238; --surface-hero: #0A1421;
+    --surface-hero-card: rgba(255,255,255,0.05);
+    --border: #223251; --border-strong: #2C3E62;
+    --text-primary: #F2F4F8; --text-secondary: #93A0BE; --text-muted: #6B7A99;
+    --text-on-hero: #F2F4F8; --text-on-hero-muted: #7E8FB4;
+    --accent: #2FE0C8; --accent-bg: #00C9B0; --accent-soft: rgba(47,224,200,0.12);
+    --plum: #C9A8C4;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.2), 0 8px 20px -10px rgba(0,0,0,0.4);
+  }
+  :root[data-theme="light"] {
+    color-scheme: light;
+    --surface-page: #F7F8FB; --surface-card: #FFFFFF; --surface-hero: #0E1A2E;
+    --border: #E3E7EF; --text-primary: #14161A; --text-secondary: #5C6B85; --text-muted: #9AA1B0;
+    --accent: #00A996; --plum: #3A1A3A;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface-page); color: var(--text-primary);
+    font-family: var(--font-body); line-height: 1.5; -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; }
+  .wrap { max-width: 1220px; margin: 0 auto; padding: 0 28px 80px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 800; text-wrap: balance; margin: 0; }
+  table { border-collapse: collapse; width: 100%; }
+  ::selection { background: var(--accent-soft); }
+
+  .hero { background: var(--surface-hero); color: var(--text-on-hero); padding: 40px 0 36px; border-bottom: 3px solid var(--accent-bg); }
+  .hero-inner { max-width: 1220px; margin: 0 auto; padding: 0 28px; }
+  .hero-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; }
+  .wordmark-row { display: flex; align-items: center; gap: 14px; }
+  .wordmark { font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.18em; color: var(--text-on-hero-muted); }
+  .nav-link { font-family: var(--font-mono); font-size: 12.5px; letter-spacing: 0.06em; color: var(--text-on-hero-muted); text-decoration: none; border: 1px solid var(--border-strong); padding: 6px 12px; border-radius: 6px; transition: color .15s, border-color .15s; }
+  .nav-link:hover { color: var(--accent); border-color: var(--accent); }
+  .hero h1 { font-size: clamp(28px, 4vw, 40px); letter-spacing: -0.02em; margin-top: 10px; color: #fff; }
+  .hero-sub { color: var(--text-on-hero-muted); font-size: 16px; margin-top: 10px; max-width: 660px; }
+  .hero-meta { text-align: right; font-family: var(--font-mono); font-size: 12.5px; color: var(--text-on-hero-muted); line-height: 1.8; white-space: nowrap; }
+  .hero-meta strong { color: var(--text-on-hero); font-weight: 600; }
+  .breadcrumb { font-family: var(--font-mono); font-size: 13px; color: var(--text-on-hero-muted); text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .breadcrumb:hover { color: var(--accent); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); margin-top: 28px; border-radius: 10px; overflow: hidden; }
+  .stat-tile { background: var(--surface-hero-card); padding: 20px 22px; }
+  .stat-label { font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-on-hero-muted); }
+  .stat-value { font-family: var(--font-display); font-weight: 800; font-size: 32px; color: #fff; margin-top: 6px; font-variant-numeric: tabular-nums; }
+  .stat-note { font-size: 13px; color: var(--text-on-hero-muted); margin-top: 4px; }
+
+  .panel { background: var(--surface-card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow-card); padding: 30px 32px; margin-top: 24px; }
+  .panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .panel h2 { font-size: 22px; letter-spacing: -0.01em; margin-top: 6px; }
+  .panel-takeaway { color: var(--text-secondary); font-size: 15px; margin-top: 8px; max-width: 780px; }
+  .panel-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; margin-top: 26px; }
+  @media (max-width: 760px) { .panel-grid-2 { grid-template-columns: 1fr; } }
+
+  .bar-list { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+  .bar-row { display: grid; grid-template-columns: 128px 1fr auto; align-items: center; gap: 14px; }
+  .bar-row-label { font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+  .bar-track { position: relative; height: 14px; background: var(--surface-page); border-radius: 4px; overflow: visible; border: 1px solid var(--border); }
+  .bar-fill { position: absolute; top: 0; left: 0; height: 100%; border-radius: 3px; min-width: 3px; transition: width .5s cubic-bezier(.2,.8,.2,1); cursor: default; }
+  .bar-value { font-family: var(--font-mono); font-size: 13.5px; color: var(--text-secondary); font-variant-numeric: tabular-nums; min-width: 56px; text-align: right; }
+  .sev-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  .sm-title { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; }
+  .sm-total { font-family: var(--font-display); font-weight: 800; font-size: 26px; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+  .callout { margin-top: 26px; padding: 18px 22px; border-radius: 10px; background: var(--accent-soft); border-left: 4px solid var(--accent-bg); font-size: 15px; line-height: 1.55; }
+  .callout strong { color: var(--text-primary); }
+
+  .table-scroll { overflow-x: auto; margin-top: 20px; }
+  .data-table { font-size: 14px; }
+  .data-table th { text-align: left; font-family: var(--font-mono); font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; padding: 10px 14px; border-bottom: 2px solid var(--border-strong); white-space: nowrap; }
+  .data-table th[data-sort] { cursor: pointer; user-select: none; }
+  .data-table th[data-sort]:hover { color: var(--accent); }
+  .data-table th .arrow { opacity: 0.4; margin-left: 3px; }
+  .data-table th.sorted .arrow { opacity: 1; color: var(--accent); }
+  .data-table td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .data-table tbody tr.clickable { cursor: pointer; }
+  .data-table tbody tr.clickable:hover { background: var(--accent-soft); }
+  .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; text-align: right; }
+  .acct-name { font-weight: 600; max-width: 320px; }
+  .acct-name .go { color: var(--accent); font-family: var(--font-mono); font-size: 12px; margin-left: 8px; opacity: 0; transition: opacity .1s; }
+  tr.clickable:hover .acct-name .go { opacity: 1; }
+  .mini-stack { display: flex; height: 10px; width: 92px; border-radius: 3px; overflow: hidden; border: 1px solid var(--border); }
+  .mini-stack span { height: 100%; }
+  .health-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .health-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .case-num { font-family: var(--font-mono); color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+  .subject-cell { max-width: 340px; }
+  .subject-cell .subj { color: var(--text-primary); font-weight: 600; }
+  .subject-cell .narrative { color: var(--text-secondary); margin-top: 4px; }
+  .reclass-flag { font-size: 12px; color: var(--status-serious); font-weight: 600; white-space: nowrap; }
+
+  .narrative-block { margin-top: 14px; font-size: 15px; color: var(--text-secondary); line-height: 1.6; }
+  .narrative-block p { margin: 0 0 12px; }
+  .narrative-block ul { margin: 8px 0 0; padding-left: 20px; }
+  .narrative-block li { margin-bottom: 8px; }
+
+  #tooltip { position: fixed; z-index: 50; pointer-events: none; opacity: 0; transform: translateY(4px); transition: opacity .12s ease, transform .12s ease; background: var(--surface-hero); color: var(--text-on-hero); border: 1px solid var(--border-strong); border-radius: 8px; padding: 10px 13px; font-size: 13px; line-height: 1.5; max-width: 320px; box-shadow: 0 8px 24px -6px rgba(0,0,0,0.35); }
+  #tooltip.show { opacity: 1; transform: translateY(0); }
+  #tooltip .tt-title { font-weight: 700; margin-bottom: 3px; }
+  #tooltip .tt-list { color: var(--text-on-hero-muted); }
+
+  .footnote { margin-top: 40px; padding-top: 24px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+  .footnote h3 { font-size: 13px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .06em; font-family: var(--font-mono); font-weight: 600; margin-bottom: 10px; }
+  .footnote ul { margin: 0 0 18px; padding-left: 18px; }
+  .footnote li { margin-bottom: 6px; }
+
+  .state-msg { padding: 60px 20px; text-align: center; color: var(--text-secondary); font-size: 16px; }
+  .state-msg code { font-family: var(--font-mono); background: var(--surface-page); padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border); }
+
+  @media (prefers-reduced-motion: reduce) { .bar-fill { transition: none; } }
+</style>
+
+<div id="app"></div>
+<div id="tooltip"></div>
+
+<script>
+const SLA_BOUND = { P1: true, P2: true, P3: false, P4: false };
+const STATUS = {
+  P1: { color: 'var(--status-critical)', label: 'P1 · Critical (SLA)' },
+  P2: { color: 'var(--status-serious)',  label: 'P2 · Serious (SLA)' },
+  P3: { color: 'var(--status-warning)',  label: 'P3 · Warning' },
+  P4: { color: 'var(--status-good)',     label: 'P4 · Minor' },
+};
+const SEV_ORDER = ['P1','P2','P3','P4'];
+const SEV_RANK = { P1: 1, P2: 2, P3: 3, P4: 4 };
+const HEALTH_META = {
+  'Healthy': { color: 'var(--status-good)', label: 'Healthy' },
+  'Low Activity': { color: 'var(--text-muted)', label: 'Low activity' },
+};
+const fmt = (n) => (n ?? 0).toLocaleString('en-US');
+const fmt1 = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 1 });
+const esc = (s) => (s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function parseDurationHours(s) {
+  if (!s || s === 'Open') return null;
+  let m = /^(\d+)d (\d+)h$/.exec(s);
+  if (m) return parseInt(m[1]) * 24 + parseInt(m[2]);
+  m = /^(\d+)h$/.exec(s);
+  if (m) return parseInt(m[1]);
+  m = /^(\d+)m$/.exec(s);
+  if (m) return parseInt(m[1]) / 60;
+  return null;
+}
+function sevKey(s) { return 'P' + (s || '').trim().split(' ')[1]; }
+
+// ---------- Tooltip ----------
+const tt = document.getElementById('tooltip');
+function showTooltip(evt, title, listHtml) {
+  tt.innerHTML = '<div class="tt-title">' + title + '</div>' + (listHtml ? '<div class="tt-list">' + listHtml + '</div>' : '');
+  tt.classList.add('show');
+  moveTooltip(evt);
+}
+function moveTooltip(evt) {
+  const pad = 16;
+  let x = evt.clientX + pad, y = evt.clientY + pad;
+  const rect = tt.getBoundingClientRect();
+  if (x + rect.width > window.innerWidth - 8) x = evt.clientX - rect.width - pad;
+  if (y + rect.height > window.innerHeight - 8) y = evt.clientY - rect.height - pad;
+  tt.style.left = x + 'px'; tt.style.top = y + 'px';
+}
+function hideTooltip() { tt.classList.remove('show'); }
+function wireTooltips(root) {
+  root.querySelectorAll('[data-tt-title]').forEach(row => {
+    row.addEventListener('mouseenter', (e) => showTooltip(e, row.dataset.ttTitle, row.dataset.ttList));
+    row.addEventListener('mousemove', moveTooltip);
+    row.addEventListener('mouseleave', hideTooltip);
+  });
+}
+
+// ---------- Data loading ----------
+async function fetchAccountFileList() {
+  const res = await fetch('accounts/', { cache: 'no-cache' });
+  if (!res.ok) throw new Error('Cannot list accounts/ (HTTP ' + res.status + ')');
+  const html = await res.text();
+  const files = [...html.matchAll(/href="([^"]+\.json)"/g)].map(m => decodeURIComponent(m[1]));
+  if (!files.length) throw new Error('accounts/ has no .json files');
+  return files.sort();
+}
+async function fetchAllAccounts() {
+  const files = await fetchAccountFileList();
+  const accounts = await Promise.all(files.map(async f => {
+    const r = await fetch('accounts/' + f, { cache: 'no-cache' });
+    const data = await r.json();
+    data._file = f;
+    return data;
+  }));
+  return accounts;
+}
+
+// ---------- Per-account computed view ----------
+function computeAccountStats(d) {
+  const sr = d.sourceReview || {};
+  const tickets = (sr.ticketDetail || []).map(row => {
+    const opened = sevKey(row.openedAs), final = sevKey(row.severity);
+    return {
+      ...row, openedSev: opened, finalSev: final,
+      hours: parseDurationHours(row.duration),
+      reclassified: opened !== final,
+      direction: SEV_RANK[final] > SEV_RANK[opened] ? 'downgraded' : (SEV_RANK[final] < SEV_RANK[opened] ? 'upgraded' : 'none'),
+      // Not in the source data yet — left null so the SLA-breach sort/column has
+      // something to key off once real breach metrics/thresholds are supplied.
+      slaBreach: row.slaBreach ?? null,
+    };
+  });
+  const openedTotals = { P1:0,P2:0,P3:0,P4:0 }, finalTotals = { P1:0,P2:0,P3:0,P4:0 };
+  tickets.forEach(t => { openedTotals[t.openedSev]++; finalTotals[t.finalSev]++; });
+  const resBySev = { P1:[],P2:[],P3:[],P4:[] };
+  tickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.finalSev].push(t.hours); });
+  const resStats = {};
+  SEV_ORDER.forEach(k => {
+    const vals = resBySev[k];
+    resStats[k] = vals.length ? {
+      count: vals.length,
+      avg: vals.reduce((a,b)=>a+b,0) / vals.length,
+      max: Math.max(...vals),
+    } : { count: 0 };
+  });
+  const reclassified = tickets.filter(t => t.reclassified);
+  return { tickets, openedTotals, finalTotals, resStats, reclassifiedCount: reclassified.length };
+}
+
+// ---------- Portfolio aggregation ----------
+function computePortfolio(accounts) {
+  const list = accounts.map(d => {
+    const sr = d.sourceReview || {};
+    const av = computeAccountStats(d);
+    return {
+      file: d._file, name: d.customer.name,
+      total: sr.ticketCounts?.total ?? 0, open: sr.ticketCounts?.open ?? 0, closed: sr.ticketCounts?.closed ?? 0,
+      openedAs: av.openedTotals, finalSeverity: av.finalTotals,
+      health: d.health?.status ?? 'Unknown',
+      _stats: av, _raw: d,
+    };
+  });
+  const portfolioTotal = list.reduce((s,a) => s + a.total, 0);
+  const portfolioOpen = list.reduce((s,a) => s + a.open, 0);
+  const portfolioClosed = list.reduce((s,a) => s + a.closed, 0);
+  const openedAsTotals = { P1:0,P2:0,P3:0,P4:0 }, finalSeverityTotals = { P1:0,P2:0,P3:0,P4:0 };
+  list.forEach(a => SEV_ORDER.forEach(k => { openedAsTotals[k] += a.openedAs[k]; finalSeverityTotals[k] += a.finalSeverity[k]; }));
+  const healthCounts = {};
+  list.forEach(a => { healthCounts[a.health] = (healthCounts[a.health] || 0) + 1; });
+
+  const allTickets = [];
+  list.forEach(a => a._stats.tickets.forEach(t => allTickets.push({ ...t, account: a.name, file: a.file })));
+
+  const resBySev = { P1:[],P2:[],P3:[],P4:[] };
+  allTickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.finalSev].push(t); });
+  const resolutionStats = {};
+  SEV_ORDER.forEach(k => {
+    const vals = resBySev[k].map(t => t.hours);
+    resolutionStats[k] = vals.length ? {
+      count: vals.length,
+      avg_hours: vals.reduce((a,b)=>a+b,0) / vals.length,
+      median_hours: [...vals].sort((a,b)=>a-b)[Math.floor(vals.length/2)],
+      max_hours: Math.max(...vals),
+    } : { count: 0, avg_hours: null, median_hours: null, max_hours: null };
+  });
+
+  const reclass = allTickets.filter(t => t.reclassified);
+  const downgraded = reclass.filter(t => t.direction === 'downgraded');
+  const upgraded = reclass.filter(t => t.direction === 'upgraded');
+  const p1Opened = allTickets.filter(t => t.openedSev === 'P1');
+  const p1StillP1 = p1Opened.filter(t => t.finalSev === 'P1');
+
+  const openTickets = allTickets.filter(t => t.status === 'Open');
+  const longestResolutions = allTickets.filter(t => t.hours != null && t.status === 'Closed')
+    .sort((a,b) => b.hours - a.hours).slice(0, 10);
+
+  const BUCKETS = [
+    ['Upgrade / Migration / Lifecycle', ['upgrad','migrat','lifecycle','version']],
+    ['License / Procurement', ['licens','procure','fulfillment']],
+    ['Stability / Reliability', ['stabilit','reliab','health','resource exhaust','crash']],
+    ['Storage / Disk / Filesystem', ['storage','disk','filesystem','permission']],
+    ['Account / Access / Identity', ['account admin','access manage','identity','onboard','personnel']],
+    ['Networking', ['network','interlock','node integration','orchestration']],
+    ['Certificate Management', ['certificat']],
+  ];
+  const themeBuckets = BUCKETS.map(([label, kws]) => {
+    const accs = list.filter(a => {
+      const text = (a._raw.sourceReview?.recurringThemes || []).join(' ').toLowerCase();
+      return kws.some(kw => text.includes(kw));
+    }).map(a => a.name);
+    return { label, accountCount: accs.length, accounts: accs.sort() };
+  }).sort((a,b) => b.accountCount - a.accountCount);
+
+  return {
+    accounts: list.sort((a,b) => b.total - a.total),
+    portfolio: { total: portfolioTotal, open: portfolioOpen, closed: portfolioClosed, openedAsTotals, finalSeverityTotals, healthCounts },
+    resolutionStats,
+    reclassification: { totalReclassified: reclass.length, downgraded: downgraded.length, upgraded: upgraded.length, p1OpenedCount: p1Opened.length, p1StillP1Count: p1StillP1.length },
+    openTickets, longestResolutions, themeBuckets,
+  };
+}
+
+// ---------- Shared render helpers ----------
+function sevBarListHtml(totals) {
+  const max = Math.max(...SEV_ORDER.map(k => totals[k]), 1);
+  return SEV_ORDER.map(k => {
+    const v = totals[k];
+    const pct = Math.max((v / max) * 100, v > 0 ? 2 : 0);
+    return '<div class="bar-row">' +
+      '<div class="bar-row-label"><span class="sev-dot" style="background:' + STATUS[k].color + '"></span>' + STATUS[k].label + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + STATUS[k].color + '"></div></div>' +
+      '<div class="bar-value">' + fmt(v) + '</div></div>';
+  }).join('');
+}
+function sevStackHtml(final) {
+  const total = SEV_ORDER.reduce((s,k) => s + final[k], 0) || 1;
+  return '<div class="mini-stack">' + SEV_ORDER.map(k => {
+    const w = (final[k] / total) * 100;
+    return w > 0 ? '<span style="width:' + w + '%; background:' + STATUS[k].color + '" title="' + STATUS[k].label + ': ' + final[k] + '"></span>' : '';
+  }).join('') + '</div>';
+}
+function healthChipHtml(health) {
+  const hm = HEALTH_META[health] || { color: 'var(--text-muted)', label: health };
+  return '<span class="health-chip"><span class="health-dot" style="background:' + hm.color + '"></span>' + hm.label + '</span>';
+}
+function resBarListHtml(resStats) {
+  const maxAvg = Math.max(...SEV_ORDER.map(k => resStats[k].avg_hours || resStats[k].avg || 0));
+  return SEV_ORDER.map(k => {
+    const r = resStats[k];
+    const avg = r.avg_hours ?? r.avg;
+    if (!r.count) {
+      return '<div class="bar-row"><div class="bar-row-label"><span class="sev-dot" style="background:' + STATUS[k].color + '"></span>' + STATUS[k].label + '</div><div class="bar-track"></div><div class="bar-value">no closed cases</div></div>';
+    }
+    const pct = Math.max((avg / maxAvg) * 100, 2);
+    const avgDays = avg / 24;
+    return '<div class="bar-row"><div class="bar-row-label"><span class="sev-dot" style="background:' + STATUS[k].color + '"></span>' + STATUS[k].label + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + STATUS[k].color + '"></div></div>' +
+      '<div class="bar-value">' + fmt1(avgDays) + 'd avg</div></div>';
+  }).join('');
+}
+function daysAge(created, asOf) {
+  const c = new Date(created + 'T00:00:00Z'), a = asOf ? new Date(asOf) : new Date(created);
+  return Math.max(0, Math.round((a - c) / 86400000));
+}
+function ticketRowHtml(t, opts) {
+  opts = opts || {};
+  const triage = t.reclassified
+    ? '<span class="reclass-flag">' + t.openedSev + ' → ' + t.finalSev + '</span>'
+    : '<span style="color:var(--text-muted)">unchanged</span>';
+  return '<tr>' +
+    (opts.showAccount ? '<td>' + esc(t.account) + '</td>' : '') +
+    '<td class="case-num">' + esc(t.caseNumber) + '</td>' +
+    '<td class="subject-cell"><div class="subj">' + esc(t.subject) + '</div>' +
+      (opts.full ? '<div class="narrative"><strong>Issue:</strong> ' + esc(t.issue) + '</div>' + (t.resolution ? '<div class="narrative"><strong>Resolution:</strong> ' + esc(t.resolution) + '</div>' : '') : '') +
+    '</td>' +
+    '<td>' + esc(t.created) + '</td>' +
+    '<td>' + esc(t.status) + (t.status === 'Open' ? ' · ' + daysAge(t.created) + 'd' : '') + '</td>' +
+    '<td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td>' +
+    '<td>' + triage + '</td>' +
+    '</tr>';
+}
+
+function fullHistoryRowHtml(t) {
+  const triage = t.reclassified
+    ? '<span class="reclass-flag">' + t.openedSev + ' → ' + t.finalSev + '</span>'
+    : '<span style="color:var(--text-muted)">unchanged</span>';
+  // t.slaBreach is left null until real breach data/thresholds are supplied — sorting is
+  // wired to this field now so filling it in later needs no table rework.
+  const breachLabel = t.slaBreach == null ? '—' : (t.slaBreach ? 'Breached' : 'Met');
+  return '<tr>' +
+    '<td class="case-num">' + esc(t.caseNumber) + '</td>' +
+    '<td class="subject-cell"><div class="subj">' + esc(t.subject) + '</div>' +
+      '<div class="narrative"><strong>Issue:</strong> ' + esc(t.issue) + '</div>' + (t.resolution ? '<div class="narrative"><strong>Resolution:</strong> ' + esc(t.resolution) + '</div>' : '') +
+    '</td>' +
+    '<td>' + esc(t.created) + '</td>' +
+    '<td>' + esc(t.status) + (t.status === 'Open' ? ' · ' + daysAge(t.created) + 'd' : '') + '</td>' +
+    '<td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td>' +
+    '<td>' + breachLabel + '</td>' +
+    '<td>' + triage + '</td>' +
+    '</tr>';
+}
+function wireSortableTable(tableId, rows, rowRenderFn, defaultKey, defaultDir) {
+  const table = document.getElementById(tableId);
+  let sortState = { key: defaultKey, dir: defaultDir };
+  function render() {
+    const sorted = [...rows].sort((a,b) => {
+      let av = a[sortState.key], bv = b[sortState.key];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === 'string') return av.localeCompare(bv) * sortState.dir;
+      return (av - bv) * sortState.dir;
+    });
+    table.querySelector('tbody').innerHTML = sorted.map(rowRenderFn).join('');
+    table.querySelectorAll('th[data-sort]').forEach(th => {
+      th.classList.toggle('sorted', th.dataset.sort === sortState.key);
+      const arrow = th.querySelector('.arrow');
+      if (arrow) arrow.textContent = (th.dataset.sort === sortState.key && sortState.dir === 1) ? '▴' : '▾';
+    });
+  }
+  table.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      sortState.dir = (sortState.key === key) ? -sortState.dir : -1;
+      sortState.key = key;
+      render();
+    });
+  });
+  render();
+}
+
+// ---------- Portfolio view ----------
+function renderPortfolio(agg) {
+  const p = agg.portfolio;
+  const healthy = p.healthCounts['Healthy'] || 0;
+  const other = p.total - healthy;
+
+  const html = `
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-top">
+          <div>
+            <div class="wordmark-row">
+              <div class="wordmark">MIRANTIS · SUPPORT OPERATIONS</div>
+              <a class="nav-link" href="QBR Configurator.dc.html">QBR Configurator →</a>
+            </div>
+            <h1>SLA &amp; Service Performance Report</h1>
+            <div class="hero-sub">Portfolio-wide review of support case history across ${agg.accounts.length} accounts — severity lifecycle, resolution time, and recurring service themes.</div>
+          </div>
+          <div class="hero-meta">
+            Period: <strong>trailing 24 months</strong><br>
+            Accounts: <strong>${agg.accounts.length}</strong> · Tickets: <strong>${fmt(p.total)}</strong>
+          </div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-tile"><div class="stat-label">Total tickets</div><div class="stat-value">${fmt(p.total)}</div><div class="stat-note">${agg.accounts.length} accounts · trailing 24mo</div></div>
+          <div class="stat-tile"><div class="stat-label">Currently open</div><div class="stat-value">${fmt(p.open)}</div><div class="stat-note">${fmt(p.closed)} closed</div></div>
+          <div class="stat-tile"><div class="stat-label">Accounts healthy</div><div class="stat-value">${healthy} / ${agg.accounts.length}</div><div class="stat-note">${p.total ? '' : ''}${agg.accounts.length - healthy} flagged other</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Ticket lifecycle</div>
+          <h2>Severity at open vs. at close</h2>
+          <div class="panel-takeaway"><strong>P1 and P2 are the SLA-bound severities</strong> — active incidents Mirantis is obligated to address under commitment. The customer sets severity at creation based on how urgent the issue feels; once a fix is applied, severity is typically stepped down to P3 while the team confirms it holds, before the ticket closes. The shift below is mostly that resolve-then-verify workflow, not a change in how severe the issue turned out to be — useful context, but secondary to the SLA-bound work itself.</div>
+        </div></div>
+        <div class="panel-grid-2">
+          <div><div class="sm-title">Opened as</div><div class="sm-total">${fmt(p.total)} tickets</div><div class="bar-list">${sevBarListHtml(p.openedAsTotals)}</div></div>
+          <div><div class="sm-title">Closed as (final)</div><div class="sm-total">${fmt(p.total)} tickets</div><div class="bar-list">${sevBarListHtml(p.finalSeverityTotals)}</div></div>
+        </div>
+        <div class="callout">
+          <strong>${fmt(agg.reclassification.totalReclassified)} of ${fmt(p.total)} tickets (${fmt1(100*agg.reclassification.totalReclassified/p.total)}%)</strong> changed severity between open and close this period —
+          <strong>${fmt(agg.reclassification.downgraded)} stepped down</strong> (typically P1/P2 → P3, marking a fix applied and pending verification), ${fmt(agg.reclassification.upgraded)} were escalated after investigation found broader impact than first reported.
+          All <strong>${fmt(agg.reclassification.p1OpenedCount)} tickets opened as P1</strong> this period were reclassified before resolution — expected, since a closed ticket is by definition no longer in an active, SLA-bound state.
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Supporting context · not an SLA measure</div>
+          <h2>How long tickets stay open overall</h2>
+          <div class="panel-takeaway">Wall-clock time from case creation to closure, by final severity. This includes any time spent at P3 verifying a fix on top of the active P1/P2 work window the SLA actually covers, so it's useful for spotting long-lived tickets — not for judging SLA response. P1 shows no closed cases for the reason above: once resolved, a ticket is no longer at an SLA-bound severity.</div>
+        </div></div>
+        <div class="bar-list" style="margin-top:24px;">${resBarListHtml(agg.resolutionStats)}</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Recurring themes</div>
+          <h2>What keeps coming up across the portfolio</h2>
+          <div class="panel-takeaway">Grouped by topic and counted by how many accounts touched each one. Hover a bar for the account list.</div>
+        </div></div>
+        <div class="bar-list" id="themeBars"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Portfolio detail</div>
+          <h2>Account-by-account breakdown</h2>
+          <div class="panel-takeaway">Click any account to see its own severity mix, resolution times, and full ticket history. Click a column header to re-sort.</div>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table" id="acctTable">
+            <thead><tr>
+              <th data-sort="name">Account<span class="arrow">▾</span></th>
+              <th data-sort="total" class="num">Total<span class="arrow">▾</span></th>
+              <th data-sort="open" class="num">Open<span class="arrow">▾</span></th>
+              <th data-sort="closed" class="num">Closed<span class="arrow">▾</span></th>
+              <th>Severity mix (final)</th>
+              <th data-sort="health">Health<span class="arrow">▾</span></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Outliers</div>
+          <h2>Ten longest resolutions on record</h2>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Final sev.</th><th>Triage</th></tr></thead>
+          <tbody>${agg.longestResolutions.map(t => ticketRowHtml({...t, status:'Closed', created:t.created}, {showAccount:true}).replace('<td>' + esc(t.created) + '</td>', '<td class="num">' + fmt1(t.hours/24) + '</td>')).join('')}</tbody></table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Right now</div>
+          <h2>Currently open (${agg.openTickets.length} of ${fmt(p.total)})</h2>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Severity</th></tr></thead>
+          <tbody>${agg.openTickets.map(t => '<tr><td>' + esc(t.account) + '</td><td class="case-num">' + esc(t.caseNumber) + '</td><td class="subject-cell"><div class="subj">' + esc(t.subject) + '</div></td><td class="num">' + daysAge(t.created) + '</td><td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td></tr>').join('')}</tbody></table>
+        </div>
+      </div>
+
+      <div class="footnote">
+        <h3>Methodology &amp; data notes</h3>
+        <ul>
+          <li><strong>Source:</strong> per-account 24-month support-case exports, computed live from <code>accounts/*.json</code> — nothing here is baked in or estimated.</li>
+          <li><strong>Two severities per ticket:</strong> "Opened as" is what the case was filed under; "Closed as (final)" is the severity on record at closure, after triage.</li>
+          <li><strong>Resolution time</strong> is wall-clock hours between creation and closure — not adjusted for business hours or holds, and no SLA threshold is applied.</li>
+          <li><strong>Health status</strong> is a per-account label from the source data reflecting recent ticket volume, not a computed composite score.</li>
+        </ul>
+      </div>
+    </div>
+  `;
+  document.getElementById('app').innerHTML = html;
+
+  document.getElementById('themeBars').innerHTML = agg.themeBuckets.map(t => {
+    const max = Math.max(...agg.themeBuckets.map(x => x.accountCount));
+    const pct = Math.max((t.accountCount / max) * 100, 2);
+    return '<div class="bar-row" data-tt-title="' + esc(t.label) + '" data-tt-list="' + t.accounts.map(esc).join('<br>') + '">' +
+      '<div class="bar-row-label">' + esc(t.label) + '</div>' +
+      '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:var(--accent-bg)"></div></div>' +
+      '<div class="bar-value">' + t.accountCount + ' / ' + agg.accounts.length + '</div></div>';
+  }).join('');
+
+  let sortState = { key: 'total', dir: -1 };
+  function renderRows() {
+    const rows = [...agg.accounts].sort((a,b) => {
+      let av = sortState.key === 'health' ? a.health : a[sortState.key];
+      let bv = sortState.key === 'health' ? b.health : b[sortState.key];
+      if (typeof av === 'string') return av.localeCompare(bv) * sortState.dir;
+      return (av - bv) * sortState.dir;
+    });
+    document.querySelector('#acctTable tbody').innerHTML = rows.map(a =>
+      '<tr class="clickable" data-file="' + esc(a.file) + '">' +
+      '<td class="acct-name">' + esc(a.name) + '<span class="go">view →</span></td>' +
+      '<td class="num">' + a.total + '</td><td class="num">' + a.open + '</td><td class="num">' + a.closed + '</td>' +
+      '<td>' + sevStackHtml(a.finalSeverity) + '</td><td>' + healthChipHtml(a.health) + '</td></tr>'
+    ).join('');
+    document.querySelectorAll('#acctTable tbody tr').forEach(tr => {
+      tr.addEventListener('click', () => { location.hash = '#account/' + encodeURIComponent(tr.dataset.file); });
+    });
+    document.querySelectorAll('#acctTable th[data-sort]').forEach(th => {
+      th.classList.toggle('sorted', th.dataset.sort === sortState.key);
+      th.querySelector('.arrow').textContent = (th.dataset.sort === sortState.key && sortState.dir === 1) ? '▴' : '▾';
+    });
+  }
+  document.querySelectorAll('#acctTable th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      const key = th.dataset.sort;
+      sortState.dir = (sortState.key === key) ? -sortState.dir : (key === 'name' || key === 'health' ? 1 : -1);
+      sortState.key = key;
+      renderRows();
+    });
+  });
+  renderRows();
+  wireTooltips(document);
+}
+
+// ---------- Account detail view ----------
+function renderAccountDetail(d) {
+  const stats = computeAccountStats(d);
+  const sr = d.sourceReview || {};
+  const health = d.health?.status ?? 'Unknown';
+  const hm = HEALTH_META[health] || { color: 'var(--text-muted)', label: health };
+
+  const narrativeParts = [];
+  if (sr.executiveSummary) narrativeParts.push('<p><strong>Executive summary:</strong> ' + esc(sr.executiveSummary) + '</p>');
+  if (sr.overview) narrativeParts.push('<p>' + esc(sr.overview) + '</p>');
+  if (sr.healthTrajectory) narrativeParts.push('<p><strong>Health trajectory:</strong> ' + esc(sr.healthTrajectory) + '</p>');
+  if (sr.recurringThemes?.length) narrativeParts.push('<p><strong>Recurring themes</strong></p><ul>' + sr.recurringThemes.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
+  if (sr.recommendations?.length) narrativeParts.push('<p><strong>Recommendations</strong></p><ul>' + sr.recommendations.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
+
+  const html = `
+    <div class="hero">
+      <div class="hero-inner">
+        <div class="hero-top">
+          <div>
+            <div class="wordmark-row">
+              <a class="breadcrumb" href="#portfolio">← All accounts</a>
+            </div>
+            <h1>${esc(d.customer.name)}</h1>
+            <div class="hero-sub">${sr.period ? 'Support case history · ' + esc(sr.period) : 'Support case history'}</div>
+          </div>
+          <div class="hero-meta">${healthChipHtml(health).replace('var(--text-muted)', '#8FA0C2')}</div>
+        </div>
+        <div class="stat-row">
+          <div class="stat-tile"><div class="stat-label">Total tickets</div><div class="stat-value">${fmt(sr.ticketCounts?.total)}</div><div class="stat-note">trailing 24mo</div></div>
+          <div class="stat-tile"><div class="stat-label">Open</div><div class="stat-value">${fmt(sr.ticketCounts?.open)}</div><div class="stat-note">${fmt(sr.ticketCounts?.closed)} closed</div></div>
+          <div class="stat-tile"><div class="stat-label">Reclassified</div><div class="stat-value">${fmt(stats.reclassifiedCount)}</div><div class="stat-note">of ${fmt(sr.ticketCounts?.total)} tickets</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="wrap">
+      ${narrativeParts.length ? '<div class="panel"><div class="eyebrow">Account narrative</div><h2>What the ticket history shows</h2><div class="narrative-block">' + narrativeParts.join('') + '</div></div>' : ''}
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Ticket lifecycle</div>
+          <h2>Severity at open vs. at close</h2>
+          <div class="panel-takeaway"><strong>P1 and P2 are the SLA-bound severities.</strong> Once a fix is applied, severity is typically stepped down to P3 while the team confirms it holds, before the ticket closes — the shift below mostly reflects that resolve-then-verify workflow.</div>
+        </div></div>
+        <div class="panel-grid-2">
+          <div><div class="sm-title">Opened as</div><div class="bar-list">${sevBarListHtml(stats.openedTotals)}</div></div>
+          <div><div class="sm-title">Closed as (final)</div><div class="bar-list">${sevBarListHtml(stats.finalTotals)}</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Supporting context · not an SLA measure</div>
+          <h2>How long this account's tickets stay open overall</h2>
+          <div class="panel-takeaway">Includes any P3 verification time on top of the active P1/P2 work window the SLA covers — useful for spotting long-lived tickets, not for judging SLA response.</div>
+        </div></div>
+        <div class="bar-list" style="margin-top:24px;">${resBarListHtml(stats.resStats)}</div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Full history</div>
+          <h2>All ${stats.tickets.length} tickets</h2>
+          <div class="panel-takeaway">Click a column to sort. SLA breach isn't populated yet — sorting is wired up and ready for when that data lands.</div>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table" id="ticketTable">
+            <thead><tr>
+              <th>Case</th>
+              <th>Subject / detail</th>
+              <th data-sort="created">Created<span class="arrow">▾</span></th>
+              <th data-sort="status">Status<span class="arrow">▾</span></th>
+              <th data-sort="finalSev">Severity<span class="arrow">▾</span></th>
+              <th data-sort="slaBreach">SLA breach<span class="arrow">▾</span></th>
+              <th>Triage</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('app').innerHTML = html;
+  wireTooltips(document);
+  wireSortableTable('ticketTable', stats.tickets, fullHistoryRowHtml, 'finalSev', 1);
+}
+
+// ---------- Router ----------
+function showState(msg) {
+  document.getElementById('app').innerHTML = '<div class="state-msg">' + msg + '</div>';
+}
+let cachedAccounts = null;
+async function route() {
+  const hash = location.hash.slice(1);
+  try {
+    if (hash.startsWith('account/')) {
+      const file = decodeURIComponent(hash.slice('account/'.length));
+      showState('Loading account…');
+      const res = await fetch('accounts/' + file, { cache: 'no-cache' });
+      if (!res.ok) throw new Error('Could not load ' + file);
+      const data = await res.json();
+      renderAccountDetail(data);
+    } else {
+      showState('Loading portfolio — reading accounts/*.json…');
+      if (!cachedAccounts) cachedAccounts = await fetchAllAccounts();
+      renderPortfolio(computePortfolio(cachedAccounts));
+    }
+    window.scrollTo(0, 0);
+  } catch (err) {
+    showState(
+      '<strong>Could not load data.</strong><br><br>' + esc(err.message) + '<br><br>' +
+      'This app reads <code>accounts/*.json</code> directly and needs a directory listing to discover them — serve this folder with <code>python3 -m http.server</code> (same as the QBR Configurator), not by opening the file directly.'
+    );
+  }
+}
+window.addEventListener('hashchange', () => { cachedAccounts = cachedAccounts; route(); });
+route();
+</script>
