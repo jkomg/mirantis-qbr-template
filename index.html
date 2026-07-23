@@ -211,6 +211,26 @@
       text-decoration: none;
     }
     .meta-item a:hover { text-decoration: underline; }
+    .admin-cell { display: flex; align-items: flex-end; justify-content: flex-end; }
+    .admin-toggle {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px; letter-spacing: 1.5px; color: #5C6B85;
+      background: none; border: 1px solid #2A3A55; padding: 6px 12px;
+      cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    .admin-toggle:hover, .admin-toggle[aria-expanded="true"] { color: #00C9B0; border-color: #00C9B0; }
+    .admin-toggle .chev { display: inline-block; transition: transform 0.15s; }
+    .admin-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+    .admin-panel {
+      margin-top: 16px; padding-top: 16px; border-top: 1px solid #1F2A44;
+    }
+    .admin-panel .label {
+      font-family: 'JetBrains Mono', ui-monospace, monospace;
+      font-size: 11px; color: #5C6B85; letter-spacing: 1.5px; margin-bottom: 4px;
+    }
+    .admin-panel .value { font-size: 14px; color: #C8D0E0; }
+    .admin-panel .value a { color: #00C9B0; text-decoration: none; }
+    .admin-panel .value a:hover { text-decoration: underline; }
     .badge {
       display: inline-flex;
       align-items: center;
@@ -290,14 +310,17 @@
         <div class="label">EXTERNAL REQUESTS</div>
         <div class="value">Zero from either tool. Fonts are self-hosted; nothing here phones home.</div>
       </div>
-      <div class="meta-item">
-        <div class="label">DOCS</div>
-        <div class="value">
-          <a href="docs.html?doc=LOCAL-SETUP">Setup</a> ·
-          <a href="docs.html?doc=SALESFORCE-OAUTH-SETUP">Salesforce OAuth</a> ·
-          <a href="docs.html?doc=AUTOMATION">Automation</a> ·
-          <a href="docs.html?doc=SERVICE-CONTRACT">Service contract</a>
-        </div>
+      <div class="meta-item admin-cell">
+        <button class="admin-toggle" id="adminToggle" aria-expanded="false" aria-controls="adminPanel">Admin <span class="chev">▾</span></button>
+      </div>
+    </div>
+    <div class="admin-panel" id="adminPanel" hidden>
+      <div class="label">SETUP &amp; REFERENCE DOCS</div>
+      <div class="value">
+        <a href="docs.html?doc=LOCAL-SETUP">Setup</a> ·
+        <a href="docs.html?doc=SALESFORCE-OAUTH-SETUP">Salesforce OAuth</a> ·
+        <a href="docs.html?doc=AUTOMATION">Automation</a> ·
+        <a href="docs.html?doc=SERVICE-CONTRACT">Service contract</a>
       </div>
     </div>
   </div>
@@ -330,6 +353,14 @@
         gridEl.innerHTML = '<div class="snapshot-empty">Not available — <code>container-info.json</code> is written once at container startup by the Docker image. Running via <code>python3 -m http.server</code> instead of <code>docker compose up</code> won\'t have it.</div>';
       }
     })();
+
+    const adminToggle = document.getElementById('adminToggle');
+    const adminPanel = document.getElementById('adminPanel');
+    adminToggle.addEventListener('click', () => {
+      const open = adminPanel.hidden;
+      adminPanel.hidden = !open;
+      adminToggle.setAttribute('aria-expanded', String(open));
+    });
   </script>
 </body>
 </html>
