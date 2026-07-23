@@ -41,7 +41,13 @@ COPY --from=fonts /work/assets/fonts /usr/share/nginx/html/assets/fonts
 
 # Small landing page + docs viewer so the bare URL doesn't 404
 COPY index.html         /usr/share/nginx/html/index.html
-COPY docker/docs.html   /usr/share/nginx/html/docs.html
+COPY docs.html          /usr/share/nginx/html/docs.html
+
+# One-time container resource snapshot for the landing page — nginx:alpine's
+# entrypoint runs every executable script under /docker-entrypoint.d/ before
+# starting nginx, so this writes container-info.json once at startup.
+COPY scripts/container-snapshot.sh /docker-entrypoint.d/20-container-snapshot.sh
+RUN chmod +x /docker-entrypoint.d/20-container-snapshot.sh
 
 # Tighten nginx for a private/local context: no upstream connections,
 # directory listing on, sensible MIME types, big-payload tolerant for JSON.
