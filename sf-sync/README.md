@@ -6,19 +6,50 @@ Pulls Salesforce account data directly into the QBR Template's JSON schema. Runs
 
 When the TAM clicks **Pull from Salesforce** in the Configurator, the browser POSTs to this sidecar at `http://localhost:8081/pull` with `{account, quarter}`. The sidecar:
 
-1. Authenticates to SF using the **logged-in user's OAuth session** (or password creds for CLI)
-2. Runs five SOQL queries: Account, open Opportunities, recent closed Opportunities, Assets, Contacts
-3. Maps the results into the `qbr.data.json` schema (preserving the TAM's existing narrative)
-4. Writes the result to `/data/accounts/{slug}-{quarter}.json`
-5. Returns the payload to the Configurator, which merges it into the form
+1. Authenticates to SF (Client Credentials / OAuth / password)
+2. Runs Mirantis-aware queries: Account, Opportunities, Contacts, **Environment__c**, **License__c**, **Case**, **Entitlement**
+3. Maps footprint, support, products, incidents, risks, and planning stubs into `qbr.data.json`
+4. Writes `/data/accounts/{slug}-{quarter}.json`
+5. Returns the payload to the Configurator
 
-The TAM still fills in usage telemetry, support metrics, incidents, wins, risks, asks, training, and roadmaps — none of which Salesforce has.
+Standard Salesforce **Asset** is not used (unavailable in the MKE Ops sandbox). Product mix comes from **License__c** + **Environment__c**.
 
-## Setup — OAuth (recommended)
+The TAM still curates wins, roadmap narrative, NPS, and asks — Salesforce does not own those.
+
+## Optional — AI account status review
+
+The Configurator can call `POST /review` for color commentary (strengths, watch items, suggested asks/takeaways).
+
+Add one key to `.env`:
+
+```
+OPENAI_API_KEY=sk-...
+# or
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+Rebuild/restart `sf-sync` so the key is loaded. `/health` reports `reviewAvailable: true` when configured. Commentary is a TAM draft — review before presenting.
+
+## Setup — Client Credentials (Mirantis sandbox)
+
+IT typically provisions **OAuth 2.0 Client Credentials**. No browser login.
+
+```
+SF_AUTH_MODE=client_credentials
+SF_CONSUMER_KEY=<from Connected App>
+SF_CONSUMER_SECRET=<from Connected App>
+SF_DOMAIN=mirantis--mkeops.sandbox.my   # My Domain — NOT login/test
+```
+
+Full walkthrough: [`SALESFORCE-OAUTH-SETUP.md`](../SALESFORCE-OAUTH-SETUP.md).
+
+Then `docker compose up --build` → Configurator → enter Account name → **Pull**.
+
+## Setup — OAuth Authorization Code (per-user browser login)
 
 Each TAM uses their **own** Salesforce login. One Connected App serves the whole team.
 
-**Full walkthrough (IT + TAM):** [`SALESFORCE-OAUTH-SETUP.md`](../SALESFORCE-OAUTH-SETUP.md) in the repo root — includes where to click in Salesforce to get the Consumer Key and Secret.
+**Full walkthrough:** [`SALESFORCE-OAUTH-SETUP.md`](../SALESFORCE-OAUTH-SETUP.md).
 
 ### Quick summary
 
@@ -32,22 +63,23 @@ In Salesforce Setup → App Manager → New Connected App:
 
 Copy the **Consumer Key** and **Consumer Secret**.
 
-### 2. Configure `.env`
+### Configure `.env` (browser OAuth)
 
 Copy `.env.example` to `.env` at the project root:
 
 ```
+SF_AUTH_MODE=oauth
 SF_CONSUMER_KEY=<from Connected App>
 SF_CONSUMER_SECRET=<from Connected App>
-SF_DOMAIN=login          # or 'test' for sandbox
+SF_DOMAIN=test
 FLASK_SECRET_KEY=<long random string>
 ```
 
 Password credentials are **not** required for the web UI.
 
-### 3. Run
+### Run
 
-```bash
+```
 docker compose up --build
 ```
 
@@ -72,6 +104,9 @@ SF_DOMAIN=login
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/health` | Sidecar status, auth mode, connected user |
+| GET | `/accounts` | Search Accounts (`?q=` fragment, blank = recent) |
+| GET | `/inspect` | Raw counts/samples for one account (`?account=Exact Name`) |
+| GET | `/scan` | Rank accounts by usable data (`?limit=25`, optional `?q=`) |
 | GET | `/oauth/login` | Start Salesforce login (browser redirect) |
 | GET | `/oauth/callback` | OAuth redirect target (internal) |
 | GET | `/oauth/status` | Current session connection |
@@ -102,14 +137,17 @@ The queries in `sync.py` use standard SF field names. Mirantis SF will have cust
 - Tier values from SF picklists (`Tier__c = "Strategic Tier 1"`) need normalizing to what the deck expects (`Strategic`, `Enterprise`, `Growth`).
 - Health score / churn risk if you have custom fields for them.
 
+**Missing objects:** some sandboxes don't enable standard `Asset`. The pull now skips unavailable objects (Assets, Contacts, Opportunities) and continues with a warning in `_meta.warnings` instead of failing.
+
 ## Auth modes
 
 | Mode | Env | Who logs in | Use case |
 |------|-----|-------------|----------|
-| **OAuth** (default when keys set) | `SF_CONSUMER_KEY` + `SF_CONSUMER_SECRET` | Each TAM in browser | Multi-user laptops |
-| **Password** | `SF_USERNAME` + `SF_PASSWORD` + `SF_SECURITY_TOKEN` | Shared service account | CLI, legacy |
+| **Client Credentials** | Key + Secret + My Domain | Integration user on Connected App | Sandbox / server-to-server |
+| **OAuth (auth code)** | Key + Secret | Each TAM in browser | Multi-user laptops |
+| **Password** | Username + password + token | Shared / personal user | CLI, legacy |
 
-Set `SF_AUTH_MODE=auto` (default), `oauth`, or `password` to force a mode.
+Set `SF_AUTH_MODE=auto` (default), `client_credentials`, `oauth`, or `password`.
 
 ## Troubleshooting
 

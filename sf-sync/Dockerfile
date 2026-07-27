@@ -11,16 +11,18 @@ WORKDIR /app
 COPY sf-sync/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY sf-sync/oauth.py   /app/oauth.py
-COPY sf-sync/sync.py    /app/sync.py
-COPY sf-sync/server.py  /app/server.py
+COPY sf-sync/oauth.py    /app/oauth.py
+COPY sf-sync/mirantis.py /app/mirantis.py
+COPY sf-sync/sync.py     /app/sync.py
+COPY sf-sync/review.py   /app/review.py
+COPY sf-sync/server.py   /app/server.py
 
 # Ensure /data/accounts exists for written JSON
 RUN mkdir -p /data/accounts
 
 ENV PYTHONUNBUFFERED=1 \
     OUTPUT_DIR=/data/accounts \
-    SYNC_VERSION=v0.1
+    SYNC_VERSION=v0.4
 
 EXPOSE 8081
 

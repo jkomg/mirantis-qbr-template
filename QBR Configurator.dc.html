@@ -44,11 +44,11 @@
       <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:56px; color:#0E1A2E; letter-spacing:-1px; line-height:1;">Set up the deck</div>
       <div style="font-family:'Lato',sans-serif; font-size:20px; color:#5B5F66; margin-top:10px; max-width:900px; line-height:1.4;">Fill these in once. The deck reads from your draft and updates every bound slide. The dials in the deck's Tweaks panel still let you swap framing per-presentation.</div>
 
-      <!-- WARNING: demo/placeholder data still present -->
+      <!-- WARNING: demo leftovers or empty critical sections after SF pull -->
       <sc-if value="{{ hasPlaceholders }}" hint-placeholder-val="{{ true }}">
         <div style="margin-top:20px; padding:18px 24px; background:rgba(255,149,0,0.1); border-left:4px solid #FF9500;">
-          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1.5px; color:#B36A00; margin-bottom:10px; font-weight:700;">⚠ {{ placeholderCount }} SECTION(S) STILL SHOW DEMO DATA — REVIEW BEFORE PRESENTING</div>
-          <div style="font-family:'Lato',sans-serif; font-size:14px; color:#5B5F66; margin-bottom:12px; line-height:1.4;">These fields still exactly match the built-in Vertex Logistics example. Fill them in, or clear them, before sharing this deck with a customer.</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:13px; letter-spacing:1.5px; color:#B36A00; margin-bottom:10px; font-weight:700;">⚠ {{ placeholderCount }} SECTION(S) NEED REVIEW BEFORE SAVE / PRESENTING</div>
+          <div style="font-family:'Lato',sans-serif; font-size:14px; color:#5B5F66; margin-bottom:12px; line-height:1.4;">Demo leftovers still match Vertex Logistics, or Salesforce left a section empty for the TAM to fill. Save and Download will ask you to confirm while any of these remain.</div>
           <div style="display:flex; flex-wrap:wrap; gap:8px;">
             <sc-for list="{{ placeholderWarnings }}" as="w" hint-placeholder-count="4">
               <div style="padding:5px 12px; background:rgba(255,149,0,0.18); color:#8A5000; font-family:'Lato',sans-serif; font-size:13px; font-weight:600;">{{ w.label }}</div>
@@ -90,7 +90,7 @@
           <div style="display:flex; align-items:center; gap:10px;">
             <sc-if value="{{ sidecarStatus === 'ok' }}" hint-placeholder-val="{{ false }}">
               <div style="display:inline-flex; align-items:center; gap:8px; padding:4px 12px; background:rgba(61,174,115,0.18); color:#3DAE73; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:1.5px;">
-                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>{{ sfAuthMode === 'oauth' ? 'CONNECTED' : 'SIDECAR READY' }}
+                <div style="width:6px; height:6px; border-radius:50%; background:#3DAE73;"></div>{{ sfAuthMode === 'oauth' ? 'CONNECTED' : (sfAuthMode === 'client_credentials' ? 'CLIENT CREDENTIALS' : 'SIDECAR READY') }}
               </div>
             </sc-if>
             <sc-if value="{{ sidecarStatus === 'oauth-needed' }}" hint-placeholder-val="{{ false }}">
@@ -116,9 +116,16 @@
           </div>
         </div>
         <div style="font-family:'Lato',sans-serif; font-size:13px; color:#7E8CA8; margin-bottom:14px; line-height:1.5;">
-          Runs as a sidecar on port 8081. Each TAM connects with their own Salesforce login (OAuth). Pulls Account, Opportunities, Assets, and Contacts and merges them into the form. Usage, support metrics, incidents, wins, risks, and asks still need the TAM's input.
+          Runs as a sidecar on port 8081. Supports Client Credentials (shared integration user from Connected App) or per-TAM browser OAuth. Pulls Account, Opportunities, Assets, and Contacts and merges them into the form. Usage, support metrics, incidents, wins, risks, and asks still need the TAM's input.
           See <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0; font-size:12px;">SALESFORCE-OAUTH-SETUP.md</span> for Connected App setup.
         </div>
+        <sc-if value="{{ sfAuthMode === 'client_credentials' }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:14px; padding:12px 14px; background:#0E1A2E; border:1px solid #1F2A44; font-family:'Lato',sans-serif; font-size:14px; color:#C8D0E0;">
+            Using <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0;">client_credentials</span> as
+            <span style="font-family:'JetBrains Mono',monospace; color:#00C9B0;">{{ sfConnectedUser || 'integration-user' }}</span>
+            — no browser login required. Search accounts below (uses API, not the Salesforce UI).
+          </div>
+        </sc-if>
         <sc-if value="{{ sfAuthMode === 'oauth' }}" hint-placeholder-val="{{ false }}">
           <div style="display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:14px; padding:12px 14px; background:#0E1A2E; border:1px solid #1F2A44;">
             <sc-if value="{{ sfConnectedUser }}" hint-placeholder-val="{{ '' }}">
@@ -141,8 +148,19 @@
         </sc-if>
         <div style="display:grid; grid-template-columns:2fr 1fr; gap:14px; margin-bottom:14px;">
           <label style="display:flex; flex-direction:column; gap:6px;">
-            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1.5px; font-weight:700;">SALESFORCE ACCOUNT NAME (exact match)</span>
-            <input type="text" value="{{ sfAccount }}" onInput="{{ onSfAccountChange }}" placeholder="e.g. Vertex Logistics" style="padding:12px 14px; font-family:'Lato',sans-serif; font-size:17px; background:#0E1A2E; color:#C8D0E0; border:1px solid #1F2A44; outline:none;"/>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1.5px; font-weight:700;">SEARCH ACCOUNTS</span>
+            <div style="display:flex; gap:8px;">
+              <input type="text" data-sf-account-input="1" value="{{ sfAccount }}" onInput="{{ onSfAccountChange }}" onKeyDown="{{ onSfSearchKey }}" placeholder="Type part of a name, or leave blank for recent" style="flex:1; padding:12px 14px; font-family:'Lato',sans-serif; font-size:17px; background:#0E1A2E; color:#C8D0E0; border:1px solid #1F2A44; outline:none;"/>
+              <sc-if value="{{ sfSearching }}" hint-placeholder-val="{{ false }}">
+                <button style="padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:12px; background:transparent; border:1px solid #3A4661; color:#5C6B85; cursor:default; letter-spacing:1px; white-space:nowrap;">Searching…</button>
+              </sc-if>
+              <sc-if value="{{ !sfSearching }}" hint-placeholder-val="{{ true }}">
+                <button onClick="{{ onSfSearch }}" style="padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:12px; background:transparent; border:1px solid #00C9B0; color:#00C9B0; cursor:pointer; letter-spacing:1px; white-space:nowrap;">Search</button>
+              </sc-if>
+            </div>
+            <sc-if value="{{ sfAccount }}" hint-placeholder-val="{{ '' }}">
+              <div style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#3DAE73;">Selected: {{ sfAccount }}</div>
+            </sc-if>
           </label>
           <div style="display:flex; flex-direction:column; gap:8px; justify-content:flex-end;">
             <sc-if value="{{ sidecarChecking }}" hint-placeholder-val="{{ false }}">
@@ -159,11 +177,86 @@
             </sc-if>
           </div>
         </div>
+        <sc-if value="{{ sfSearchResults.length }}" hint-placeholder-val="{{ 0 }}">
+          <div style="margin-bottom:14px; border:1px solid #1F2A44; max-height:220px; overflow:auto;">
+            <div style="padding:8px 12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1.5px; border-bottom:1px solid #1F2A44;">{{ sfSearchResults.length }} MATCHES — click to select</div>
+            <sc-for list="{{ sfSearchResults }}" as="acct" hint-placeholder-count="3">
+              <button type="button" data-index="{{ $index }}" onClick="{{ onSfPickAccount }}" style="display:block; width:100%; text-align:left; padding:10px 12px; background:transparent; border:none; border-bottom:1px solid #1F2A44; cursor:pointer; color:#C8D0E0;">
+                <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:15px;">{{ acct.name }}</div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; margin-top:2px;">{{ acct.type || '—' }} · {{ acct.industry || '—' }} · {{ acct.owner || '—' }}</div>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ sfSearchEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-bottom:14px; padding:10px 14px; background:rgba(245,166,35,0.12); border-left:3px solid #F5A623; font-family:'JetBrains Mono',monospace; font-size:13px; color:#F5A623;">No accounts matched. Try a shorter fragment, or leave blank and Search for recent accounts.</div>
+        </sc-if>
         <sc-if value="{{ sfPullError }}" hint-placeholder-val="{{ '' }}">
           <div style="padding:10px 14px; background:rgba(224,53,70,0.12); border-left:3px solid #E03546; font-family:'JetBrains Mono',monospace; font-size:13px; color:#E03546; line-height:1.5;">{{ sfPullError }}</div>
         </sc-if>
         <sc-if value="{{ sfPulledRecently }}" hint-placeholder-val="{{ false }}">
-          <div style="padding:10px 14px; background:rgba(61,174,115,0.12); border-left:3px solid #3DAE73; font-family:'JetBrains Mono',monospace; font-size:13px; color:#3DAE73;">✓ Merged into form — review and fill in telemetry, support metrics, and narrative below.</div>
+          <div style="padding:10px 14px; background:rgba(61,174,115,0.12); border-left:3px solid #3DAE73; font-family:'JetBrains Mono',monospace; font-size:13px; color:#3DAE73;">✓ Merged into form — blanks stay blank (no Vertex demo fill-in). Review flagged sections, then fill narrative below.{{ sfPullWarning }}</div>
+        </sc-if>
+      </div>
+
+      <!-- SECTION: AI account status review -->
+      <div style="margin-top:16px; padding:24px 28px; background:#0E1A2E; color:white; border:1px solid #1F2A44;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:16px;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:14px; color:#00C9B0; letter-spacing:2px;">// AI ACCOUNT STATUS REVIEW</div>
+          <sc-if value="{{ reviewAvailable }}" hint-placeholder-val="{{ false }}">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3DAE73; letter-spacing:1px;">API KEY READY</div>
+          </sc-if>
+          <sc-if value="{{ !reviewAvailable }}" hint-placeholder-val="{{ true }}">
+            <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#F5A623; letter-spacing:1px;">SET OPENAI_API_KEY OR ANTHROPIC_API_KEY</div>
+          </sc-if>
+        </div>
+        <div style="font-family:'Lato',sans-serif; font-size:14px; color:#7E8CA8; margin-bottom:14px; line-height:1.5;">Optional color commentary from the pulled account footprint, support, risks, and commercial signals. Review before pasting into exec takeaways — it is a draft, not customer-facing copy.</div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <sc-if value="{{ aiReviewing }}" hint-placeholder-val="{{ false }}">
+            <button style="padding:11px 18px; font-family:'Overpass',sans-serif; font-weight:700; font-size:15px; background:#009E8A; border:none; color:#0E1A2E; cursor:default; letter-spacing:0.5px;">Reviewing…</button>
+          </sc-if>
+          <sc-if value="{{ !aiReviewing }}" hint-placeholder-val="{{ true }}">
+            <button onClick="{{ onAiReview }}" style="padding:11px 18px; font-family:'Overpass',sans-serif; font-weight:700; font-size:15px; background:#00C9B0; border:none; color:#0E1A2E; cursor:pointer; letter-spacing:0.5px;">✦ Generate status commentary</button>
+          </sc-if>
+          <sc-if value="{{ form.aiReview }}" hint-placeholder-val="{{ null }}">
+            <button onClick="{{ onApplyAiTakeaways }}" style="padding:11px 18px; font-family:'JetBrains Mono',monospace; font-size:12px; background:transparent; border:1px solid #00C9B0; color:#00C9B0; cursor:pointer; letter-spacing:1px;">Apply suggested takeaways</button>
+          </sc-if>
+        </div>
+        <sc-if value="{{ aiReviewError }}" hint-placeholder-val="{{ '' }}">
+          <div style="margin-top:12px; padding:10px 14px; background:rgba(224,53,70,0.12); border-left:3px solid #E03546; font-family:'JetBrains Mono',monospace; font-size:13px; color:#E03546; line-height:1.5;">{{ aiReviewError }}</div>
+        </sc-if>
+        <sc-if value="{{ form.aiReview }}" hint-placeholder-val="{{ null }}">
+          <div style="margin-top:16px; padding:16px 18px; background:#070D1A; border:1px solid #1F2A44;">
+            <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:10px;">
+              <div style="font-family:'Overpass',sans-serif; font-weight:700; font-size:18px; color:white;">{{ form.aiReview.statusLabel || 'Account status' }}</div>
+              <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#7E8CA8; letter-spacing:1px;">{{ form.aiReview.provider || '' }} · {{ form.aiReview.generatedAt || '' }}</div>
+            </div>
+            <div style="font-family:'Lato',sans-serif; font-size:15px; color:#C8D0E0; line-height:1.55; margin-bottom:14px;">{{ form.aiReview.commentary || '' }}</div>
+            <sc-if value="{{ form.aiReview.strengths && form.aiReview.strengths.length }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-bottom:10px;">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#3DAE73; letter-spacing:1.5px; margin-bottom:6px;">STRENGTHS</div>
+                <sc-for list="{{ form.aiReview.strengths }}" as="item" hint-placeholder-count="2">
+                  <div style="font-family:'Lato',sans-serif; font-size:14px; color:#A8B4C8; margin-bottom:4px;">• {{ item }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ form.aiReview.watchItems && form.aiReview.watchItems.length }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-bottom:10px;">
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#F5A623; letter-spacing:1.5px; margin-bottom:6px;">WATCH</div>
+                <sc-for list="{{ form.aiReview.watchItems }}" as="item" hint-placeholder-count="2">
+                  <div style="font-family:'Lato',sans-serif; font-size:14px; color:#A8B4C8; margin-bottom:4px;">• {{ item }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+            <sc-if value="{{ form.aiReview.suggestedAsks && form.aiReview.suggestedAsks.length }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#00C9B0; letter-spacing:1.5px; margin-bottom:6px;">SUGGESTED ASKS</div>
+                <sc-for list="{{ form.aiReview.suggestedAsks }}" as="item" hint-placeholder-count="2">
+                  <div style="font-family:'Lato',sans-serif; font-size:14px; color:#A8B4C8; margin-bottom:4px;">• {{ item }}</div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
         </sc-if>
       </div>
 
@@ -782,13 +875,20 @@ class Component extends DCLogic {
     importText: '',
     importedAt: null,
     sfAccount: '',
+    sfSearchResults: [],
+    sfSearchEmpty: false,
+    sfSearching: false,
     sidecarStatus: null,   // null | 'ok' | 'oauth-needed' | 'no-creds' | 'not-configured' | 'unreachable'
     sidecarChecking: false,
-    sfAuthMode: null,      // null | 'oauth' | 'password' | 'none'
+    sfAuthMode: null,      // null | 'oauth' | 'client_credentials' | 'password' | 'none'
     sfConnectedUser: '',
     sfPulling: false,
     sfPulledAt: null,
     sfPullError: '',
+    sfPullWarning: '',
+    reviewAvailable: false,
+    aiReviewing: false,
+    aiReviewError: '',
   };
 
   componentDidMount() {
@@ -814,6 +914,9 @@ class Component extends DCLogic {
   }
 
   mapSidecarHealth(j) {
+    if (j.authMode === 'client_credentials') {
+      return j.ready ? 'ok' : 'not-configured';
+    }
     if (j.authMode === 'oauth') {
       if (!j.oauthConfigured) return 'not-configured';
       return j.connected ? 'ok' : 'oauth-needed';
@@ -822,8 +925,81 @@ class Component extends DCLogic {
     return j.oauthConfigured ? 'oauth-needed' : 'not-configured';
   }
 
+  readSfAccountInput() {
+    const el = document.querySelector('[data-sf-account-input]');
+    const fromDom = (el && typeof el.value === 'string') ? el.value.trim() : '';
+    const fromState = (this.state.sfAccount || '').trim();
+    return fromState || fromDom;
+  }
+
   onSfAccountChange = (e) => {
-    this.setState({ sfAccount: e.target.value, sfPullError: '' });
+    const el = e && (e.target || e.currentTarget);
+    const val = el && typeof el.value === 'string' ? el.value : '';
+    this.setState({ sfAccount: val, sfPullError: '', sfSearchEmpty: false });
+  };
+
+  onSfSearchKey = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      this.onSfSearch();
+    }
+  };
+
+  onSfSearch = async (opts = {}) => {
+    if (this.state.sfAuthMode === 'oauth' && !this.state.sfConnectedUser) {
+      this.setState({ sfPullError: 'Connect to Salesforce first.' });
+      return;
+    }
+    const q = (opts.query != null ? opts.query : this.readSfAccountInput()).trim();
+    this.setState({
+      sfAccount: q || this.state.sfAccount,
+      sfSearching: true,
+      sfPullError: '',
+      sfSearchEmpty: false,
+      sfSearchResults: [],
+    });
+    try {
+      const r = await this.sfFetch('/accounts?q=' + encodeURIComponent(q) + '&limit=25', {
+        signal: AbortSignal.timeout(20000),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        this.setState({
+          sfSearching: false,
+          sfPullError: j.error || 'Search failed (HTTP ' + r.status + ')',
+          sidecarStatus: r.status === 401 ? 'oauth-needed' : this.state.sidecarStatus,
+        });
+        return;
+      }
+      const accounts = j.accounts || [];
+      this.setState({
+        sfSearching: false,
+        sfSearchResults: accounts,
+        sfSearchEmpty: accounts.length === 0,
+        sidecarStatus: 'ok',
+      });
+    } catch (err) {
+      const msg = err.name === 'TimeoutError' ? 'Search timed out.' : 'Sidecar unreachable — run `docker compose up`.';
+      this.setState({ sfSearching: false, sfPullError: msg, sidecarStatus: 'unreachable' });
+    }
+  };
+
+  onSfPickAccount = (e) => {
+    const btn = e.currentTarget || e.target;
+    const idx = Number(btn && btn.dataset ? btn.dataset.index : NaN);
+    const rows = this.state.sfSearchResults || [];
+    const row = Number.isFinite(idx) ? rows[idx] : null;
+    const name = (row && row.name) || '';
+    if (!name) {
+      this.setState({ sfPullError: 'Could not read account name from that row — try Search again.' });
+      return;
+    }
+    this.setState({
+      sfAccount: name,
+      sfSearchResults: [],
+      sfSearchEmpty: false,
+      sfPullError: '',
+    });
   };
 
   onSidecarCheck = async () => {
@@ -831,18 +1007,24 @@ class Component extends DCLogic {
     try {
       const r = await this.sfFetch('/health', { signal: AbortSignal.timeout(5000) });
       const j = await r.json();
+      const status = this.mapSidecarHealth(j);
       this.setState({
         sidecarChecking: false,
-        sidecarStatus: this.mapSidecarHealth(j),
+        sidecarStatus: status,
         sfAuthMode: j.authMode || 'none',
         sfConnectedUser: j.connected ? (j.username || '') : '',
+        reviewAvailable: !!j.reviewAvailable,
       });
+      if (status === 'ok' && (j.authMode === 'client_credentials' || j.authMode === 'password' || (j.authMode === 'oauth' && j.connected))) {
+        this.onSfSearch({ query: '' });
+      }
     } catch {
       this.setState({
         sidecarChecking: false,
         sidecarStatus: 'unreachable',
         sfAuthMode: null,
         sfConnectedUser: '',
+        reviewAvailable: false,
       });
     }
   };
@@ -855,21 +1037,23 @@ class Component extends DCLogic {
     try {
       await this.sfFetch('/oauth/logout', { method: 'POST' });
     } catch (_) {}
-    this.setState({ sfConnectedUser: '', sfPullError: '' });
+    this.setState({ sfConnectedUser: '', sfPullError: '', sfSearchResults: [] });
     this.onSidecarCheck();
   };
 
   onSfPull = async () => {
-    const account = (this.state.sfAccount || '').trim();
+    const account = this.readSfAccountInput();
     if (!account) {
-      this.setState({ sfPullError: 'Enter a Salesforce Account name first.' });
+      this.setState({
+        sfPullError: 'Pick an account from Search results (or type the exact name), then Pull.',
+      });
       return;
     }
     if (this.state.sfAuthMode === 'oauth' && !this.state.sfConnectedUser) {
       this.setState({ sfPullError: 'Connect to Salesforce first.' });
       return;
     }
-    this.setState({ sfPulling: true, sfPullError: '', sfPulledAt: null });
+    this.setState({ sfAccount: account, sfPulling: true, sfPullError: '', sfPullWarning: '', sfPulledAt: null });
     try {
       const r = await this.sfFetch('/pull', {
         method: 'POST',
@@ -887,12 +1071,76 @@ class Component extends DCLogic {
         });
         return;
       }
-      const merged = this.hydrate(j.payload);
-      this.setState({ sfPulling: false, sfPulledAt: Date.now(), sfPullError: '', form: merged, sidecarStatus: 'ok' });
+        const merged = this.hydrate(j.payload, { mode: 'live' });
+        const warns = (j.payload && j.payload._meta && j.payload._meta.warnings) || [];
+        const warnNote = warns.length
+          ? ' Note: ' + warns.map(w => w.split(' — ')[0] || w).join('; ')
+          : '';
+        this.setState({
+          sfPulling: false,
+          sfPulledAt: Date.now(),
+          sfPullError: '',
+          form: merged,
+          sidecarStatus: 'ok',
+          sfPullWarning: warnNote,
+          aiReviewError: '',
+        });
     } catch (err) {
       const msg = err.name === 'TimeoutError' ? 'Sidecar timed out (30 s). Is it running?' : 'Sidecar unreachable — run `docker compose up`.';
       this.setState({ sfPulling: false, sfPullError: msg, sidecarStatus: 'unreachable' });
     }
+  };
+
+  onAiReview = async () => {
+    this.setState({ aiReviewing: true, aiReviewError: '' });
+    try {
+      const payload = this.serialize(this.state.form);
+      const r = await this.sfFetch('/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ payload }),
+        signal: AbortSignal.timeout(90000),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        this.setState({
+          aiReviewing: false,
+          aiReviewError: j.error || 'AI review failed (HTTP ' + r.status + ')',
+          reviewAvailable: r.status === 503 ? false : this.state.reviewAvailable,
+        });
+        return;
+      }
+      this.setState(prev => {
+        const next = JSON.parse(JSON.stringify(prev.form));
+        next.aiReview = j.review;
+        return { form: next, aiReviewing: false, aiReviewError: '', savedAt: null, reviewAvailable: true };
+      });
+    } catch (err) {
+      const msg = err.name === 'TimeoutError'
+        ? 'AI review timed out (90 s).'
+        : 'Sidecar unreachable — run `docker compose up`.';
+      this.setState({ aiReviewing: false, aiReviewError: msg });
+    }
+  };
+
+  onApplyAiTakeaways = () => {
+    const review = this.state.form && this.state.form.aiReview;
+    const suggested = review && Array.isArray(review.suggestedTakeaways) ? review.suggestedTakeaways : [];
+    if (!suggested.length) {
+      alert('No suggested takeaways in the latest AI review.');
+      return;
+    }
+    if (!confirm('Replace Exec Summary takeaways with the AI suggestions? You can still edit them afterward.')) return;
+    this.setState(prev => {
+      const next = JSON.parse(JSON.stringify(prev.form));
+      next.execSummaryTakeaways = suggested.map((t, i) => ({
+        kind: t.kind || 'watch',
+        label: t.label || String(i + 1).padStart(2, '0') + ' · REVIEW',
+        headline: t.headline || '',
+        body: t.body || '',
+      }));
+      return { form: next, savedAt: null };
+    });
   };
 
   loadInitial() {
@@ -934,114 +1182,147 @@ class Component extends DCLogic {
     return out;
   }
 
-  // Take a stored object (which may be missing fields) and ensure all paths exist
-  hydrate(d) {
+  // Take a stored object (which may be missing fields) and ensure all paths exist.
+  // mode 'demo'  — first-load / Clear draft: Vertex example values (legacy)
+  // mode 'live'  — Salesforce pull / real import: blanks instead of Vertex demos
+  hydrate(d, opts = {}) {
+    const mode = opts.mode || (d && d._meta && String(d._meta.source || '').includes('sf-sync') ? 'live' : 'demo');
+    const live = mode === 'live';
     d = d || {};
     const sections = Object.assign(this.defaultSections(), d.sections || {});
+
+    const blankStakeholder = [];
+    const demoStakeholders = [
+      { name: 'Jordan Patel', title: 'CTO' },
+      { name: 'Lina Ortega', title: 'VP Infrastructure' },
+    ];
+
+    const pick = (val, demoVal, blankVal) => {
+      if (val !== undefined && val !== null) return val;
+      return live ? blankVal : demoVal;
+    };
+
+    const customerName = pick(d.customer?.name, 'Vertex Logistics', '');
+    const stakeholders = Array.isArray(d.customer?.stakeholders)
+      ? d.customer.stakeholders
+      : (live ? blankStakeholder : demoStakeholders);
+    const products = Array.isArray(d.products)
+      ? d.products
+      : (live ? [] : ['MKE', 'MOSK', 'k0rdent Enterprise', 'Lens']);
+
     return {
-      // Spread first so fields outside the strict schema (health, roadmapQuarters,
-      // sourceReview, etc.) survive the round-trip instead of being silently dropped —
-      // the explicit keys below only override the ones this form actually edits.
       ...d,
       _meta: d._meta || { schemaVersion: 'qbr-2026.06', lastUpdated: new Date().toISOString(), source: 'configurator' },
       sections,
       customer: {
         ...d.customer,
-        name: d.customer?.name ?? 'Vertex Logistics',
-        tier: d.customer?.tier ?? 'Strategic',
-        industry: d.customer?.industry ?? 'Logistics & freight',
-        stakeholders: d.customer?.stakeholders ?? [
-          { name: 'Jordan Patel', title: 'CTO' },
-          { name: 'Lina Ortega', title: 'VP Infrastructure' },
-        ],
+        name: customerName || (live ? '' : 'Vertex Logistics'),
+        tier: pick(d.customer?.tier, 'Strategic', ''),
+        industry: pick(d.customer?.industry, 'Logistics & freight', ''),
+        stakeholders,
       },
-      quarter: d.quarter ?? 'Q3 FY26',
-      preparedBy: d.preparedBy ?? 'Alex Morgan, TAM',
-      preparedByEmail: d.preparedByEmail ?? 'tam@example.com',
-      presentationDate: d.presentationDate ?? '2026-06-24',
-      nextQbr: { label: d.nextQbr?.label ?? 'Q4 FY26 review', date: d.nextQbr?.date ?? '2026-09-25' },
+      quarter: pick(d.quarter, 'Q3 FY26', d.quarter || ''),
+      preparedBy: pick(d.preparedBy, 'Alex Morgan, TAM', ''),
+      preparedByEmail: pick(d.preparedByEmail, 'tam@example.com', ''),
+      presentationDate: pick(d.presentationDate, '2026-06-24', new Date().toISOString().slice(0, 10)),
+      nextQbr: {
+        label: pick(d.nextQbr?.label, 'Q4 FY26 review', ''),
+        date: pick(d.nextQbr?.date, '2026-09-25', ''),
+      },
       commercial: {
         ...d.commercial,
-        arr: { ...d.commercial?.arr, current: d.commercial?.arr?.current ?? 2400000, prior: d.commercial?.arr?.prior ?? 1800000, yoyPct: d.commercial?.arr?.yoyPct ?? 33 },
-        renewalDate: d.commercial?.renewalDate ?? '2027-03-15',
-        renewalSponsor: d.commercial?.renewalSponsor ?? 'TBD — confirm in meeting',
-        expansions: d.commercial?.expansions ?? [],
+        arr: {
+          ...d.commercial?.arr,
+          current: pick(d.commercial?.arr?.current, 2400000, 0),
+          prior: pick(d.commercial?.arr?.prior, 1800000, 0),
+          yoyPct: pick(d.commercial?.arr?.yoyPct, 33, 0),
+        },
+        renewalDate: pick(d.commercial?.renewalDate, '2027-03-15', ''),
+        renewalSponsor: pick(d.commercial?.renewalSponsor, 'TBD — confirm in meeting', ''),
+        expansions: Array.isArray(d.commercial?.expansions) ? d.commercial.expansions : [],
       },
       usage: {
         ...d.usage,
-        clusters: d.usage?.clusters ?? 14, clustersDelta: d.usage?.clustersDelta ?? 3,
-        nodes: d.usage?.nodes ?? 312, nodesDelta: d.usage?.nodesDelta ?? 24,
-        workloads: d.usage?.workloads ?? 1847, workloadsDelta: d.usage?.workloadsDelta ?? 412,
-        environments: d.usage?.environments ?? 6,
-        uptime: d.usage?.uptime ?? 99.94,
+        clusters: pick(d.usage?.clusters, 14, 0),
+        clustersDelta: pick(d.usage?.clustersDelta, 3, 0),
+        nodes: pick(d.usage?.nodes, 312, 0),
+        nodesDelta: pick(d.usage?.nodesDelta, 24, 0),
+        workloads: pick(d.usage?.workloads, 1847, 0),
+        workloadsDelta: pick(d.usage?.workloadsDelta, 412, 0),
+        environments: pick(d.usage?.environments, 6, 0),
+        uptime: pick(d.usage?.uptime, 99.94, 0),
       },
       support: {
         ...d.support,
-        ticketsTotal: d.support?.ticketsTotal ?? 87,
-        p1Count: d.support?.p1Count ?? 4, p1Delta: d.support?.p1Delta ?? -2,
-        slaMetPct: d.support?.slaMetPct ?? 96, slaDeltaPp: d.support?.slaDeltaPp ?? -2,
-        p1MttrHours: d.support?.p1MttrHours ?? 3.4, p1MttrTargetHours: d.support?.p1MttrTargetHours ?? 3.0,
-        csat: d.support?.csat ?? 4.6,
+        ticketsTotal: pick(d.support?.ticketsTotal, 87, 0),
+        p1Count: pick(d.support?.p1Count, 4, 0),
+        p1Delta: pick(d.support?.p1Delta, -2, 0),
+        slaMetPct: pick(d.support?.slaMetPct, 96, 0),
+        slaDeltaPp: pick(d.support?.slaDeltaPp, -2, 0),
+        p1MttrHours: pick(d.support?.p1MttrHours, 3.4, 0),
+        p1MttrTargetHours: pick(d.support?.p1MttrTargetHours, 3.0, 3.0),
+        csat: pick(d.support?.csat, 4.6, 0),
       },
-      nps: { ...d.nps, score: d.nps?.score ?? 42, industry: d.nps?.industry ?? 30, delta: d.nps?.delta ?? 7 },
-      products: d.products ?? ['MKE', 'MOSK', 'k0rdent Enterprise', 'Lens'],
-      // String shadow for editing — sync on save
-      productsText: (d.products ?? ['MKE', 'MOSK', 'k0rdent Enterprise', 'Lens']).join(', '),
-      stakeholdersText: ((d.customer?.stakeholders ?? [
-        { name: 'Jordan Patel', title: 'CTO' },
-        { name: 'Lina Ortega', title: 'VP Infrastructure' },
-      ]).map(s => `${s.name}, ${s.title}`).join('\n')),
-      nextActions: d.nextActions ?? [
+      nps: {
+        ...d.nps,
+        score: pick(d.nps?.score, 42, 0),
+        industry: pick(d.nps?.industry, 30, 30),
+        delta: pick(d.nps?.delta, 7, 0),
+      },
+      products,
+      productsText: products.join(', '),
+      stakeholdersText: stakeholders.map(s => `${s.name}, ${s.title}`).join('\n'),
+      nextActions: Array.isArray(d.nextActions) ? d.nextActions : (live ? [] : [
         { id: 'NA-01', commitment: 'P1 MTTR back under 3h target', owner: 'Mirantis Support', dueDate: '2026-09-30', successCriteria: '2 consecutive months < 3h', status: 'on-track', kind: 'support' },
         { id: 'NA-02', commitment: 'k0rdent UK environments live', owner: 'Joint', dueDate: '2026-12-15', successCriteria: '2 UK envs in production', status: 'blocked', kind: 'expansion' },
         { id: 'NA-03', commitment: 'MKE 3.7 upgrade plan signed off', owner: 'Joint', dueDate: '2026-11-01', successCriteria: 'Staged plan + rollback approved', status: 'not-started', kind: 'platform' },
         { id: 'NA-04', commitment: 'Renewal proposal delivered', owner: 'Mirantis Sales', dueDate: '2026-10-31', successCriteria: 'Customer sponsor has paper', status: 'on-track', kind: 'renewal' },
         { id: 'NA-05', commitment: 'Last-mile platform design review', owner: 'Joint', dueDate: '2026-08-28', successCriteria: 'Architecture doc + node sizing', status: 'on-track', kind: 'architecture' },
-      ],
-      previousActions: d.previousActions ?? [
+      ]),
+      previousActions: Array.isArray(d.previousActions) ? d.previousActions : (live ? [] : [
         { id: 'PA-01', commitment: 'Bring Dallas DC online with MKE', owner: 'Mirantis + Vertex', dueDate: '2026-05-30', status: 'delivered' },
         { id: 'PA-02', commitment: 'Migrate freight-tracking to k0rdent Enterprise', owner: 'Vertex', dueDate: '2026-04-30', status: 'delivered' },
         { id: 'PA-03', commitment: 'Cut P1 MTTR from 4.2h to under 3h', owner: 'Mirantis', dueDate: '2026-06-30', status: 'missed' },
         { id: 'PA-04', commitment: 'k0rdent Enterprise expansion to UK envs', owner: 'Vertex', dueDate: '2026-06-30', status: 'slipped' },
-      ],
-      productMix: d.productMix ?? [
+      ]),
+      productMix: Array.isArray(d.productMix) ? d.productMix : (live ? [] : [
         { product: 'Mirantis Kubernetes Engine', entitlement: '300 nodes', inUse: '284', utilizationPct: 95, trend: '▲ +9pp' },
         { product: 'Mirantis OpenStack for K8s', entitlement: '120 cores', inUse: '96', utilizationPct: 80, trend: '▲ +4pp' },
         { product: 'k0rdent Enterprise', entitlement: '2 environments', inUse: '2', utilizationPct: 100, trend: '▲ new' },
         { product: 'Lens (Pro seats)', entitlement: '40 seats', inUse: '31', utilizationPct: 78, trend: '— flat' },
-      ],
-      incidents: d.incidents ?? [
+      ]),
+      incidents: Array.isArray(d.incidents) ? d.incidents : (live ? [] : [
         { id: 'INC-01', date: '2026-04-14', severity: 'P1', summary: 'EU-WEST ingress controller crash loop', duration: '2h 14m', rcaStatus: 'CLOSED', action: 'Pinned ingress version; nightly canary added' },
         { id: 'INC-02', date: '2026-05-02', severity: 'P1', summary: 'etcd leader election storm — Dallas DC', duration: '4h 12m', rcaStatus: 'CLOSED', action: 'Disk class upgraded; etcd tuned' },
-      ],
-      incidentsPattern: d.incidentsPattern ?? 'Pattern: three of the four P1s traced to capacity / throughput limits at infrastructure boundaries.',
-      wins: d.wins ?? [
+      ]),
+      incidentsPattern: pick(d.incidentsPattern, 'Pattern: three of the four P1s traced to capacity / throughput limits at infrastructure boundaries.', ''),
+      wins: Array.isArray(d.wins) ? d.wins : (live ? [] : [
         { kind: 'PRODUCTION', headline: 'Freight platform live on k0rdent', body: '187 new workloads migrated. Cutover took 6 hours against a 12-hour window.', metric: '187 workloads · 0 rollbacks' },
         { kind: 'INFRASTRUCTURE', headline: 'Dallas DC online ahead of plan', body: 'Three new MKE clusters bootstrapped in 18 days.', metric: '3 clusters · 12 days early' },
         { kind: 'SENTIMENT', headline: 'CTO referenced us at KubeCon EU', body: 'Jordan Patel\u2019s session named MKE specifically.', metric: 'NPS +9 · 2 inbound leads' },
-      ],
-      risks: d.risks ?? [
+      ]),
+      risks: Array.isArray(d.risks) ? d.risks : (live ? [] : [
         { id: 'R-01', level: 'high', title: 'P1 MTTR trending wrong', body: 'Two of four P1s exceeded the 3h target.', owner: 'Mirantis Support Ops', dueDate: 'Q4 close', action: 'Add APAC-hour engineer' },
         { id: 'R-02', level: 'med', title: 'k0rdent UK expansion slip', body: 'Originally Q3, deferred to Q4 pending data-residency review.', owner: 'Vertex Infra', dueDate: 'Oct 15', action: 'DPIA sign-off then schedule' },
         { id: 'R-03', level: 'med', title: 'MKE 3.7 upgrade window', body: '3.6 reaches EOL Feb 2027.', owner: 'Joint', dueDate: 'Plan by Nov 1', action: 'Stage in non-prod first' },
-      ],
-      mirantisRoadmap: d.mirantisRoadmap ?? [
+      ]),
+      mirantisRoadmap: Array.isArray(d.mirantisRoadmap) ? d.mirantisRoadmap : (live ? [] : [
         { lane: 'PRODUCT',  col: 1, title: 'MKE 3.7 GA', body: 'k8s 1.31, longer LTS window' },
         { lane: 'PRODUCT',  col: 2, title: 'Lens 7', body: 'SSO refresh, audit log export' },
         { lane: 'PLATFORM', col: 1, title: 'Observability bundle', body: 'Bundled Loki + Tempo + Prom' },
         { lane: 'SERVICES', col: 1, title: 'OpsCare APAC-hour add-on', body: 'Directly addresses Risk 01' },
-      ],
-      customerRoadmap: d.customerRoadmap ?? [
+      ]),
+      customerRoadmap: Array.isArray(d.customerRoadmap) ? d.customerRoadmap : (live ? [] : [
         { horizon: 'NOW · Q4',   horizonColor: '#3A1A3A', title: 'UK data-residency build', body: 'k0rdent rollout to UK envs after DPIA closes.', lead: 'Lina Ortega' },
         { horizon: 'NEXT · Q1',  horizonColor: '#7B4E7B', title: 'Last-mile platform v2', body: 'Real-time routing service.', lead: 'Jordan Patel' },
         { horizon: 'LATER · Q2+',horizonColor: '#A88AA0', title: 'ML platform consolidation', body: 'Consolidate three internal ML teams.', lead: 'TBD' },
-      ],
-      execSummaryTakeaways: d.execSummaryTakeaways ?? [
+      ]),
+      execSummaryTakeaways: Array.isArray(d.execSummaryTakeaways) ? d.execSummaryTakeaways : (live ? [] : [
         { kind: 'momentum', label: '01 · MOMENTUM', headline: 'Usage up across the board.', body: '14 clusters (+3), 312 nodes, 1,847 workloads (+412).' },
         { kind: 'watch',    label: '02 · WATCH',    headline: 'Support response softened.', body: '96% SLA met (down 2pp).' },
         { kind: 'decide',   label: '03 · DECIDE',   headline: 'k0rdent expansion needs a date.', body: 'Deferred from Q3 to Q4.' },
-      ],
-      asks: d.asks ?? {
+      ]),
+      asks: (d.asks && (d.asks.fromUs || d.asks.fromYou)) ? d.asks : (live ? { fromUs: [], fromYou: [] } : {
         fromUs: [
           { title: 'Sign off on k0rdent UK plan by Oct 15', body: 'DPIA closure + go/no-go from compliance.' },
           { title: 'Reference for one new logo', body: 'Logistics or freight prospect — 30-minute call.' },
@@ -1052,8 +1333,10 @@ class Component extends DCLogic {
           { title: 'MKE 3.7 upgrade runbook draft by Sep 1', body: 'Before 3.6 EOL pressure builds.' },
           { title: 'Last-mile platform architecture review', body: 'Joint design session before Q1 work starts.' },
         ],
-      },
-      training: d.training ?? {
+      }),
+      training: d.training ? d.training : (live ? {
+        delivered: [], deliveredNote: '', planned: [], plannedNote: '',
+      } : {
         delivered: [
           { session: 'MKE upgrade workshop', attendees: '12', csat: '4.8' },
           { session: 'k0rdent intro & hands-on', attendees: '18', csat: '4.9' },
@@ -1065,7 +1348,8 @@ class Component extends DCLogic {
           { session: 'Observability bundle preview', target: 'SRE · 15', date: 'Sep 04' },
         ],
         plannedNote: 'Bundled in current contract — no additional spend.',
-      },
+      }),
+      aiReview: d.aiReview || null,
     };
   }
 
@@ -1112,6 +1396,7 @@ class Component extends DCLogic {
   // (Vertex Logistics) values — i.e. an import left them unfilled and hydrate()'s
   // ?? fallback quietly substituted example data instead of leaving them blank.
   static PLACEHOLDER_CHECKS = [
+    { path: 'customer.name', label: 'Customer name' },
     { path: 'customer.tier', label: 'Customer tier' },
     { path: 'customer.industry', label: 'Customer industry' },
     { path: 'customer.stakeholders', label: 'Stakeholders' },
@@ -1146,17 +1431,65 @@ class Component extends DCLogic {
     { path: 'previousActions', label: 'Previous actions / goals recap' },
   ];
 
+  // After a Salesforce / live import, empty narrative sections still need TAM input.
+  static EMPTY_CHECKS = [
+    { path: 'customer.name', label: 'Customer name', kind: 'string' },
+    { path: 'wins', label: 'Wins', kind: 'array' },
+    { path: 'asks.fromUs', label: 'Asks from us', kind: 'array' },
+    { path: 'asks.fromYou', label: 'Asks from you', kind: 'array' },
+    { path: 'mirantisRoadmap', label: 'Mirantis roadmap', kind: 'array' },
+    { path: 'customerRoadmap', label: 'Customer roadmap', kind: 'array' },
+    { path: 'previousActions', label: 'Previous actions / goals recap', kind: 'array' },
+    { path: 'training.delivered', label: 'Training delivered', kind: 'array' },
+    { path: 'commercial.renewalSponsor', label: 'Renewal sponsor', kind: 'string' },
+    { path: 'commercial.arr.current', label: 'ARR (current)', kind: 'zero' },
+    { path: 'nps.score', label: 'NPS score', kind: 'zero' },
+  ];
+
+  isEmptyCheck(form, check) {
+    const val = this.getPath(form, check.path);
+    if (check.kind === 'array') return !Array.isArray(val) || val.length === 0;
+    if (check.kind === 'zero') return val == null || Number(val) === 0;
+    if (check.kind === 'string') return val == null || String(val).trim() === '';
+    return false;
+  }
+
   // Live diff against the canonical demo doc — no separate tracking state needed:
   // a field reads as a placeholder exactly as long as it's untouched from the demo.
   // Editing it (or importing real data into it) changes the value and it drops off
-  // this list on the next render.
+  // this list on the next render. After SF pull, also flag empty TAM-owned sections.
   computePlaceholders(form) {
-    const demo = this.hydrate(null);
-    return Component.PLACEHOLDER_CHECKS.filter(({ path }) => {
+    const demo = this.hydrate(null, { mode: 'demo' });
+    const warnings = [];
+    const seen = new Set();
+    for (const { path, label } of Component.PLACEHOLDER_CHECKS) {
       const cur = JSON.stringify(this.getPath(form, path));
       const demoVal = JSON.stringify(this.getPath(demo, path));
-      return cur === demoVal;
-    });
+      if (cur === demoVal) {
+        warnings.push({ path, label: label + ' (demo leftover)', kind: 'demo' });
+        seen.add(path);
+      }
+    }
+    const isLive = !!(form && form._meta && String(form._meta.source || '').includes('sf-sync'));
+    if (isLive) {
+      for (const check of Component.EMPTY_CHECKS) {
+        if (seen.has(check.path)) continue;
+        if (this.isEmptyCheck(form, check)) {
+          warnings.push({ path: check.path, label: check.label + ' (empty — needs TAM input)', kind: 'empty' });
+        }
+      }
+    }
+    return warnings;
+  }
+
+  confirmIfPlaceholders(actionLabel) {
+    const warnings = this.computePlaceholders(this.state.form);
+    if (!warnings.length) return true;
+    const preview = warnings.slice(0, 8).map(w => '• ' + w.label).join('\n');
+    const more = warnings.length > 8 ? `\n…and ${warnings.length - 8} more` : '';
+    return confirm(
+      `${warnings.length} section(s) still need review before ${actionLabel}:\n\n${preview}${more}\n\nContinue anyway?`
+    );
   }
 
   // Build the JSON payload to persist (clean up shadow text fields)
@@ -1436,6 +1769,7 @@ class Component extends DCLogic {
     };
 
     const onSave = () => {
+      if (!this.confirmIfPlaceholders('saving')) return;
       const payload = this.serialize(this.state.form);
       try {
         localStorage.setItem('qbr_data_draft', JSON.stringify(payload, null, 2));
@@ -1448,10 +1782,11 @@ class Component extends DCLogic {
     const onClear = () => {
       if (!confirm('Clear the saved draft? The deck will fall back to qbr.data.json or built-in demo values.')) return;
       try { localStorage.removeItem('qbr_data_draft'); } catch (e) {}
-      this.setState({ form: this.hydrate(null), savedAt: null });
+      this.setState({ form: this.hydrate(null, { mode: 'demo' }), savedAt: null });
     };
 
     const onDownload = () => {
+      if (!this.confirmIfPlaceholders('downloading')) return;
       const payload = this.serialize(this.state.form);
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -1514,7 +1849,7 @@ class Component extends DCLogic {
       // requiring them to be truthy silently downgraded those documents to the
       // flat-field picker above, which doesn't even understand nested customer.name.
       if (raw._meta?.schemaVersion || (raw.customer && typeof raw.customer === 'object')) {
-        return this.hydrate(raw);
+        return this.hydrate(raw, { mode: 'live' });
       }
       return next;
     };
@@ -1563,6 +1898,9 @@ class Component extends DCLogic {
       placeholderCount: placeholderWarnings.length,
       hasPlaceholders: placeholderWarnings.length > 0,
       sfAccount: this.state.sfAccount,
+      sfSearchResults: this.state.sfSearchResults || [],
+      sfSearchEmpty: !!this.state.sfSearchEmpty,
+      sfSearching: !!this.state.sfSearching,
       sidecarStatus: this.state.sidecarStatus,
       sidecarChecking: this.state.sidecarChecking,
       sfAuthMode: this.state.sfAuthMode,
@@ -1571,11 +1909,20 @@ class Component extends DCLogic {
       sfPulledAt: this.state.sfPulledAt,
       sfPulledRecently: this.state.sfPulledAt && (Date.now() - this.state.sfPulledAt < 12000),
       sfPullError: this.state.sfPullError || '',
+      sfPullWarning: this.state.sfPullWarning || '',
+      reviewAvailable: !!this.state.reviewAvailable,
+      aiReviewing: !!this.state.aiReviewing,
+      aiReviewError: this.state.aiReviewError || '',
       onSfAccountChange: this.onSfAccountChange,
+      onSfSearchKey: this.onSfSearchKey,
+      onSfSearch: this.onSfSearch,
+      onSfPickAccount: this.onSfPickAccount,
       onSidecarCheck: this.onSidecarCheck,
       onSfConnect: this.onSfConnect,
       onSfDisconnect: this.onSfDisconnect,
       onSfPull: this.onSfPull,
+      onAiReview: this.onAiReview,
+      onApplyAiTakeaways: this.onApplyAiTakeaways,
       onFieldChange, onActionChange, onActionAdd, onActionRemove,
       onIncChange, onIncAdd, onIncRemove,
       onWinChange, onWinAdd, onWinRemove,
