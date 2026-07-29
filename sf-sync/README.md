@@ -7,9 +7,9 @@ Pulls Salesforce account data directly into the QBR Template's JSON schema. Runs
 When the TAM clicks **Pull from Salesforce** in the Configurator, the browser POSTs to this sidecar at `http://localhost:8081/pull` with `{account, quarter}`. The sidecar:
 
 1. Authenticates to SF (Client Credentials / OAuth / password)
-2. Runs Mirantis-aware queries: Account, Opportunities, Contacts, **Environment__c**, **License__c**, **Case**, **Entitlement**
-3. Maps footprint, support, products, incidents, risks, and planning stubs into `qbr.data.json`
-4. Writes `/data/accounts/{slug}-{quarter}.json`
+2. Runs Mirantis-aware queries: Account, Opportunities, Contacts, **Environment__c**, **License__c**, **Case** (`Severity_Level__c`), **CaseHistory**, **CaseMilestone**, **Entitlement**
+3. Maps footprint, support, products, incidents, risks, and `sourceReview.ticketDetail` (SLA Performance Report) into `qbr.data.json`
+4. Writes `/data/accounts/{slug}-{quarter}.json` and `/data/accounts/{slug}.json` (shared `./accounts` bind mount)
 5. Returns the payload to the Configurator
 
 Standard Salesforce **Asset** is not used (unavailable in the MKE Ops sandbox). Product mix comes from **License__c** + **Environment__c**.
@@ -132,7 +132,9 @@ Useful for: pre-meeting CI, cron-style nightly refresh, scripting bulk pulls acr
 
 The queries in `sync.py` use standard SF field names. Mirantis SF will have custom fields the queries don't reference yet. Common edits per-org:
 
-- `Account.AnnualRevenue` is rarely the source of truth for ARR — most orgs use a `ARR__c` custom field. Edit `SOQL_ACCOUNT`.
+- Account commercial SoR: `ARR__c`, `Total_Won_Amount__c`, `Open_Pipeline__c`, `Upcoming_renewal_date__c` (fallback `Renewal_Open_Opportunity_Start_Date__c`, then License end date)
+- Environment node SoR: `of_nodes__c` (component node fields as fallback)
+- Standard Salesforce **Asset** is not used (unavailable in the MKE Ops sandbox; footprint from **License__c** + **Environment__c**)
 - Renewal date probably lives on a `Renewal_Date__c` custom field. Add it to the SELECT and map it in `build_payload`.
 - Tier values from SF picklists (`Tier__c = "Strategic Tier 1"`) need normalizing to what the deck expects (`Strategic`, `Enterprise`, `Growth`).
 - Health score / churn risk if you have custom fields for them.

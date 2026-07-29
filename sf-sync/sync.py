@@ -98,10 +98,26 @@ def connect() -> Salesforce:
 
 
 # ---------------------------------------------------------------------------
-# SOQL queries — adjust field names to match the Mirantis SF org.
-# Custom fields end in __c. If a field doesn't exist in your org, the query
-# returns INVALID_FIELD and sync fails with a clear message.
+# SOQL queries — Mirantis field names from RevOps guidance.
+# Custom Account commercial fields are selected describe-driven so sandbox/prod
+# drift does not break the pull.
 # ---------------------------------------------------------------------------
+ACCOUNT_PREFERRED = [
+    "Id",
+    "Name",
+    "Type",
+    "Industry",
+    "NumberOfEmployees",
+    # Mirantis commercial SoR (confirmed by RevOps)
+    "ARR__c",  # label: Total Open Renewal Amount
+    "Total_Won_Amount__c",  # contract value
+    "Open_Pipeline__c",  # sum of TCV from non-closed opps
+    "Upcoming_renewal_date__c",  # Latest_Open_Renewal_Opportunity__r.Entitlement_Expiration_Date__c
+    "Renewal_Open_Opportunity_Start_Date__c",  # close date of open renewal opp
+    # Legacy fallback only
+    "AnnualRevenue",
+]
+
 SOQL_ACCOUNT = """
 SELECT Id, Name, Type, Industry, NumberOfEmployees,
        AnnualRevenue,
@@ -187,6 +203,93 @@ def soql_escape(s: str) -> str:
     return s.replace("\\", "\\\\").replace("'", "\\'")
 
 
+def query_account_by_name(sf: Salesforce, account_name: str) -> List[Dict[str, Any]]:
+    """Pull Account with Mirantis commercial fields when present on the org."""
+    safe_name = soql_escape(account_name)
+    try:
+        meta = sf.Account.describe()
+        available = {f.get("name") for f in meta.get("fields", []) if f.get("name")}
+        fields = [f for f in ACCOUNT_PREFERRED if f in available]
+        if "Id" not in fields:
+            fields.insert(0, "Id")
+        if "Name" not in fields:
+            fields.insert(1, "Name")
+        soql = (
+            f"SELECT {', '.join(fields)}, Owner.Name, Owner.Email "
+            f"FROM Account WHERE Name = '{safe_name}' LIMIT 1"
+        )
+        return query_records(sf, soql)
+    except SalesforceError:
+        return query_records(sf, SOQL_ACCOUNT.format(name=safe_name))
+
+
+def _num_field(rec: Dict[str, Any], *keys: str) -> float:
+    for k in keys:
+        v = rec.get(k)
+        if v is None or v == "":
+            continue
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            continue
+    return 0.0
+
+
+def map_commercial(
+    acct: Dict[str, Any],
+    opps_open: List[Dict[str, Any]],
+    licenses: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """
+    Mirantis commercial SoR (RevOps):
+      ARR            → ARR__c (Total Open Renewal Amount)
+      contract value → Total_Won_Amount__c
+      pipeline       → Open_Pipeline__c (else sum open Opportunity.Amount)
+      renewal date   → Upcoming_renewal_date__c, else Renewal_Open_Opportunity_Start_Date__c,
+                       else earliest License__c.End_Date__c
+    """
+    arr_current = _num_field(acct, "ARR__c", "AnnualRevenue")
+    contract_value = _num_field(acct, "Total_Won_Amount__c")
+    pipeline = _num_field(acct, "Open_Pipeline__c")
+    if pipeline <= 0:
+        pipeline = sum((o.get("Amount") or 0) for o in opps_open if (o.get("Amount") or 0) > 0)
+
+    renewal_date = (
+        str(acct.get("Upcoming_renewal_date__c") or "")[:10]
+        or str(acct.get("Renewal_Open_Opportunity_Start_Date__c") or "")[:10]
+    )
+    if not renewal_date:
+        for lic in licenses:
+            end = lic.get("End_Date__c")
+            if end and (not renewal_date or str(end)[:10] < renewal_date):
+                renewal_date = str(end)[:10]
+
+    expansions = [
+        {
+            "name": o["Name"],
+            "valueUSD": o.get("Amount") or 0,
+            "quarter": quarter_from_iso(o.get("CloseDate")),
+            "stage": o.get("StageName") or "",
+            "probability": o.get("Probability") or 0,
+        }
+        for o in opps_open
+        if (o.get("Amount") or 0) > 0
+    ]
+
+    return {
+        "arr": {
+            "current": arr_current,
+            "prior": arr_current,
+            "yoyPct": 0,
+        },
+        "contractValue": contract_value or None,
+        "pipelineUSD": pipeline,
+        "renewalDate": renewal_date,
+        "renewalSponsor": "",
+        "expansions": expansions,
+    }
+
+
 def query_records(sf: Salesforce, soql: str) -> List[Dict[str, Any]]:
     result = sf.query(soql)
     return result.get("records", [])
@@ -247,8 +350,7 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
     """Return raw counts + samples so we can see what SF has without form hydrate."""
     import mirantis
 
-    safe_name = soql_escape(account_name)
-    accounts = query_records(sf, SOQL_ACCOUNT.format(name=safe_name))
+    accounts = query_account_by_name(sf, account_name)
     if not accounts:
         return {
             "found": False,
@@ -270,11 +372,7 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
     bundle = mirantis.fetch_mirantis_bundle(sf, account_id)
     warnings = [w for w in (w1, w2, w3, *bundle.get("warnings", [])) if w]
 
-    revenue = acct.get("AnnualRevenue")
-    try:
-        revenue_n = float(revenue) if revenue is not None else 0.0
-    except (TypeError, ValueError):
-        revenue_n = 0.0
+    revenue_n = _num_field(acct, "ARR__c", "AnnualRevenue", "Total_Won_Amount__c")
 
     envs = bundle.get("environments") or []
     licenses = bundle.get("licenses") or []
@@ -317,7 +415,12 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
             "name": acct.get("Name"),
             "type": acct.get("Type"),
             "industry": acct.get("Industry"),
-            "annualRevenue": acct.get("AnnualRevenue"),
+            "annualRevenue": revenue_n,
+            "arr": acct.get("ARR__c"),
+            "totalWonAmount": acct.get("Total_Won_Amount__c"),
+            "openPipeline": acct.get("Open_Pipeline__c"),
+            "upcomingRenewalDate": acct.get("Upcoming_renewal_date__c"),
+            "renewalOpenOppStartDate": acct.get("Renewal_Open_Opportunity_Start_Date__c"),
             "ownerName": safe_get(acct, "Owner", "Name", default=""),
             "ownerEmail": safe_get(acct, "Owner", "Email", default=""),
         },
@@ -332,7 +435,12 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
         },
         "samples": {
             "environments": [
-                {"name": e.get("Name"), "computes": e.get("of_Computes__c")} for e in envs[:5]
+                {
+                    "name": e.get("Name"),
+                    "of_nodes": e.get("of_nodes__c"),
+                    "computes": e.get("of_Computes__c"),
+                }
+                for e in envs[:5]
             ],
             "licenses": [
                 {"name": e.get("Name"), "end": e.get("End_Date__c")} for e in licenses[:5]
@@ -340,7 +448,7 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
             "cases": [
                 {
                     "number": e.get("CaseNumber"),
-                    "priority": e.get("Priority"),
+                    "severity": e.get("Severity_Level__c") or e.get("Priority"),
                     "subject": e.get("Subject"),
                 }
                 for e in cases[:5]
@@ -356,8 +464,9 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
         },
         "warnings": warnings,
         "note": (
-            "Mirantis QBR depth comes from Environment__c, License__c, Case, and Entitlement — "
-            "not standard Asset/AnnualRevenue."
+            "Mirantis QBR depth comes from Environment__c (of_nodes__c), License__c, Case, and Entitlement — "
+            "not standard Asset / AnnualRevenue. Commercial SoR: ARR__c, Total_Won_Amount__c, "
+            "Open_Pipeline__c, Upcoming_renewal_date__c."
         ),
     }
 
@@ -562,8 +671,7 @@ def build_payload(
 ) -> Dict[str, Any]:
     import mirantis
 
-    safe_name = soql_escape(account_name)
-    accounts = query_records(sf, SOQL_ACCOUNT.format(name=safe_name))
+    accounts = query_account_by_name(sf, account_name)
     if not accounts:
         raise SystemExit(
             f"Account not found in Salesforce: {account_name!r}\n"
@@ -588,41 +696,32 @@ def build_payload(
     licenses = bundle.get("licenses") or []
     cases = bundle.get("cases") or []
     entitlements = bundle.get("entitlements") or []
+    case_history = bundle.get("caseHistory") or []
+    case_milestones = bundle.get("caseMilestones") or []
 
     usage = mirantis.map_usage(envs)
-    support = mirantis.map_support(cases, entitlements)
+    support = mirantis.map_support(cases, entitlements, case_milestones, case_history)
     products, product_mix = mirantis.map_products_from_licenses_and_envs(licenses, envs)
-    incidents = mirantis.map_incidents_from_p1(cases)
+    incidents = mirantis.map_incidents_from_p1(cases, case_history)
     risks = mirantis.map_risks_from_signals(licenses, cases, envs)
+    source_review = mirantis.map_source_review(cases, case_history, case_milestones)
+    health = mirantis.map_health_from_cases(cases, support)
     takeaways = mirantis.map_exec_takeaways(
         acct.get("Name") or account_name, usage, support, products, risks
     )
 
-    # Commercial: AnnualRevenue often empty — fall back to open pipeline sum for projection
-    arr_current = safe_get(acct, "AnnualRevenue", default=0) or 0
-    try:
-        arr_current = float(arr_current)
-    except (TypeError, ValueError):
-        arr_current = 0
-    pipeline = sum((o.get("Amount") or 0) for o in opps_open if (o.get("Amount") or 0) > 0)
-    expansions = [
+    # Commercial SoR: ARR__c / Total_Won_Amount__c / Open_Pipeline__c / Upcoming_renewal_date__c
+    commercial = map_commercial(acct, opps_open, licenses)
+    pipeline = commercial.get("pipelineUSD") or 0
+    commercial["_recentClosed"] = [
         {
             "name": o["Name"],
-            "valueUSD": o.get("Amount") or 0,
-            "quarter": quarter_from_iso(o.get("CloseDate")),
-            "stage": o.get("StageName") or "",
-            "probability": o.get("Probability") or 0,
+            "amount": o.get("Amount") or 0,
+            "closeDate": o.get("CloseDate") or "",
+            "won": bool(o.get("IsWon")),
         }
-        for o in opps_open
-        if (o.get("Amount") or 0) > 0
+        for o in opps_recent
     ]
-
-    # Next license end date as renewal signal
-    renewal_date = ""
-    for lic in licenses:
-        end = lic.get("End_Date__c")
-        if end and (not renewal_date or str(end) < renewal_date):
-            renewal_date = str(end)[:10]
 
     # Planning stubs from live signals (TAM refines in Configurator)
     next_actions = []
@@ -657,8 +756,8 @@ def build_payload(
             "schemaVersion": SCHEMA_VERSION,
             "lastUpdated": datetime.now(timezone.utc).isoformat(),
             "source": (
-                f"sf-sync/{os.environ.get('SYNC_VERSION', 'v0.4')} "
-                "(Environment__c + License__c + Case + Entitlement)"
+                f"sf-sync/{os.environ.get('SYNC_VERSION', 'v0.5')} "
+                "(Environment__c + License__c + Case + CaseMilestone + Entitlement)"
             ),
             "accountId": account_id,
             "warnings": warnings,
@@ -666,6 +765,7 @@ def build_payload(
                 "environments": len(envs),
                 "licenses": len(licenses),
                 "cases": len(cases),
+                "caseMilestones": len(case_milestones),
                 "entitlements": len(entitlements),
                 "contacts": len(contacts),
                 "opportunitiesOpen": len(opps_open),
@@ -686,31 +786,14 @@ def build_payload(
         "preparedByEmail": safe_get(acct, "Owner", "Email", default=""),
         "presentationDate": datetime.now().date().isoformat(),
         "nextQbr": {"label": "", "date": ""},
-        "commercial": {
-            "arr": {
-                "current": arr_current,
-                "prior": arr_current,
-                "yoyPct": 0,
-            },
-            "pipelineUSD": pipeline,
-            "renewalDate": renewal_date,
-            "renewalSponsor": "",
-            "expansions": expansions,
-            "_recentClosed": [
-                {
-                    "name": o["Name"],
-                    "amount": o.get("Amount") or 0,
-                    "closeDate": o.get("CloseDate") or "",
-                    "won": bool(o.get("IsWon")),
-                }
-                for o in opps_recent
-            ],
-        },
+        "commercial": commercial,
         "usage": usage,
         "support": support,
+        "health": health,
         "nps": {"score": 0, "industry": 30, "delta": 0},
         "products": products,
         "productMix": product_mix,
+        "sourceReview": source_review,
         "incidents": incidents,
         "incidentsPattern": (
             f"{support.get('p1Count', 0)} P1 cases in Salesforce Case history for this account. "
@@ -779,20 +862,27 @@ def main() -> int:
         print(body)
         return 0
 
+    slug = "".join(c.lower() if c.isalnum() else "-" for c in args.account).strip("-")
     if args.out:
         out_path = Path(args.out)
     else:
-        out_dir = Path(os.environ.get("OUTPUT_DIR", "/data/accounts"))
-        out_dir.mkdir(parents=True, exist_ok=True)
-        slug = "".join(c.lower() if c.isalnum() else "-" for c in args.account).strip("-")
         qslug = args.quarter.lower().replace(" ", "-")
-        out_path = out_dir / f"{slug}-{qslug}.json"
+        out_path = Path(os.environ.get("OUTPUT_DIR", "/data/accounts")) / f"{slug}-{qslug}.json"
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(body)
     print(f"✓ Wrote {out_path}")
+
+    # Stable name the SLA report discovers via nginx autoindex. Written next to
+    # the quarter-stamped file, including under --out — otherwise an explicit
+    # output path silently leaves the report reading a stale pull.
+    latest_path = out_path.parent / f"{slug}.json"
+    if latest_path != out_path:
+        latest_path.write_text(body)
+        print(f"✓ Also wrote {latest_path} (SLA report)")
     print(f"  {len(payload['products'])} products · {len(payload['commercial']['expansions'])} open opps · "
-          f"{len(payload['customer']['stakeholders'])} contacts")
+          f"{len(payload['customer']['stakeholders'])} contacts · "
+          f"{len((payload.get('sourceReview') or {}).get('ticketDetail') or [])} cases")
     return 0
 
 

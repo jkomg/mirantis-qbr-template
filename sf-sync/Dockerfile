@@ -22,7 +22,7 @@ RUN mkdir -p /data/accounts
 
 ENV PYTHONUNBUFFERED=1 \
     OUTPUT_DIR=/data/accounts \
-    SYNC_VERSION=v0.4
+    SYNC_VERSION=v0.5
 
 EXPOSE 8081
 

@@ -330,10 +330,15 @@ def pull():
     slug = "".join(c.lower() if c.isalnum() else "-" for c in account).strip("-")
     qslug = quarter.lower().replace(" ", "-")
     out_path = os.path.join(out_dir, f"{slug}-{qslug}.json")
+    latest_path = os.path.join(out_dir, f"{slug}.json")
+    body = json.dumps(payload, indent=2, default=str)
     with open(out_path, "w") as f:
-        json.dump(payload, f, indent=2, default=str)
+        f.write(body)
+    # Stable name for SLA Performance Report (accounts/*.json portfolio)
+    with open(latest_path, "w") as f:
+        f.write(body)
 
-    return jsonify({"payload": payload, "savedTo": out_path})
+    return jsonify({"payload": payload, "savedTo": out_path, "latestTo": latest_path})
 
 
 @app.post("/review")

@@ -1,8 +1,11 @@
 """
-oauth.py — Salesforce OAuth 2.0 Authorization Code flow for the sf-sync sidecar.
+oauth.py — Salesforce OAuth helpers for the sf-sync sidecar.
 
-Each TAM authenticates with their own Salesforce identity in the browser.
-Tokens are stored in the Flask session (signed cookie) for that browser only.
+Supported modes:
+  - client_credentials  Server-to-server (Connected App key/secret → token as
+                        the assigned integration user). No browser login.
+  - oauth               Authorization Code (each TAM logs in via browser).
+  - password            Username + password + security token (legacy / CLI).
 """
 
 from __future__ import annotations
@@ -27,14 +30,27 @@ def password_configured() -> bool:
     )
 
 
+def client_credentials_configured() -> bool:
+    """Client Credentials needs key/secret plus a My Domain (not login/test)."""
+    if not oauth_configured():
+        return False
+    domain = (os.environ.get("SF_DOMAIN") or "").strip()
+    return bool(domain) and domain not in ("login", "test")
+
+
 def auth_mode() -> str:
-    """Return 'oauth', 'password', or 'none'."""
-    mode = os.environ.get("SF_AUTH_MODE", "auto").lower()
+    """Return 'client_credentials', 'oauth', 'password', or 'none'."""
+    mode = os.environ.get("SF_AUTH_MODE", "auto").lower().replace("-", "_")
+    if mode in ("client_credentials", "client_credential", "cc"):
+        return "client_credentials" if client_credentials_configured() else "none"
     if mode == "oauth":
         return "oauth" if oauth_configured() else "none"
     if mode == "password":
         return "password" if password_configured() else "none"
-    # auto: prefer OAuth when Connected App creds are present
+    # auto: prefer client_credentials when My Domain is set (IT sandbox style),
+    # else browser OAuth when keys exist, else password.
+    if client_credentials_configured():
+        return "client_credentials"
     if oauth_configured():
         return "oauth"
     if password_configured():
@@ -43,8 +59,34 @@ def auth_mode() -> str:
 
 
 def login_host() -> str:
-    domain = os.environ.get("SF_DOMAIN", "login")
+    """Host for authorize/token endpoints.
+
+    Client Credentials / My Domain orgs:
+        SF_DOMAIN=mirantis--mkeops.sandbox.my
+        → https://mirantis--mkeops.sandbox.my.salesforce.com
+
+    Classic login/test:
+        SF_DOMAIN=login|test → https://login.salesforce.com
+    """
+    domain = (os.environ.get("SF_DOMAIN") or "login").strip()
+    # Allow full host paste: mirantis--mkeops.sandbox.my.salesforce.com
+    if domain.endswith(".salesforce.com"):
+        return f"https://{domain}"
+    # Allow full URL paste
+    if domain.startswith("https://") or domain.startswith("http://"):
+        return domain.rstrip("/")
     return f"https://{domain}.salesforce.com"
+
+
+def my_domain_for_simple_salesforce() -> str:
+    """Domain value for simple_salesforce (host without scheme/.salesforce.com)."""
+    domain = (os.environ.get("SF_DOMAIN") or "").strip()
+    if domain.startswith("https://") or domain.startswith("http://"):
+        domain = domain.split("://", 1)[1]
+    domain = domain.rstrip("/")
+    if domain.endswith(".salesforce.com"):
+        domain = domain[: -len(".salesforce.com")]
+    return domain
 
 
 def redirect_uri() -> str:
@@ -93,6 +135,17 @@ def exchange_code(code: str) -> Dict[str, Any]:
             "client_id": os.environ["SF_CONSUMER_KEY"],
             "client_secret": os.environ["SF_CONSUMER_SECRET"],
             "redirect_uri": redirect_uri(),
+        }
+    )
+
+
+def client_credentials_token() -> Dict[str, Any]:
+    """Exchange Connected App key/secret for an access token (integration user)."""
+    return _token_request(
+        {
+            "grant_type": "client_credentials",
+            "client_id": os.environ["SF_CONSUMER_KEY"],
+            "client_secret": os.environ["SF_CONSUMER_SECRET"],
         }
     )
 
