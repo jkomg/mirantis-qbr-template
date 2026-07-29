@@ -1,0 +1,119 @@
+# Mirantis QBR Template — static deck (nginx) + sf-sync sidecar.
+#
+# Both containers live in ONE pod because they share the accounts volume:
+# sf-sync writes /data/accounts, nginx reads the same files (read-only) at
+# /usr/share/nginx/html/accounts. The PVC is ReadWriteOnce, so two separate
+# Deployments could only share it when they happen to land on the same node —
+# a two-container pod guarantees that, and mirrors compose, where both
+# containers sit on one host over one shared folder.
+#
+# Build images first:
+#   docker build -t mirantis-qbr-template:local .
+#   docker build -f sf-sync/Dockerfile -t mirantis-qbr-sf-sync:local .
+#
+# sf-sync needs Salesforce OAuth creds — create the secret from your .env
+# (SF_CONSUMER_KEY, SF_CONSUMER_SECRET, SF_REDIRECT_URI, SF_AUTH_MODE, SF_DOMAIN, ...):
+#   kubectl create secret generic mirantis-qbr-sf-sync-env --from-env-file=.env
+#
+# Apply:
+#   kubectl apply -f k8s/deployment.yaml
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mirantis-qbr
+  labels:
+    app: mirantis-qbr
+spec:
+  replicas: 1
+  # Recreate, not RollingUpdate: a ReadWriteOnce PVC cannot be mounted by a
+  # replacement pod on another node while the old pod still holds it.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mirantis-qbr
+  template:
+    metadata:
+      labels:
+        app: mirantis-qbr
+    spec:
+      containers:
+        - name: qbr
+          image: mirantis-qbr-template:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            # The image deliberately bakes no accounts/ directory; the mount
+            # creates the path, and nginx autoindex serves it even when empty.
+            - name: sf-data
+              mountPath: /usr/share/nginx/html/accounts
+              readOnly: true
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+        - name: sf-sync
+          image: mirantis-qbr-sf-sync:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8081
+          envFrom:
+            - secretRef:
+                name: mirantis-qbr-sf-sync-env
+                optional: true
+          volumeMounts:
+            - name: sf-data
+              mountPath: /data/accounts
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+      volumes:
+        - name: sf-data
+          persistentVolumeClaim:
+            claimName: mirantis-qbr-sf-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mirantis-qbr
+spec:
+  selector:
+    app: mirantis-qbr
+  ports:
+    - port: 8080
+      targetPort: 8080
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mirantis-qbr-sf-sync
+spec:
+  # Same pod as the deck now — 8080 and 8081 are two ports on one pod, so this
+  # selector intentionally matches the mirantis-qbr labels.
+  selector:
+    app: mirantis-qbr
+  ports:
+    - port: 8081
+      targetPort: 8081
+  type: ClusterIP
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mirantis-qbr-sf-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi

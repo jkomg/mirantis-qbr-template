@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f docker-compose.yml -o k8s/
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: sf-sync
+  name: sf-sync
+spec:
+  ports:
+    - name: "8081"
+      port: 8081
+      targetPort: 8081
+  # sf-sync runs as the second container in the qbr pod (they share the sf-data
+  # volume), so this selects that pod — :8081 is one of its two ports.
+  selector:
+    io.kompose.service: qbr

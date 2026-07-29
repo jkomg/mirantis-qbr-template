@@ -25,6 +25,13 @@ accounts/
 qbr.data.local.json
 draft.json
 
+# ---- Kubernetes ----
+# Manifests are committed, but never one with inlined credentials. Secrets are
+# created at deploy time and stay out of the repo:
+#   kubectl create secret generic mirantis-qbr-sf-sync-env --from-env-file=.env
+k8s/*secret*.yaml
+k8s/*.local.yaml
+
 # ---- Project working folders ----
 uploads/
 screenshots/

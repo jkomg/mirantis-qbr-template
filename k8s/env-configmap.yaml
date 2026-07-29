@@ -1,0 +1,22 @@
+# Non-secret defaults for sf-sync.
+#
+# Credentials do NOT belong here — a ConfigMap is stored unencrypted and is
+# readable by anyone with namespace access. Supply SF_CONSUMER_KEY,
+# SF_CONSUMER_SECRET, SF_PASSWORD, SF_SECURITY_TOKEN, SF_USERNAME and any
+# API keys through the Secret instead:
+#
+#   kubectl create secret generic mirantis-qbr-sf-sync-env --from-env-file=.env
+#
+# Pods load this ConfigMap first and the Secret second, so anything in .env
+# overrides the defaults below.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: env
+  labels:
+    io.kompose.service: sf-sync-env
+data:
+  # Sandbox by default — override with your own host in .env.
+  SF_DOMAIN: mirantis--mkeops.sandbox.my
+  SF_AUTH_MODE: client_credentials
+  SYNC_VERSION: v0.5
