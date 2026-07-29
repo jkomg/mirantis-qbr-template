@@ -24,6 +24,8 @@ accounts/
 *.qbr.data.json
 qbr.data.local.json
 draft.json
+# Unreviewed account dump — provenance unconfirmed, so keep it out of `git add .`
+demo/meridian-financial-solutions.json
 
 # ---- Kubernetes ----
 # Manifests are committed, but never one with inlined credentials. Secrets are
