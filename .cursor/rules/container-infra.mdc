@@ -1,0 +1,64 @@
+---
+description: "Docker, compose and k8s for the QBR stack — shared accounts volume, healthchecks, and the explicit-COPY gotcha."
+globs:
+  - "Dockerfile"
+  - "sf-sync/Dockerfile"
+  - "docker-compose.yml"
+  - "docker/**"
+  - "k8s/**"
+  - "scripts/*.sh"
+  - ".env.example"
+alwaysApply: false
+---
+
+# Container & deploy layout
+
+Two services. `qbr` is `nginx:alpine` serving the static deck on `:8080`;
+`sf-sync` is a Flask/gunicorn sidecar on `:8081`.
+
+## Both Dockerfiles COPY files explicitly
+
+Neither image copies a directory wholesale. A new page, script, or Python
+module that is not added to the relevant `COPY` line **will not exist in the
+container**, and the failure looks like a stale-cache bug rather than a
+missing file. When you add a file, add the `COPY`:
+
+- new `*.html` / `*.js` → root `Dockerfile`
+- new `sf-sync/*.py` → `sf-sync/Dockerfile`
+
+## The shared accounts volume
+
+`./accounts` on the host is bind-mounted into both containers — read-only at
+`/usr/share/nginx/html/accounts` for `qbr`, read-write at `/data/accounts` for
+`sf-sync`. This is what makes a Salesforce pull show up in the SLA report with
+no copy step.
+
+Do not convert this to a named volume. Do not bake `accounts/` into an image.
+It is gitignored and holds real customer data.
+
+## Healthchecks
+
+Use `127.0.0.1`, never `localhost` — on Alpine `localhost` can resolve
+IPv6-only and busybox `wget` then fails against an IPv4 listener, marking a
+perfectly healthy container unhealthy. Keep an explicit `--start-period` so
+startup isn't counted as failure.
+
+## No egress after build
+
+The root image's only network step is the font-fetch build stage. The runtime
+container makes zero outbound requests, which is what lets this handle real
+customer data. Don't introduce a runtime fetch, a CDN reference, or a
+telemetry call.
+
+## Compose conventions
+
+- `restart: unless-stopped` on both services.
+- `.env` is `required: false` — the deck must come up without Salesforce
+  credentials. Only `sf-sync` degrades.
+- `.env` is never committed; changes go to `.env.example` with placeholders.
+
+## Keep versions aligned
+
+`SYNC_VERSION` appears in `sf-sync/Dockerfile`, `.env.example`, and
+`k8s/env-configmap.yaml`. Bump them together, and mirror any compose change
+into the matching `k8s/*.yaml` manifest.

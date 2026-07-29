@@ -1,0 +1,74 @@
+---
+description: "Salesforce sync sidecar (Python/Flask/SOQL) — org-specific field invariants and failure model."
+globs:
+  - "sf-sync/**/*.py"
+alwaysApply: false
+---
+
+# sf-sync — Salesforce pull sidecar
+
+Flask sidecar that queries the Mirantis Salesforce org and writes QBR/SLA JSON
+into `/data/accounts`. `mirantis.py` holds object→payload mapping, `sync.py`
+holds queries and payload assembly, `server.py` holds HTTP routes.
+
+## Field selection is describe-driven — never hardcode
+
+Sandbox and prod drift. Every SOQL `SELECT` list must be built by passing a
+`*_PREFERRED` list through `_select_fields(meta, preferred)`, which intersects
+it with the object describe. Adding a bare field name straight into a query
+string is the single most common way this service breaks.
+
+To add a field: append it to the relevant `*_PREFERRED` constant. Do not edit
+query strings directly.
+
+## Org facts that are not guessable
+
+- **Case severity is `Severity_Level__c`** (`"Sev 1"`–`"Sev 4"`). Standard
+  `Case.Priority` does not exist in the MKE Ops sandbox and must never be the
+  sole source of severity. Read it through `_case_severity_raw()`.
+- **Standard `Asset` returns `INVALID_TYPE`.** Footprint and product mix come
+  from `Environment__c` + `License__c`, never `Asset`.
+- **Node counts:** `of_nodes__c` is the source of truth. Per-component fields
+  (`of_Computes__c`, `Number_of_Controllers__c`, …) are fallback only.
+- **Commercial fields are RevOps-confirmed:** ARR → `ARR__c`; contract value →
+  `Total_Won_Amount__c`; pipeline → `Open_Pipeline__c`; renewal date →
+  `Upcoming_renewal_date__c`, falling back to
+  `Renewal_Open_Opportunity_Start_Date__c`. `Account.AnnualRevenue` is a last
+  resort, not a default.
+- **Severity at open** comes from `CaseHistory`, not the current field value.
+  A case reclassified after opening still counts under the severity it opened
+  as.
+
+## SLA scoring
+
+SLA adherence is **P1/P2 First Response milestones only**. Resolution-time,
+Next Update, and WatchDog milestones are not scored. Cases outside P1/P2 are
+reported as not SLA-bound (`slaBound: false`) rather than as passes — do not
+let unbound cases inflate the met percentage.
+
+## Failure model: degrade, don't raise
+
+A missing object, missing field, or failed related query is a **warning**, not
+an exception. Append to the `warnings` list and continue with partial data;
+`build_payload` must always return a payload. Wrap optional queries in
+`except SalesforceError` and record the message.
+
+## SOQL safety
+
+- Interpolated strings go through `_soql_escape()`. No f-string user input
+  directly into a `WHERE` clause.
+- ID lists go through `_chunked()` — SOQL has a statement-length limit and
+  large `IN (...)` sets will fail in prod even when they pass in sandbox.
+- Keep the `CASE_MONTHS` / `CASE_LIMIT` bounds on Case queries.
+
+## Output
+
+Each pull writes two copies into the accounts dir: `{slug}-{quarter}.json`
+(historical) and `{slug}.json` (stable name the SLA report reads). Both must
+stay in sync. Bump `SYNC_VERSION` in `.env.example` and `sf-sync/Dockerfile`
+together when payload shape changes, and update `_meta.source`/`counts`.
+
+## Dependencies
+
+`requirements.txt` is deliberately small (`simple-salesforce`, Flask). Ask
+before adding a dependency.

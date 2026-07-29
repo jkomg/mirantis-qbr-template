@@ -1,0 +1,63 @@
+---
+description: "Deck, Configurator and SLA report — dependency-free single-file HTML/JS conventions and the accounts JSON contract."
+globs:
+  - "*.html"
+  - "*.js"
+  - "assets/**"
+alwaysApply: false
+---
+
+# Deck / Configurator / SLA report
+
+Static front end served by nginx on `:8080`. There is **no build step, no
+bundler, no npm, no framework**. Each page is a self-contained HTML file with
+inline `<style>` and `<script>`, plus a couple of shared `.js` files.
+
+- `perf-report.html` — SLA & Service Performance Report (portfolio + per-account)
+- `QBR Configurator.dc.html` — pulls from the sidecar, edits payload, exports JSON
+- `QBR Template*.dc.html`, `index.html`, `deck-stage.js`, `support.js` — the deck
+
+## Hard constraints
+
+- **No runtime network calls to third parties.** No CDN scripts, no Google
+  Fonts, no analytics. Fonts are self-hosted under `assets/` (see
+  `scripts/fetch-fonts.sh`). This deck gets shown to customers on untrusted
+  networks and must render fully offline.
+- **Vanilla ES2020.** No TypeScript, no JSX, no imports from a package
+  registry.
+- Only the sidecar on `:8081` is a legitimate fetch target, and every page must
+  still render when it is unreachable.
+
+## The accounts JSON contract
+
+`perf-report.html` discovers `accounts/*.json` through nginx `autoindex` and
+parses whatever it finds. Those files are produced by `sf-sync`, so treat the
+payload as an external contract:
+
+- Every field may be missing, `null`, or a different type than expected. Guard
+  before arithmetic; never let one malformed account blank the whole report.
+- SLA rows live in `sourceReview.ticketDetail[]` and carry `openedAs`,
+  `slaBound`, `slaBreach`, `slaTargetMins`, `slaActualMins`, `slaMilestone`.
+- Severity buckets are driven by **severity at open** (`openedAs`), not the
+  case's current severity.
+- Percentages are computed over SLA-bound cases only. Cases with
+  `slaBound: false` are excluded from both numerator and denominator.
+
+If you change the shape of anything under `sourceReview`, the corresponding
+mapping in `sf-sync/mirantis.py` changes in the same pass.
+
+## Configurator specifics
+
+- Never backfill demo data (the Vertex Logistics / Meridian fixtures) into
+  fields left blank by a Salesforce pull. Blank means blank, and the
+  placeholder banner is what surfaces it.
+- Drafts persist in `localStorage`; nothing is written server-side unless the
+  user explicitly downloads JSON.
+- Sections that Salesforce cannot fill (wins, asks, roadmap, training
+  narrative) stay TAM-owned — don't invent generated content for them.
+
+## Style
+
+Match the surrounding file. These are long single-file pages with a consistent
+internal idiom; follow the local naming and helper conventions rather than
+introducing a new pattern in one section.
