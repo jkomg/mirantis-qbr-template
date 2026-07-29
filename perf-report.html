@@ -172,22 +172,33 @@ const SEV_RANK = { P1: 1, P2: 2, P3: 3, P4: 4 };
 const HEALTH_META = {
   'Healthy': { color: 'var(--status-good)', label: 'Healthy' },
   'Low Activity': { color: 'var(--text-muted)', label: 'Low activity' },
+  'At Risk': { color: 'var(--status-critical)', label: 'At risk' },
 };
-const fmt = (n) => (n ?? 0).toLocaleString('en-US');
-const fmt1 = (n) => (n ?? 0).toLocaleString('en-US', { maximumFractionDigits: 1 });
-const esc = (s) => (s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// accounts/*.json is an external contract: any field may be missing, null, or
+// the wrong type. Everything below coerces rather than throws, so one bad
+// account degrades to an empty row instead of blanking the whole report.
+const asObject = (v) => (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+const asArray = (v) => Array.isArray(v) ? v : [];
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const accountName = (d) => asObject(asObject(d).customer).name || asObject(d)._file || 'Unnamed account';
+const fmt = (n) => num(n).toLocaleString('en-US');
+const fmt1 = (n) => num(n).toLocaleString('en-US', { maximumFractionDigits: 1 });
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 function parseDurationHours(s) {
   if (!s || s === 'Open') return null;
   let m = /^(\d+)d (\d+)h$/.exec(s);
-  if (m) return parseInt(m[1]) * 24 + parseInt(m[2]);
-  m = /^(\d+)h$/.exec(s);
-  if (m) return parseInt(m[1]);
-  m = /^(\d+)m$/.exec(s);
-  if (m) return parseInt(m[1]) / 60;
+  if (m) return parseInt(m[1], 10) * 24 + parseInt(m[2], 10);
+  m = /^(\d+(?:\.\d+)?)h$/.exec(s);
+  if (m) return parseFloat(m[1]);
+  m = /^(\d+(?:\.\d+)?)m$/.exec(s);
+  if (m) return parseFloat(m[1]) / 60;
   return null;
 }
-function sevKey(s) { return 'P' + (s || '').trim().split(' ')[1]; }
+function sevKey(s) {
+  const m = String(s || '').match(/([1-4])/);
+  return m ? ('P' + m[1]) : null;
+}
 
 // ---------- Tooltip ----------
 const tt = document.getElementById('tooltip');
@@ -224,34 +235,68 @@ async function fetchAccountFileList() {
 }
 async function fetchAllAccounts() {
   const files = await fetchAccountFileList();
-  const accounts = await Promise.all(files.map(async f => {
-    const r = await fetch('accounts/' + f, { cache: 'no-cache' });
-    const data = await r.json();
-    data._file = f;
-    return data;
+  // A file that 404s or holds unparseable JSON is dropped with a console note —
+  // it must not take the rest of the portfolio down with it.
+  const loaded = await Promise.all(files.map(async f => {
+    try {
+      const r = await fetch('accounts/' + f, { cache: 'no-cache' });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = asObject(await r.json());
+      data._file = f;
+      return data;
+    } catch (err) {
+      console.warn('accounts/' + f + ' skipped: ' + err.message);
+      return null;
+    }
   }));
-  return accounts;
+  const accounts = loaded.filter(Boolean);
+  if (!accounts.length) throw new Error('No readable .json files in accounts/');
+  // Sidecar writes both {slug}.json and {slug}-{quarter}.json — keep one row per customer.
+  const byName = new Map();
+  for (const d of accounts) {
+    const name = accountName(d);
+    const prev = byName.get(name);
+    const score = (d._meta && d._meta.lastUpdated) || '';
+    const prevScore = (prev && prev._meta && prev._meta.lastUpdated) || '';
+    const preferStable = !/q[1-4]-fy\d/i.test(d._file);
+    const prevStable = prev ? !/q[1-4]-fy\d/i.test(prev._file) : false;
+    if (!prev || (preferStable && !prevStable) || score > prevScore) {
+      byName.set(name, d);
+    }
+  }
+  return [...byName.values()];
 }
 
 // ---------- Per-account computed view ----------
 function computeAccountStats(d) {
-  const sr = d.sourceReview || {};
-  const tickets = (sr.ticketDetail || []).map(row => {
-    const opened = sevKey(row.openedAs), final = sevKey(row.severity);
+  const sr = asObject(asObject(d).sourceReview);
+  const tickets = asArray(sr.ticketDetail).map(raw => {
+    const row = asObject(raw);
+    // SLA severity = severity when the commitment applied, so `openedAs` wins.
+    // `severity` is only a fallback for curated dumps that omit it — the sidecar
+    // writes severity-at-open into both, but a hand-built file may carry the
+    // current severity there, and tickets routinely step down after response.
+    const slaSev = sevKey(row.openedAs) || sevKey(row.severity) || 'P4';
+    // Boundness is P1/P2 first response only. A payload declaring slaBound on a
+    // P3/P4 row must not enter the scored set, or the top-line percentage and
+    // the per-severity breakdown would be computed over different rows.
+    const slaBound = !!SLA_BOUND[slaSev] && (row.slaBound == null || !!row.slaBound);
+    let slaBreach = row.slaBreach ?? null;
+    if (!slaBound) slaBreach = null;
     return {
-      ...row, openedSev: opened, finalSev: final,
+      ...row,
+      slaSev,
+      slaBound,
       hours: parseDurationHours(row.duration),
-      reclassified: opened !== final,
-      direction: SEV_RANK[final] > SEV_RANK[opened] ? 'downgraded' : (SEV_RANK[final] < SEV_RANK[opened] ? 'upgraded' : 'none'),
-      // Not in the source data yet — left null so the SLA-breach sort/column has
-      // something to key off once real breach metrics/thresholds are supplied.
-      slaBreach: row.slaBreach ?? null,
+      slaBreach,
+      slaTargetMins: row.slaTargetMins ?? null,
+      slaActualMins: row.slaActualMins ?? null,
     };
   });
-  const openedTotals = { P1:0,P2:0,P3:0,P4:0 }, finalTotals = { P1:0,P2:0,P3:0,P4:0 };
-  tickets.forEach(t => { openedTotals[t.openedSev]++; finalTotals[t.finalSev]++; });
+  const slaTotals = { P1:0, P2:0, P3:0, P4:0 };
+  tickets.forEach(t => { slaTotals[t.slaSev]++; });
   const resBySev = { P1:[],P2:[],P3:[],P4:[] };
-  tickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.finalSev].push(t.hours); });
+  tickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.slaSev].push(t.hours); });
   const resStats = {};
   SEV_ORDER.forEach(k => {
     const vals = resBySev[k];
@@ -261,28 +306,61 @@ function computeAccountStats(d) {
       max: Math.max(...vals),
     } : { count: 0 };
   });
-  const reclassified = tickets.filter(t => t.reclassified);
-  return { tickets, openedTotals, finalTotals, resStats, reclassifiedCount: reclassified.length };
+  const slaBoundTickets = tickets.filter(t => t.slaBound);
+  const slaScored = slaBoundTickets.filter(t => t.slaBreach != null);
+  const slaMet = slaScored.filter(t => t.slaBreach === false).length;
+  const slaBreached = slaScored.filter(t => t.slaBreach === true).length;
+  const bySev = {};
+  ['P1','P2'].forEach(k => {
+    const rows = slaBoundTickets.filter(t => t.slaSev === k && t.slaBreach != null);
+    const met = rows.filter(t => t.slaBreach === false).length;
+    bySev[k] = { total: rows.length, met, breached: rows.length - met, pct: rows.length ? Math.round(100 * met / rows.length) : null };
+  });
+  return {
+    tickets, slaTotals, resStats,
+    sla: {
+      bound: slaBoundTickets.length,
+      scored: slaScored.length,
+      met: slaMet,
+      breached: slaBreached,
+      pct: slaScored.length ? Math.round(100 * slaMet / slaScored.length) : null,
+      bySev,
+    },
+  };
 }
 
 // ---------- Portfolio aggregation ----------
+function accountSummary(d) {
+  const sr = asObject(asObject(d).sourceReview);
+  const counts = asObject(sr.ticketCounts);
+  const av = computeAccountStats(d);
+  return {
+    file: asObject(d)._file, name: accountName(d),
+    total: num(counts.total), open: num(counts.open), closed: num(counts.closed),
+    slaTotals: av.slaTotals,
+    slaPct: av.sla.pct,
+    slaBreached: av.sla.breached,
+    health: asObject(asObject(d).health).status ?? 'Unknown',
+    _stats: av, _raw: asObject(d),
+  };
+}
+
 function computePortfolio(accounts) {
   const list = accounts.map(d => {
-    const sr = d.sourceReview || {};
-    const av = computeAccountStats(d);
-    return {
-      file: d._file, name: d.customer.name,
-      total: sr.ticketCounts?.total ?? 0, open: sr.ticketCounts?.open ?? 0, closed: sr.ticketCounts?.closed ?? 0,
-      openedAs: av.openedTotals, finalSeverity: av.finalTotals,
-      health: d.health?.status ?? 'Unknown',
-      _stats: av, _raw: d,
-    };
+    try {
+      return accountSummary(d);
+    } catch (err) {
+      // Last resort for a shape nothing above anticipated: an empty row keyed on
+      // the filename, so this account degrades and the rest still render.
+      console.warn('Degraded row for ' + (asObject(d)._file || 'unknown account') + ': ' + err.message);
+      return accountSummary({ _file: asObject(d)._file });
+    }
   });
   const portfolioTotal = list.reduce((s,a) => s + a.total, 0);
   const portfolioOpen = list.reduce((s,a) => s + a.open, 0);
   const portfolioClosed = list.reduce((s,a) => s + a.closed, 0);
-  const openedAsTotals = { P1:0,P2:0,P3:0,P4:0 }, finalSeverityTotals = { P1:0,P2:0,P3:0,P4:0 };
-  list.forEach(a => SEV_ORDER.forEach(k => { openedAsTotals[k] += a.openedAs[k]; finalSeverityTotals[k] += a.finalSeverity[k]; }));
+  const slaTotals = { P1:0,P2:0,P3:0,P4:0 };
+  list.forEach(a => SEV_ORDER.forEach(k => { slaTotals[k] += a.slaTotals[k]; }));
   const healthCounts = {};
   list.forEach(a => { healthCounts[a.health] = (healthCounts[a.health] || 0) + 1; });
 
@@ -290,7 +368,7 @@ function computePortfolio(accounts) {
   list.forEach(a => a._stats.tickets.forEach(t => allTickets.push({ ...t, account: a.name, file: a.file })));
 
   const resBySev = { P1:[],P2:[],P3:[],P4:[] };
-  allTickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.finalSev].push(t); });
+  allTickets.forEach(t => { if (t.hours != null && t.status === 'Closed') resBySev[t.slaSev].push(t); });
   const resolutionStats = {};
   SEV_ORDER.forEach(k => {
     const vals = resBySev[k].map(t => t.hours);
@@ -302,11 +380,16 @@ function computePortfolio(accounts) {
     } : { count: 0, avg_hours: null, median_hours: null, max_hours: null };
   });
 
-  const reclass = allTickets.filter(t => t.reclassified);
-  const downgraded = reclass.filter(t => t.direction === 'downgraded');
-  const upgraded = reclass.filter(t => t.direction === 'upgraded');
-  const p1Opened = allTickets.filter(t => t.openedSev === 'P1');
-  const p1StillP1 = p1Opened.filter(t => t.finalSev === 'P1');
+  const slaBound = allTickets.filter(t => t.slaBound);
+  const slaScored = slaBound.filter(t => t.slaBreach != null);
+  const slaMet = slaScored.filter(t => t.slaBreach === false).length;
+  const slaBreached = slaScored.filter(t => t.slaBreach === true);
+  const slaBySev = {};
+  ['P1','P2'].forEach(k => {
+    const rows = slaBound.filter(t => t.slaSev === k && t.slaBreach != null);
+    const met = rows.filter(t => t.slaBreach === false).length;
+    slaBySev[k] = { total: rows.length, met, breached: rows.length - met, pct: rows.length ? Math.round(100 * met / rows.length) : null };
+  });
 
   const openTickets = allTickets.filter(t => t.status === 'Open');
   const longestResolutions = allTickets.filter(t => t.hours != null && t.status === 'Closed')
@@ -323,17 +406,25 @@ function computePortfolio(accounts) {
   ];
   const themeBuckets = BUCKETS.map(([label, kws]) => {
     const accs = list.filter(a => {
-      const text = (a._raw.sourceReview?.recurringThemes || []).join(' ').toLowerCase();
+      const text = asArray(asObject(a._raw.sourceReview).recurringThemes).join(' ').toLowerCase();
       return kws.some(kw => text.includes(kw));
     }).map(a => a.name);
     return { label, accountCount: accs.length, accounts: accs.sort() };
   }).sort((a,b) => b.accountCount - a.accountCount);
 
   return {
-    accounts: list.sort((a,b) => b.total - a.total),
-    portfolio: { total: portfolioTotal, open: portfolioOpen, closed: portfolioClosed, openedAsTotals, finalSeverityTotals, healthCounts },
+    accounts: list.sort((a,b) => (b.slaBreached - a.slaBreached) || (b.total - a.total)),
+    portfolio: { total: portfolioTotal, open: portfolioOpen, closed: portfolioClosed, slaTotals, healthCounts },
     resolutionStats,
-    reclassification: { totalReclassified: reclass.length, downgraded: downgraded.length, upgraded: upgraded.length, p1OpenedCount: p1Opened.length, p1StillP1Count: p1StillP1.length },
+    sla: {
+      bound: slaBound.length,
+      scored: slaScored.length,
+      met: slaMet,
+      breached: slaBreached.length,
+      pct: slaScored.length ? Math.round(100 * slaMet / slaScored.length) : null,
+      bySev: slaBySev,
+      breaches: slaBreached.sort((a,b) => (a.account || '').localeCompare(b.account || '')),
+    },
     openTickets, longestResolutions, themeBuckets,
   };
 }
@@ -350,16 +441,45 @@ function sevBarListHtml(totals) {
       '<div class="bar-value">' + fmt(v) + '</div></div>';
   }).join('');
 }
-function sevStackHtml(final) {
-  const total = SEV_ORDER.reduce((s,k) => s + final[k], 0) || 1;
+function sevStackHtml(totals) {
+  const total = SEV_ORDER.reduce((s,k) => s + totals[k], 0) || 1;
   return '<div class="mini-stack">' + SEV_ORDER.map(k => {
-    const w = (final[k] / total) * 100;
-    return w > 0 ? '<span style="width:' + w + '%; background:' + STATUS[k].color + '" title="' + STATUS[k].label + ': ' + final[k] + '"></span>' : '';
+    const w = (totals[k] / total) * 100;
+    return w > 0 ? '<span style="width:' + w + '%; background:' + STATUS[k].color + '" title="' + STATUS[k].label + ': ' + totals[k] + '"></span>' : '';
   }).join('') + '</div>';
 }
 function healthChipHtml(health) {
   const hm = HEALTH_META[health] || { color: 'var(--text-muted)', label: health };
-  return '<span class="health-chip"><span class="health-dot" style="background:' + hm.color + '"></span>' + hm.label + '</span>';
+  return '<span class="health-chip"><span class="health-dot" style="background:' + hm.color + '"></span>' + esc(hm.label) + '</span>';
+}
+function fmtMins(m) {
+  if (m == null || m === '') return '—';
+  const n = Number(m);
+  if (Number.isNaN(n)) return '—';
+  if (n < 60) return Math.round(n) + 'm';
+  if (n < 1440) return fmt1(n / 60) + 'h';
+  return fmt1(n / 1440) + 'd';
+}
+// The column is headed "First response", so naming the milestone is only
+// informative when the row was scored against a different one.
+function slaMilestoneNote(t) {
+  const name = t.slaMilestone;
+  if (!name || String(name) === 'First Response') return '';
+  return ' <span style="color:var(--text-muted);font-size:12px">· ' + esc(name) + '</span>';
+}
+function slaLabel(t) {
+  if (!t.slaBound) return '<span style="color:var(--text-muted)">n/a</span>';
+  if (t.slaBreach == null) return '<span style="color:var(--text-muted)">no milestone</span>';
+  if (t.slaBreach) {
+    return '<span class="reclass-flag">Breached</span>' +
+      (t.slaTargetMins != null ? ' <span style="color:var(--text-muted);font-size:12px">target ' + fmtMins(t.slaTargetMins) + '</span>' : '') +
+      slaMilestoneNote(t);
+  }
+  return '<span style="color:var(--status-good);font-weight:600">Met</span>' +
+    (t.slaActualMins != null || t.slaTargetMins != null
+      ? ' <span style="color:var(--text-muted);font-size:12px">' + fmtMins(t.slaActualMins) + ' / ' + fmtMins(t.slaTargetMins) + '</span>'
+      : '') +
+    slaMilestoneNote(t);
 }
 function resBarListHtml(resStats) {
   const maxAvg = Math.max(...SEV_ORDER.map(k => resStats[k].avg_hours || resStats[k].avg || 0));
@@ -369,7 +489,7 @@ function resBarListHtml(resStats) {
     if (!r.count) {
       return '<div class="bar-row"><div class="bar-row-label"><span class="sev-dot" style="background:' + STATUS[k].color + '"></span>' + STATUS[k].label + '</div><div class="bar-track"></div><div class="bar-value">no closed cases</div></div>';
     }
-    const pct = Math.max((avg / maxAvg) * 100, 2);
+    const pct = maxAvg > 0 ? Math.max((avg / maxAvg) * 100, 2) : 2;
     const avgDays = avg / 24;
     return '<div class="bar-row"><div class="bar-row-label"><span class="sev-dot" style="background:' + STATUS[k].color + '"></span>' + STATUS[k].label + '</div>' +
       '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%; background:' + STATUS[k].color + '"></div></div>' +
@@ -377,14 +497,17 @@ function resBarListHtml(resStats) {
   }).join('');
 }
 function daysAge(created, asOf) {
-  const c = new Date(created + 'T00:00:00Z'), a = asOf ? new Date(asOf) : new Date(created);
+  const c = new Date(String(created ?? '') + 'T00:00:00Z');
+  if (Number.isNaN(c.getTime())) return null;
+  const a = asOf ? new Date(asOf) : new Date();
   return Math.max(0, Math.round((a - c) / 86400000));
+}
+function ageSuffix(t) {
+  const age = t.status === 'Open' ? daysAge(t.created) : null;
+  return age == null ? '' : ' · ' + age + 'd';
 }
 function ticketRowHtml(t, opts) {
   opts = opts || {};
-  const triage = t.reclassified
-    ? '<span class="reclass-flag">' + t.openedSev + ' → ' + t.finalSev + '</span>'
-    : '<span style="color:var(--text-muted)">unchanged</span>';
   return '<tr>' +
     (opts.showAccount ? '<td>' + esc(t.account) + '</td>' : '') +
     '<td class="case-num">' + esc(t.caseNumber) + '</td>' +
@@ -392,29 +515,22 @@ function ticketRowHtml(t, opts) {
       (opts.full ? '<div class="narrative"><strong>Issue:</strong> ' + esc(t.issue) + '</div>' + (t.resolution ? '<div class="narrative"><strong>Resolution:</strong> ' + esc(t.resolution) + '</div>' : '') : '') +
     '</td>' +
     '<td>' + esc(t.created) + '</td>' +
-    '<td>' + esc(t.status) + (t.status === 'Open' ? ' · ' + daysAge(t.created) + 'd' : '') + '</td>' +
-    '<td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td>' +
-    '<td>' + triage + '</td>' +
+    '<td>' + esc(t.status) + ageSuffix(t) + '</td>' +
+    '<td><span class="sev-dot" style="background:' + STATUS[t.slaSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.slaSev + '</td>' +
+    '<td>' + slaLabel(t) + '</td>' +
     '</tr>';
 }
 
 function fullHistoryRowHtml(t) {
-  const triage = t.reclassified
-    ? '<span class="reclass-flag">' + t.openedSev + ' → ' + t.finalSev + '</span>'
-    : '<span style="color:var(--text-muted)">unchanged</span>';
-  // t.slaBreach is left null until real breach data/thresholds are supplied — sorting is
-  // wired to this field now so filling it in later needs no table rework.
-  const breachLabel = t.slaBreach == null ? '—' : (t.slaBreach ? 'Breached' : 'Met');
   return '<tr>' +
     '<td class="case-num">' + esc(t.caseNumber) + '</td>' +
     '<td class="subject-cell"><div class="subj">' + esc(t.subject) + '</div>' +
       '<div class="narrative"><strong>Issue:</strong> ' + esc(t.issue) + '</div>' + (t.resolution ? '<div class="narrative"><strong>Resolution:</strong> ' + esc(t.resolution) + '</div>' : '') +
     '</td>' +
     '<td>' + esc(t.created) + '</td>' +
-    '<td>' + esc(t.status) + (t.status === 'Open' ? ' · ' + daysAge(t.created) + 'd' : '') + '</td>' +
-    '<td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td>' +
-    '<td>' + breachLabel + '</td>' +
-    '<td>' + triage + '</td>' +
+    '<td>' + esc(t.status) + ageSuffix(t) + '</td>' +
+    '<td><span class="sev-dot" style="background:' + STATUS[t.slaSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.slaSev + '</td>' +
+    '<td>' + slaLabel(t) + '</td>' +
     '</tr>';
 }
 function wireSortableTable(tableId, rows, rowRenderFn, defaultKey, defaultDir) {
@@ -450,8 +566,9 @@ function wireSortableTable(tableId, rows, rowRenderFn, defaultKey, defaultDir) {
 // ---------- Portfolio view ----------
 function renderPortfolio(agg) {
   const p = agg.portfolio;
-  const healthy = p.healthCounts['Healthy'] || 0;
-  const other = p.total - healthy;
+  const sla = agg.sla;
+  const p1 = sla.bySev.P1 || { total: 0, met: 0, breached: 0, pct: null };
+  const p2 = sla.bySev.P2 || { total: 0, met: 0, breached: 0, pct: null };
 
   const html = `
     <div class="hero">
@@ -463,7 +580,7 @@ function renderPortfolio(agg) {
               <a class="nav-link" href="QBR Configurator.dc.html">QBR Configurator →</a>
             </div>
             <h1>SLA &amp; Service Performance Report</h1>
-            <div class="hero-sub">Portfolio-wide review of support case history across ${agg.accounts.length} accounts — severity lifecycle, resolution time, and recurring service themes.</div>
+            <div class="hero-sub">First-response adherence for P1/P2 across ${agg.accounts.length} accounts — the commitment that matters. Severity step-downs after response are normal Support workflow and are not scored here.</div>
           </div>
           <div class="hero-meta">
             Period: <strong>trailing 24 months</strong><br>
@@ -471,35 +588,47 @@ function renderPortfolio(agg) {
           </div>
         </div>
         <div class="stat-row">
-          <div class="stat-tile"><div class="stat-label">Total tickets</div><div class="stat-value">${fmt(p.total)}</div><div class="stat-note">${agg.accounts.length} accounts · trailing 24mo</div></div>
-          <div class="stat-tile"><div class="stat-label">Currently open</div><div class="stat-value">${fmt(p.open)}</div><div class="stat-note">${fmt(p.closed)} closed</div></div>
-          <div class="stat-tile"><div class="stat-label">Accounts healthy</div><div class="stat-value">${healthy} / ${agg.accounts.length}</div><div class="stat-note">${p.total ? '' : ''}${agg.accounts.length - healthy} flagged other</div></div>
+          <div class="stat-tile"><div class="stat-label">P1/P2 first response</div><div class="stat-value">${sla.pct == null ? '—' : sla.pct + '%'}</div><div class="stat-note">${fmt(sla.met)} met · ${fmt(sla.breached)} breached · ${fmt(sla.scored)} scored</div></div>
+          <div class="stat-tile"><div class="stat-label">P1 first response</div><div class="stat-value">${p1.pct == null ? '—' : p1.pct + '%'}</div><div class="stat-note">${fmt(p1.met)} / ${fmt(p1.total)} within window</div></div>
+          <div class="stat-tile"><div class="stat-label">P2 first response</div><div class="stat-value">${p2.pct == null ? '—' : p2.pct + '%'}</div><div class="stat-note">${fmt(p2.met)} / ${fmt(p2.total)} within window</div></div>
         </div>
       </div>
     </div>
     <div class="wrap">
       <div class="panel">
         <div class="panel-head"><div>
-          <div class="eyebrow">Ticket lifecycle</div>
-          <h2>Severity at open vs. at close</h2>
-          <div class="panel-takeaway"><strong>P1 and P2 are the SLA-bound severities</strong> — active incidents Mirantis is obligated to address under commitment. The customer sets severity at creation based on how urgent the issue feels; once a fix is applied, severity is typically stepped down to P3 while the team confirms it holds, before the ticket closes. The shift below is mostly that resolve-then-verify workflow, not a change in how severe the issue turned out to be — useful context, but secondary to the SLA-bound work itself.</div>
+          <div class="eyebrow">SLA-bound volume</div>
+          <h2>Tickets by severity at open</h2>
+          <div class="panel-takeaway"><strong>P1 and P2 are SLA-bound</strong> — first response must land inside the entitlement window (x for P1, y for P2, from Salesforce Case milestones). P3/P4 are shown for volume context only. Severity often changes after the first response; that progression is expected and is not treated as a finding.</div>
         </div></div>
-        <div class="panel-grid-2">
-          <div><div class="sm-title">Opened as</div><div class="sm-total">${fmt(p.total)} tickets</div><div class="bar-list">${sevBarListHtml(p.openedAsTotals)}</div></div>
-          <div><div class="sm-title">Closed as (final)</div><div class="sm-total">${fmt(p.total)} tickets</div><div class="bar-list">${sevBarListHtml(p.finalSeverityTotals)}</div></div>
-        </div>
-        <div class="callout">
-          <strong>${fmt(agg.reclassification.totalReclassified)} of ${fmt(p.total)} tickets (${fmt1(100*agg.reclassification.totalReclassified/p.total)}%)</strong> changed severity between open and close this period —
-          <strong>${fmt(agg.reclassification.downgraded)} stepped down</strong> (typically P1/P2 → P3, marking a fix applied and pending verification), ${fmt(agg.reclassification.upgraded)} were escalated after investigation found broader impact than first reported.
-          All <strong>${fmt(agg.reclassification.p1OpenedCount)} tickets opened as P1</strong> this period were reclassified before resolution — expected, since a closed ticket is by definition no longer in an active, SLA-bound state.
-        </div>
+        <div class="bar-list">${sevBarListHtml(p.slaTotals)}</div>
       </div>
+
+      ${sla.breaches.length ? `
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Attention</div>
+          <h2>First-response breaches (${fmt(sla.breaches.length)})</h2>
+          <div class="panel-takeaway">P1/P2 cases where the First Response milestone was violated.</div>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th>Created</th><th>Severity</th><th>First response</th></tr></thead>
+          <tbody>${sla.breaches.map(t => ticketRowHtml(t, {showAccount:true})).join('')}</tbody></table>
+        </div>
+      </div>` : `
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Attention</div>
+          <h2>First-response breaches</h2>
+          <div class="panel-takeaway">No P1/P2 First Response violations in the scored sample for this period.</div>
+        </div></div>
+      </div>`}
 
       <div class="panel">
         <div class="panel-head"><div>
           <div class="eyebrow">Supporting context · not an SLA measure</div>
           <h2>How long tickets stay open overall</h2>
-          <div class="panel-takeaway">Wall-clock time from case creation to closure, by final severity. This includes any time spent at P3 verifying a fix on top of the active P1/P2 work window the SLA actually covers, so it's useful for spotting long-lived tickets — not for judging SLA response. P1 shows no closed cases for the reason above: once resolved, a ticket is no longer at an SLA-bound severity.</div>
+          <div class="panel-takeaway">Wall-clock time to closure by severity at open. Useful for spotting long-lived tickets — not for judging first-response SLA.</div>
         </div></div>
         <div class="bar-list" style="margin-top:24px;">${resBarListHtml(agg.resolutionStats)}</div>
       </div>
@@ -517,16 +646,16 @@ function renderPortfolio(agg) {
         <div class="panel-head"><div>
           <div class="eyebrow">Portfolio detail</div>
           <h2>Account-by-account breakdown</h2>
-          <div class="panel-takeaway">Click any account to see its own severity mix, resolution times, and full ticket history. Click a column header to re-sort.</div>
+          <div class="panel-takeaway">Click any account for ticket history and first-response detail. Sorted by breach count, then volume.</div>
         </div></div>
         <div class="table-scroll">
           <table class="data-table" id="acctTable">
             <thead><tr>
               <th data-sort="name">Account<span class="arrow">▾</span></th>
               <th data-sort="total" class="num">Total<span class="arrow">▾</span></th>
-              <th data-sort="open" class="num">Open<span class="arrow">▾</span></th>
-              <th data-sort="closed" class="num">Closed<span class="arrow">▾</span></th>
-              <th>Severity mix (final)</th>
+              <th data-sort="slaBreached" class="num">SLA breaches<span class="arrow">▾</span></th>
+              <th data-sort="slaPct" class="num">SLA met %<span class="arrow">▾</span></th>
+              <th>Severity at open</th>
               <th data-sort="health">Health<span class="arrow">▾</span></th>
             </tr></thead>
             <tbody></tbody>
@@ -540,7 +669,7 @@ function renderPortfolio(agg) {
           <h2>Ten longest resolutions on record</h2>
         </div></div>
         <div class="table-scroll">
-          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Final sev.</th><th>Triage</th></tr></thead>
+          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Sev at open</th><th>First response</th></tr></thead>
           <tbody>${agg.longestResolutions.map(t => ticketRowHtml({...t, status:'Closed', created:t.created}, {showAccount:true}).replace('<td>' + esc(t.created) + '</td>', '<td class="num">' + fmt1(t.hours/24) + '</td>')).join('')}</tbody></table>
         </div>
       </div>
@@ -551,18 +680,18 @@ function renderPortfolio(agg) {
           <h2>Currently open (${agg.openTickets.length} of ${fmt(p.total)})</h2>
         </div></div>
         <div class="table-scroll">
-          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Severity</th></tr></thead>
-          <tbody>${agg.openTickets.map(t => '<tr><td>' + esc(t.account) + '</td><td class="case-num">' + esc(t.caseNumber) + '</td><td class="subject-cell"><div class="subj">' + esc(t.subject) + '</div></td><td class="num">' + daysAge(t.created) + '</td><td><span class="sev-dot" style="background:' + STATUS[t.finalSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.finalSev + '</td></tr>').join('')}</tbody></table>
+          <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th class="num">Days open</th><th>Sev at open</th><th>First response</th></tr></thead>
+          <tbody>${agg.openTickets.map(t => ticketRowHtml(t, {showAccount:true}).replace('<td>' + esc(t.created) + '</td>', '<td class="num">' + (daysAge(t.created) ?? '—') + '</td>')).join('')}</tbody></table>
         </div>
       </div>
 
       <div class="footnote">
         <h3>Methodology &amp; data notes</h3>
         <ul>
-          <li><strong>Source:</strong> per-account 24-month support-case exports, computed live from <code>accounts/*.json</code> — nothing here is baked in or estimated.</li>
-          <li><strong>Two severities per ticket:</strong> "Opened as" is what the case was filed under; "Closed as (final)" is the severity on record at closure, after triage.</li>
-          <li><strong>Resolution time</strong> is wall-clock hours between creation and closure — not adjusted for business hours or holds, and no SLA threshold is applied.</li>
-          <li><strong>Health status</strong> is a per-account label from the source data reflecting recent ticket volume, not a computed composite score.</li>
+          <li><strong>What we score:</strong> First Response milestone on cases that opened as <strong>P1 or P2</strong>. Target windows come from Salesforce entitlement milestones (per-case <code>TargetResponseInMins</code>).</li>
+          <li><strong>What we ignore:</strong> Severity changes after open (normal resolve/verify workflow), WatchDog / Next Update milestones, and P3/P4 first-response clocks.</li>
+          <li><strong>Severity at open:</strong> taken from Case history on <code>Severity_Level__c</code> when available; otherwise the Case field at pull time.</li>
+          <li><strong>Source:</strong> <code>accounts/*.json</code> from the Salesforce sidecar (<code>sourceReview</code>) or curated dumps.</li>
         </ul>
       </div>
     </div>
@@ -570,7 +699,7 @@ function renderPortfolio(agg) {
   document.getElementById('app').innerHTML = html;
 
   document.getElementById('themeBars').innerHTML = agg.themeBuckets.map(t => {
-    const max = Math.max(...agg.themeBuckets.map(x => x.accountCount));
+    const max = Math.max(...agg.themeBuckets.map(x => x.accountCount), 1);
     const pct = Math.max((t.accountCount / max) * 100, 2);
     return '<div class="bar-row" data-tt-title="' + esc(t.label) + '" data-tt-list="' + t.accounts.map(esc).join('<br>') + '">' +
       '<div class="bar-row-label">' + esc(t.label) + '</div>' +
@@ -578,19 +707,26 @@ function renderPortfolio(agg) {
       '<div class="bar-value">' + t.accountCount + ' / ' + agg.accounts.length + '</div></div>';
   }).join('');
 
-  let sortState = { key: 'total', dir: -1 };
+  let sortState = { key: 'slaBreached', dir: -1 };
   function renderRows() {
     const rows = [...agg.accounts].sort((a,b) => {
-      let av = sortState.key === 'health' ? a.health : a[sortState.key];
-      let bv = sortState.key === 'health' ? b.health : b[sortState.key];
-      if (typeof av === 'string') return av.localeCompare(bv) * sortState.dir;
+      let av = a[sortState.key], bv = b[sortState.key];
+      if (sortState.key === 'health' || sortState.key === 'name') {
+        av = a[sortState.key] || ''; bv = b[sortState.key] || '';
+        return String(av).localeCompare(String(bv)) * sortState.dir;
+      }
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
       return (av - bv) * sortState.dir;
     });
     document.querySelector('#acctTable tbody').innerHTML = rows.map(a =>
       '<tr class="clickable" data-file="' + esc(a.file) + '">' +
       '<td class="acct-name">' + esc(a.name) + '<span class="go">view →</span></td>' +
-      '<td class="num">' + a.total + '</td><td class="num">' + a.open + '</td><td class="num">' + a.closed + '</td>' +
-      '<td>' + sevStackHtml(a.finalSeverity) + '</td><td>' + healthChipHtml(a.health) + '</td></tr>'
+      '<td class="num">' + a.total + '</td>' +
+      '<td class="num">' + a.slaBreached + '</td>' +
+      '<td class="num">' + (a.slaPct == null ? '—' : a.slaPct + '%') + '</td>' +
+      '<td>' + sevStackHtml(a.slaTotals) + '</td><td>' + healthChipHtml(a.health) + '</td></tr>'
     ).join('');
     document.querySelectorAll('#acctTable tbody tr').forEach(tr => {
       tr.addEventListener('click', () => { location.hash = '#account/' + encodeURIComponent(tr.dataset.file); });
@@ -615,16 +751,19 @@ function renderPortfolio(agg) {
 // ---------- Account detail view ----------
 function renderAccountDetail(d) {
   const stats = computeAccountStats(d);
-  const sr = d.sourceReview || {};
-  const health = d.health?.status ?? 'Unknown';
-  const hm = HEALTH_META[health] || { color: 'var(--text-muted)', label: health };
+  const sr = asObject(asObject(d).sourceReview);
+  const health = asObject(asObject(d).health).status ?? 'Unknown';
+  const sla = stats.sla;
+  const p1 = sla.bySev.P1 || { total: 0, met: 0, pct: null };
+  const p2 = sla.bySev.P2 || { total: 0, met: 0, pct: null };
 
   const narrativeParts = [];
   if (sr.executiveSummary) narrativeParts.push('<p><strong>Executive summary:</strong> ' + esc(sr.executiveSummary) + '</p>');
   if (sr.overview) narrativeParts.push('<p>' + esc(sr.overview) + '</p>');
   if (sr.healthTrajectory) narrativeParts.push('<p><strong>Health trajectory:</strong> ' + esc(sr.healthTrajectory) + '</p>');
-  if (sr.recurringThemes?.length) narrativeParts.push('<p><strong>Recurring themes</strong></p><ul>' + sr.recurringThemes.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
-  if (sr.recommendations?.length) narrativeParts.push('<p><strong>Recommendations</strong></p><ul>' + sr.recommendations.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
+  const themes = asArray(sr.recurringThemes), recs = asArray(sr.recommendations);
+  if (themes.length) narrativeParts.push('<p><strong>Recurring themes</strong></p><ul>' + themes.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
+  if (recs.length) narrativeParts.push('<p><strong>Recommendations</strong></p><ul>' + recs.map(t => '<li>' + esc(t) + '</li>').join('') + '</ul>');
 
   const html = `
     <div class="hero">
@@ -634,15 +773,15 @@ function renderAccountDetail(d) {
             <div class="wordmark-row">
               <a class="breadcrumb" href="#portfolio">← All accounts</a>
             </div>
-            <h1>${esc(d.customer.name)}</h1>
-            <div class="hero-sub">${sr.period ? 'Support case history · ' + esc(sr.period) : 'Support case history'}</div>
+            <h1>${esc(accountName(d))}</h1>
+            <div class="hero-sub">${sr.period ? 'First-response SLA · ' + esc(sr.period) : 'First-response SLA'}</div>
           </div>
           <div class="hero-meta">${healthChipHtml(health).replace('var(--text-muted)', '#8FA0C2')}</div>
         </div>
         <div class="stat-row">
-          <div class="stat-tile"><div class="stat-label">Total tickets</div><div class="stat-value">${fmt(sr.ticketCounts?.total)}</div><div class="stat-note">trailing 24mo</div></div>
-          <div class="stat-tile"><div class="stat-label">Open</div><div class="stat-value">${fmt(sr.ticketCounts?.open)}</div><div class="stat-note">${fmt(sr.ticketCounts?.closed)} closed</div></div>
-          <div class="stat-tile"><div class="stat-label">Reclassified</div><div class="stat-value">${fmt(stats.reclassifiedCount)}</div><div class="stat-note">of ${fmt(sr.ticketCounts?.total)} tickets</div></div>
+          <div class="stat-tile"><div class="stat-label">P1/P2 first response</div><div class="stat-value">${sla.pct == null ? '—' : sla.pct + '%'}</div><div class="stat-note">${fmt(sla.met)} met · ${fmt(sla.breached)} breached</div></div>
+          <div class="stat-tile"><div class="stat-label">P1 / P2 scored</div><div class="stat-value">${fmt(p1.total)} / ${fmt(p2.total)}</div><div class="stat-note">P1 ${p1.pct == null ? '—' : p1.pct + '%'} · P2 ${p2.pct == null ? '—' : p2.pct + '%'}</div></div>
+          <div class="stat-tile"><div class="stat-label">Total tickets</div><div class="stat-value">${fmt(sr.ticketCounts?.total)}</div><div class="stat-note">${fmt(sr.ticketCounts?.open)} open</div></div>
         </div>
       </div>
     </div>
@@ -651,21 +790,18 @@ function renderAccountDetail(d) {
 
       <div class="panel">
         <div class="panel-head"><div>
-          <div class="eyebrow">Ticket lifecycle</div>
-          <h2>Severity at open vs. at close</h2>
-          <div class="panel-takeaway"><strong>P1 and P2 are the SLA-bound severities.</strong> Once a fix is applied, severity is typically stepped down to P3 while the team confirms it holds, before the ticket closes — the shift below mostly reflects that resolve-then-verify workflow.</div>
+          <div class="eyebrow">SLA-bound volume</div>
+          <h2>Tickets by severity at open</h2>
+          <div class="panel-takeaway">P1/P2 drive first-response SLA. Later severity changes are normal and not shown as a separate comparison.</div>
         </div></div>
-        <div class="panel-grid-2">
-          <div><div class="sm-title">Opened as</div><div class="bar-list">${sevBarListHtml(stats.openedTotals)}</div></div>
-          <div><div class="sm-title">Closed as (final)</div><div class="bar-list">${sevBarListHtml(stats.finalTotals)}</div></div>
-        </div>
+        <div class="bar-list">${sevBarListHtml(stats.slaTotals)}</div>
       </div>
 
       <div class="panel">
         <div class="panel-head"><div>
           <div class="eyebrow">Supporting context · not an SLA measure</div>
-          <h2>How long this account's tickets stay open overall</h2>
-          <div class="panel-takeaway">Includes any P3 verification time on top of the active P1/P2 work window the SLA covers — useful for spotting long-lived tickets, not for judging SLA response.</div>
+          <h2>How long this account's tickets stay open</h2>
+          <div class="panel-takeaway">Wall-clock time to closure — secondary to first-response adherence.</div>
         </div></div>
         <div class="bar-list" style="margin-top:24px;">${resBarListHtml(stats.resStats)}</div>
       </div>
@@ -674,7 +810,7 @@ function renderAccountDetail(d) {
         <div class="panel-head"><div>
           <div class="eyebrow">Full history</div>
           <h2>All ${stats.tickets.length} tickets</h2>
-          <div class="panel-takeaway">Click a column to sort. SLA breach isn't populated yet — sorting is wired up and ready for when that data lands.</div>
+          <div class="panel-takeaway">Severity column is severity at open (SLA clock). First response is Met / Breached / n/a for P3–P4.</div>
         </div></div>
         <div class="table-scroll">
           <table class="data-table" id="ticketTable">
@@ -683,9 +819,8 @@ function renderAccountDetail(d) {
               <th>Subject / detail</th>
               <th data-sort="created">Created<span class="arrow">▾</span></th>
               <th data-sort="status">Status<span class="arrow">▾</span></th>
-              <th data-sort="finalSev">Severity<span class="arrow">▾</span></th>
-              <th data-sort="slaBreach">SLA breach<span class="arrow">▾</span></th>
-              <th>Triage</th>
+              <th data-sort="slaSev">Sev at open<span class="arrow">▾</span></th>
+              <th data-sort="slaBreach">First response<span class="arrow">▾</span></th>
             </tr></thead>
             <tbody></tbody>
           </table>
@@ -695,7 +830,7 @@ function renderAccountDetail(d) {
   `;
   document.getElementById('app').innerHTML = html;
   wireTooltips(document);
-  wireSortableTable('ticketTable', stats.tickets, fullHistoryRowHtml, 'finalSev', 1);
+  wireSortableTable('ticketTable', stats.tickets, fullHistoryRowHtml, 'slaBreach', -1);
 }
 
 // ---------- Router ----------
@@ -711,7 +846,8 @@ async function route() {
       showState('Loading account…');
       const res = await fetch('accounts/' + file, { cache: 'no-cache' });
       if (!res.ok) throw new Error('Could not load ' + file);
-      const data = await res.json();
+      const data = asObject(await res.json());
+      data._file = file;
       renderAccountDetail(data);
     } else {
       showState('Loading portfolio — reading accounts/*.json…');
