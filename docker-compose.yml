@@ -7,10 +7,9 @@
 # SF credentials: copy .env.example → .env and fill in before `docker compose up`.
 # The sf-sync service won't start without a valid .env but the deck runs fine without it.
 #
-# SLA Performance Report reads ./accounts/*.json (gitignored, real customer
-# data) via a read-only bind mount — populate that folder locally before
-# `docker compose up` if you want it to show real accounts instead of an
-# empty portfolio.
+# SLA Performance Report reads ./accounts/*.json (gitignored). Both the nginx
+# deck and sf-sync share that folder so a Salesforce pull appears in the report
+# immediately — no copy step.
 
 services:
   qbr:
@@ -19,18 +18,13 @@ services:
     container_name: mirantis-qbr
     ports:
       - "8080:8080"
-    # accounts/ is read-only and bind-mounted, not baked into the image —
-    # the SLA Performance Report reads accounts/*.json via nginx's directory
-    # listing (autoindex, see docker/nginx.conf). Nothing else is mounted:
-    # anything saved elsewhere inside the container disappears when it
-    # stops. Configurator/Deck data still lives only in your browser's
-    # localStorage and in any JSON files you explicitly download.
+    # accounts/ is bind-mounted, not baked into the image — the SLA Performance
+    # Report reads accounts/*.json via nginx's directory listing (autoindex).
+    # Configurator/Deck drafts still live in browser localStorage unless you
+    # explicitly download JSON.
     volumes:
       - ./accounts:/usr/share/nginx/html/accounts:ro
-    restart: "no"
-    # Tighten the network surface: container can be reached but cannot
-    # phone home. Comment out if you need to install packages live.
-    # network_mode: "none"   # uncomment for fully air-gapped
+    restart: unless-stopped
 
   sf-sync:
     build:
@@ -44,8 +38,6 @@ services:
       - path: .env
         required: false   # stack still starts even without .env
     volumes:
-      - sf-data:/data/accounts
-    restart: "no"
-
-volumes:
-  sf-data:
+      # Same host folder the SLA report reads — pull writes land here.
+      - ./accounts:/data/accounts
+    restart: unless-stopped

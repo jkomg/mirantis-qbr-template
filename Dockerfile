@@ -54,4 +54,6 @@ RUN chmod +x /docker-entrypoint.d/20-container-snapshot.sh
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 8080
-HEALTHCHECK CMD wget -q --spider http://localhost:8080/ || exit 1
+# busybox wget in nginx:alpine; pin 127.0.0.1 (localhost can be IPv6-only and fail)
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/ || exit 1
