@@ -2,8 +2,12 @@
 mirantis.py — Mirantis-org Salesforce objects → QBR + SLA report fields.
 
 Uses Environment__c, License__c, Case (Severity_Level__c), CaseHistory,
-CaseMilestone, Entitlement (not standard Asset).
+CaseMilestone, Entitlement, SlaProcess (not standard Asset).
 Field selection is describe-driven so sandbox/prod drift is tolerated.
+
+Initial-response SLA is scored for all four severities against the contractual
+table in CONTRACT_RESPONSE_MINS, which depends on the subscription tier derived
+in derive_subscription_tier().
 """
 
 from __future__ import annotations
@@ -117,7 +121,87 @@ ENTITLEMENT_PREFERRED = [
     "SlaProcessId",
     "AssetId",
     "ContractLineItemId",
+    # Subscription-tier candidates. Describe-driven, so any of these that the org
+    # does not have are dropped rather than breaking the query.
+    "Service_Level__c",
+    "Support_Level__c",
+    "Support_Offering__c",
+    "Subscription_Tier__c",
+    "Tier__c",
+    "Product__c",
 ]
+
+# The Entitlement Process is what CaseMilestone rows are cut from, so its name is
+# the most direct tier signal the org exposes.
+SLA_PROCESS_PREFERRED = [
+    "Id",
+    "Name",
+    "Description",
+    "IsActive",
+    "VersionNumber",
+    "IsVersionDefault",
+]
+
+TIER_OPSCARE_PLUS = "OpsCare Plus"
+TIER_OPSCARE = "OpsCare"
+# Present in Salesforce (SlaProcess.Name / Support_Level__c) but not on the
+# Confluence "Service Level Management" table — label them, never invent targets.
+LEVEL_LABCARE = "LabCare"
+LEVEL_CUSTOM = "Custom"
+
+# Contractual initial-response commitments in minutes. All tiers are 24x7.
+# Only OpsCare / OpsCare Plus are documented; LabCare and Custom stay out.
+CONTRACT_RESPONSE_MINS: Dict[str, Dict[str, int]] = {
+    TIER_OPSCARE_PLUS: {"Sev 1": 15, "Sev 2": 60, "Sev 3": 120, "Sev 4": 480},
+    TIER_OPSCARE: {"Sev 1": 30, "Sev 2": 120, "Sev 3": 240, "Sev 4": 480},
+}
+CONTRACT_REFERENCE = (
+    "Confluence 'Service Level Management' (space 2S, page 884343127)"
+)
+
+SEV_LABELS = ("Sev 1", "Sev 2", "Sev 3", "Sev 4")
+# Kept separable so the report can headline what customers actually challenge.
+HEADLINE_SEVERITIES = ("Sev 1", "Sev 2")
+
+TARGET_SOURCE_LIVE = "CaseMilestone.TargetResponseInMins"
+TARGET_SOURCE_CONTRACT = "contract"
+
+# Entitlement field names that plausibly name the purchased service level.
+# Entitlement.Type is "Phone Support" in this org and is never used for tier.
+_TIER_FIELD_HINTS = (
+    "service_level",
+    "servicelevel",
+    "support_level",
+    "supportlevel",
+    "offering",
+    "opscare",
+    "labcare",
+    "care_level",
+    "subscription",
+    "tier",
+)
+
+# Confirmed against MKE Ops sandbox inspect: SlaProcess.Name and
+# Entitlement.Support_Level__c both carry OpsCare / LabCare / Custom.
+_TIER_SOURCE_CONFIDENCE = {
+    "SlaProcess.Name": "high",
+    "Entitlement.Support_Level__c": "high",
+}
+
+
+def _source_rank(source: str) -> int:
+    """Lower wins. Entitlement.Type is excluded from the decision path entirely."""
+    if source == "SlaProcess.Name":
+        return 0
+    if source == "Entitlement.Support_Level__c":
+        return 1
+    if source == "Entitlement.Type":
+        return 99
+    if source == "Entitlement.Name":
+        return 3
+    if source.startswith("Entitlement."):
+        return 2
+    return 9
 
 
 def _soql_escape(s: str) -> str:
@@ -131,6 +215,23 @@ def _num(val: Any) -> float:
         return float(val)
     except (TypeError, ValueError):
         return 0.0
+
+
+def _int_or_none(val: Any) -> Optional[int]:
+    """Minutes fields arrive as int, float or string depending on the API path."""
+    if val is None or val == "":
+        return None
+    try:
+        return int(round(float(val)))
+    except (TypeError, ValueError):
+        return None
+
+
+def _contract_target_mins(sev_label: str, tier: Optional[str]) -> Optional[int]:
+    """Documented initial-response target, or None when the tier is unknown."""
+    if not tier:
+        return None
+    return CONTRACT_RESPONSE_MINS.get(tier, {}).get(sev_label)
 
 
 def _pick_account_field(meta: Dict[str, Any]) -> Optional[str]:
@@ -444,6 +545,206 @@ def _opened_and_final_severity(
     return opened, final
 
 
+def query_sla_processes(
+    sf: Salesforce, sla_process_ids: List[str]
+) -> Tuple[List[Dict[str, Any]], Optional[str]]:
+    """Entitlement Processes referenced by this account's Entitlements."""
+    ids = [i for i in dict.fromkeys(sla_process_ids) if i]
+    if not ids:
+        return [], None
+    try:
+        meta = getattr(sf, "SlaProcess").describe()
+    except Exception as e:
+        return [], f"SlaProcess describe failed: {e}"
+
+    fields = _select_fields(meta, SLA_PROCESS_PREFERRED)
+    if not fields:
+        return [], "SlaProcess: no selectable fields"
+
+    rows: List[Dict[str, Any]] = []
+    for chunk in _chunked(ids, 80):
+        id_list = ",".join(f"'{_soql_escape(i)}'" for i in chunk)
+        soql = (
+            f"SELECT {', '.join(fields)} FROM SlaProcess "
+            f"WHERE Id IN ({id_list}) LIMIT 200"
+        )
+        try:
+            rows.extend(_query(sf, soql))
+        except SalesforceError as e:
+            return rows, f"SlaProcess query failed: {e}"
+    return rows, None
+
+
+def _support_level_from_text(text: str) -> Optional[str]:
+    """Map a free-text value onto a known support level label, or None.
+
+    OpsCare Plus is only returned on an explicit plus marker — guessing upward
+    would apply the tighter target and under-report breaches.
+    LabCare and Custom are recognized as labels but have no published targets
+    on the Service Level Management page.
+    """
+    squashed = re.sub(r"[^a-z0-9+]", "", (text or "").lower())
+    if not squashed:
+        return None
+    if "opscare" in squashed:
+        if "plus" in squashed or "+" in squashed:
+            return TIER_OPSCARE_PLUS
+        return TIER_OPSCARE
+    if "labcare" in squashed:
+        return LEVEL_LABCARE
+    if squashed == "custom":
+        return LEVEL_CUSTOM
+    return None
+
+
+def _contract_tier(level: Optional[str]) -> Optional[str]:
+    """Only OpsCare / OpsCare Plus have documented response windows."""
+    if level in CONTRACT_RESPONSE_MINS:
+        return level
+    return None
+
+
+def _add_tier_candidate(out: List[Dict[str, Any]], source: str, value: str) -> None:
+    text = (value or "").strip()
+    if not text:
+        return
+    if any(c["source"] == source and c["value"] == text for c in out):
+        return
+    level = _support_level_from_text(text)
+    out.append({
+        "source": source,
+        "value": text,
+        "level": level,
+        "tier": _contract_tier(level),
+    })
+
+
+def derive_subscription_tier(
+    entitlements: List[Dict[str, Any]],
+    sla_processes: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Derive OpsCare / OpsCare Plus (and label LabCare / Custom) from Entitlements.
+
+    Decision order, confirmed against the MKE Ops sandbox:
+      1. SlaProcess.Name
+      2. Entitlement.Support_Level__c
+      3. other Entitlement.* level-ish fields
+      4. Entitlement.Name
+    Entitlement.Type is recorded in candidates but never decides — in this org
+    it is always "Phone Support".
+
+    `tier` is only set when the level has documented targets (OpsCare / Plus).
+    LabCare and Custom set `supportLevel` with `tier: null` so the report can
+    show the label without inventing response windows.
+    """
+    entitlements = entitlements or []
+    processes = {p.get("Id"): p for p in (sla_processes or []) if p.get("Id")}
+    warnings: List[str] = []
+
+    # A lapsed OpsCare row alongside a live OpsCare Plus row is a normal upgrade
+    # history, not a conflict — score the active ones when there are any.
+    active = [e for e in entitlements if _first_str(e, "Status").lower() == "active"]
+    pool = active or entitlements
+    if active:
+        scope = "active entitlements"
+    elif entitlements:
+        scope = "all entitlements (none marked Active)"
+    else:
+        scope = "none"
+
+    candidates: List[Dict[str, Any]] = []
+    for e in pool:
+        proc = processes.get(_first_str(e, "SlaProcessId"))
+        if proc:
+            _add_tier_candidate(candidates, "SlaProcess.Name", _first_str(proc, "Name"))
+    # Type is informational only — see docstring.
+    for e in pool:
+        _add_tier_candidate(candidates, "Entitlement.Type", _first_str(e, "Type"))
+    for e in pool:
+        for key, val in e.items():
+            if key == "attributes" or not isinstance(val, str):
+                continue
+            if any(hint in key.lower() for hint in _TIER_FIELD_HINTS):
+                _add_tier_candidate(candidates, f"Entitlement.{key}", val)
+    for e in pool:
+        _add_tier_candidate(candidates, "Entitlement.Name", _first_str(e, "Name"))
+
+    # Decision path ignores Entitlement.Type and anything with no recognized level.
+    decision = [
+        c for c in candidates
+        if c.get("level") and c["source"] != "Entitlement.Type"
+    ]
+    tier: Optional[str] = None
+    support_level: Optional[str] = None
+    source: Optional[str] = None
+    confidence = "unknown"
+    conflict = False
+
+    if not entitlements:
+        warnings.append(
+            "Subscription tier unknown: no Entitlement records for this account. "
+            "Response targets are reported exactly as Salesforce enforced them "
+            "and are not validated against the contract table."
+        )
+    elif not decision:
+        seen = "; ".join(f"{c['source']}={c['value']!r}" for c in candidates[:6])
+        warnings.append(
+            "Subscription tier unknown: nothing on the Entitlement or its SLA "
+            f"process matched a known support level "
+            f"({TIER_OPSCARE}, {TIER_OPSCARE_PLUS}, {LEVEL_LABCARE}, {LEVEL_CUSTOM}) "
+            f"({seen or 'no readable values'}). Targets are unvalidated."
+        )
+    else:
+        best_rank = min(_source_rank(c["source"]) for c in decision)
+        best = [c for c in decision if _source_rank(c["source"]) == best_rank]
+        distinct_levels = sorted({c["level"] for c in best if c["level"]})
+        distinct_tiers = sorted({c["tier"] for c in best if c["tier"]})
+        conflict = len(distinct_levels) > 1
+
+        if conflict:
+            detail = "; ".join(f"{c['source']}={c['value']!r}" for c in best[:4])
+            warnings.append(
+                f"Subscription tier unknown: conflicting signals at preferred "
+                f"source rank across {scope} ({' and '.join(distinct_levels)}) "
+                f"from {detail}. Not guessing — assuming the higher tier would "
+                "hide breaches."
+            )
+        else:
+            support_level = distinct_levels[0]
+            source = best[0]["source"]
+            confidence = _TIER_SOURCE_CONFIDENCE.get(source, "low")
+            tier = distinct_tiers[0] if len(distinct_tiers) == 1 else None
+
+            if tier is None and support_level in (LEVEL_LABCARE, LEVEL_CUSTOM):
+                warnings.append(
+                    f"Support level {support_level!r} from {source} "
+                    f"({best[0]['value']!r}) has no published initial-response "
+                    f"windows on {CONTRACT_REFERENCE}. Adherence is measured "
+                    "against whatever Salesforce enforced and is not validated "
+                    "against the OpsCare / OpsCare Plus contract table."
+                )
+            elif confidence == "low":
+                warnings.append(
+                    f"Subscription tier {support_level!r} inferred from {source} "
+                    f"({best[0]['value']!r}) — low confidence. Verify before "
+                    "presenting adherence."
+                )
+
+    return {
+        "tier": tier,
+        "supportLevel": support_level,
+        "confidence": confidence,
+        "source": source,
+        "conflict": conflict,
+        "scope": scope,
+        "entitlementsConsidered": len(pool),
+        "candidates": candidates[:12],
+        "documentedTargetMins": dict(CONTRACT_RESPONSE_MINS[tier]) if tier else None,
+        "reference": CONTRACT_REFERENCE,
+        "warnings": warnings,
+    }
+
+
 def _milestone_type_name(m: Dict[str, Any]) -> str:
     mt = m.get("MilestoneType")
     if isinstance(mt, dict):
@@ -470,27 +771,43 @@ def _case_sla_adherence(
     case: Dict[str, Any],
     milestones: List[Dict[str, Any]],
     sla_sev_label: str,
+    tier: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    SLA that matters: first response within the window for P1/P2.
-    Severity changes after open are normal workflow — not scored here.
-    P3/P4 are not SLA-bound for this report → slaBreach None.
+    All four severities carry an initial-response commitment, so every case with
+    a determinable severity at open is SLA-bound. Severity changes after open are
+    normal workflow — the commitment that applied at open is the one scored.
+
+    A case with no usable First Response milestone stays slaBreach None and is
+    excluded from the denominator: absent evidence is not adherence.
+
+    The live milestone target wins, because it is what Salesforce enforced. The
+    documented target rides alongside it so a disagreement can be surfaced
+    instead of one source being silently preferred.
     """
+    label = _normalize_sev_label(sla_sev_label)
     bucket = _priority_bucket(sla_sev_label)
+    contract_mins = _contract_target_mins(label, tier)
     out: Dict[str, Any] = {
-        "slaSeverity": sla_sev_label or None,
-        "slaBound": bucket in ("p1", "p2"),
+        "slaSeverity": label or None,
+        "slaBound": bool(label),
+        "slaHeadline": bucket in ("p1", "p2"),
         "slaBreach": None,
         "slaTargetMins": None,
+        "slaTargetSource": None,
+        "slaContractTargetMins": contract_mins,
+        "slaTargetMismatch": None,
         "slaActualMins": None,
         "slaMilestone": None,
     }
-    if bucket not in ("p1", "p2"):
+    if not label:
+        # Severity at open is undeterminable — nothing to hold anyone to.
         return out
 
     fr = _first_response_milestones(case, milestones)
     if not fr:
-        # No First Response milestone — leave unknown (don't use WatchDog/Next Update)
+        # No First Response milestone — leave unknown (don't use WatchDog/Next
+        # Update, and don't present the documented target as if it were enforced)
         return out
 
     # Prefer a completed or violated row; else the latest by StartDate
@@ -504,8 +821,18 @@ def _case_sla_adherence(
     )
     m = fr_sorted[0]
     out["slaMilestone"] = "First Response"
-    out["slaTargetMins"] = m.get("TargetResponseInMins")
-    out["slaActualMins"] = m.get("ActualElapsedTimeInMins")
+    live_mins = _int_or_none(m.get("TargetResponseInMins"))
+    if live_mins is not None:
+        out["slaTargetMins"] = live_mins
+        out["slaTargetSource"] = TARGET_SOURCE_LIVE
+        if contract_mins is not None:
+            out["slaTargetMismatch"] = live_mins != contract_mins
+    elif contract_mins is not None:
+        # Milestone exists but carries no target — fall back to the documented
+        # value, labelled as such. Verdict below still comes from Salesforce.
+        out["slaTargetMins"] = contract_mins
+        out["slaTargetSource"] = TARGET_SOURCE_CONTRACT
+    out["slaActualMins"] = _int_or_none(m.get("ActualElapsedTimeInMins"))
     if m.get("IsViolated") is True:
         out["slaBreach"] = True
     elif m.get("IsCompleted") is True:
@@ -520,9 +847,10 @@ def _case_sla_breach(
     case: Dict[str, Any],
     milestones: List[Dict[str, Any]],
     sla_sev_label: str = "",
+    tier: Optional[str] = None,
 ) -> Optional[bool]:
     """Back-compat wrapper — prefer _case_sla_adherence."""
-    return _case_sla_adherence(case, milestones, sla_sev_label).get("slaBreach")
+    return _case_sla_adherence(case, milestones, sla_sev_label, tier).get("slaBreach")
 
 
 def query_cases(
@@ -641,14 +969,181 @@ def query_case_milestones(
     return rows, None
 
 
+def _sla_severity_label(case: Dict[str, Any], history: List[Dict[str, Any]]) -> str:
+    """Severity the commitment was made under — at open, per CaseHistory."""
+    opened, final = _opened_and_final_severity(case, history)
+    return _normalize_sev_label(opened or final or _case_severity_raw(case))
+
+
+def map_sla_scoring(
+    cases: List[Dict[str, Any]],
+    milestones: Optional[List[Dict[str, Any]]] = None,
+    history: Optional[List[Dict[str, Any]]] = None,
+    tier_info: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Initial-response adherence for all four severities, plus target validation.
+
+    Sev 3/4 are scored, not dropped: a 2-to-8-hour commitment is still a
+    commitment, and those severities are most of the queue. Sev 1/2 stay rolled
+    up separately so the report can keep them as the headline.
+    """
+    cases = cases or []
+    milestones = milestones or []
+    history = history or []
+    if tier_info is None:
+        tier_info = derive_subscription_tier([], [])
+    tier = tier_info.get("tier")
+
+    per_sev: Dict[str, Dict[str, Any]] = {
+        label: {
+            "total": 0,
+            "bound": 0,
+            "scored": 0,
+            "met": 0,
+            "breached": 0,
+            "noMilestone": 0,
+            "pct": None,
+            "contractTargetMins": _contract_target_mins(label, tier),
+            "liveTargetMinsObserved": [],
+        }
+        for label in SEV_LABELS
+    }
+    live_seen: Dict[str, set] = {label: set() for label in SEV_LABELS}
+    mismatches: Dict[Tuple[str, int, int], Dict[str, Any]] = {}
+    unknown_sev = 0
+
+    for case in cases:
+        label = _sla_severity_label(case, history)
+        if label not in per_sev:
+            unknown_sev += 1
+            continue
+        row = per_sev[label]
+        row["total"] += 1
+        adh = _case_sla_adherence(case, milestones, label, tier=tier)
+        if adh["slaBound"]:
+            row["bound"] += 1
+        if adh["slaMilestone"] is None:
+            row["noMilestone"] += 1
+
+        live_mins = (
+            adh["slaTargetMins"]
+            if adh["slaTargetSource"] == TARGET_SOURCE_LIVE
+            else None
+        )
+        doc_mins = adh["slaContractTargetMins"]
+        if live_mins is not None:
+            live_seen[label].add(live_mins)
+            if adh["slaTargetMismatch"] and doc_mins is not None:
+                entry = mismatches.setdefault(
+                    (label, live_mins, doc_mins),
+                    {
+                        "severity": label,
+                        "tier": tier,
+                        "liveTargetMins": live_mins,
+                        "documentedTargetMins": doc_mins,
+                        "cases": 0,
+                        "sampleCaseNumbers": [],
+                    },
+                )
+                entry["cases"] += 1
+                number = _first_str(case, "CaseNumber")
+                if number and len(entry["sampleCaseNumbers"]) < 3:
+                    entry["sampleCaseNumbers"].append(number)
+
+        if adh["slaBreach"] is None:
+            continue
+        row["scored"] += 1
+        if adh["slaBreach"]:
+            row["breached"] += 1
+        else:
+            row["met"] += 1
+
+    for label in SEV_LABELS:
+        row = per_sev[label]
+        row["liveTargetMinsObserved"] = sorted(live_seen[label])
+        row["pct"] = (
+            round(100.0 * row["met"] / row["scored"]) if row["scored"] else None
+        )
+
+    def _rollup(labels: Iterable[str]) -> Dict[str, Any]:
+        labels = list(labels)
+        agg: Dict[str, Any] = {
+            key: sum(per_sev[l][key] for l in labels)
+            for key in ("total", "bound", "scored", "met", "breached", "noMilestone")
+        }
+        agg["pct"] = round(100.0 * agg["met"] / agg["scored"]) if agg["scored"] else None
+        return agg
+
+    overall = _rollup(SEV_LABELS)
+    overall["total"] += unknown_sev
+    headline = _rollup(HEADLINE_SEVERITIES)
+
+    mismatch_rows = sorted(
+        mismatches.values(), key=lambda m: (m["severity"], m["liveTargetMins"])
+    )
+
+    warnings: List[str] = list(tier_info.get("warnings") or [])
+    for entry in mismatch_rows:
+        sample = (
+            f" (e.g. {', '.join(entry['sampleCaseNumbers'])})"
+            if entry["sampleCaseNumbers"]
+            else ""
+        )
+        warnings.append(
+            f"SLA target mismatch on {entry['severity']}: Salesforce enforced "
+            f"{entry['liveTargetMins']} min on {entry['cases']} case(s) but the "
+            f"{entry['tier']} contract documents "
+            f"{entry['documentedTargetMins']} min{sample}. Either the Salesforce "
+            f"SLA process is misconfigured or {CONTRACT_REFERENCE} is stale — "
+            "resolve before this reaches a customer."
+        )
+    for label in SEV_LABELS:
+        row = per_sev[label]
+        if row["bound"] and not row["scored"]:
+            warnings.append(
+                f"{label}: {row['bound']} case(s) are SLA-bound on initial "
+                "response but none carry a usable First Response milestone. "
+                "Excluded from adherence rather than counted as met."
+            )
+    if unknown_sev:
+        warnings.append(
+            f"{unknown_sev} case(s) have no determinable severity at open and are "
+            "excluded from SLA scoring."
+        )
+    if not tier and overall["scored"]:
+        warnings.append(
+            "Targets shown are Salesforce-enforced only: the subscription tier "
+            "could not be determined, so no comparison against the contractual "
+            "table was possible."
+        )
+
+    subscription = {k: v for k, v in tier_info.items() if k != "warnings"}
+    return {
+        "basis": "initial response",
+        "scope": "all severities (Sev 1–4)",
+        "headlineScope": "Sev 1–2",
+        "subscription": subscription,
+        "bySeverity": per_sev,
+        "overall": overall,
+        "headline": headline,
+        "unknownSeverity": unknown_sev,
+        "targetMismatches": mismatch_rows,
+        "warnings": warnings,
+    }
+
+
 def map_support(
     cases: List[Dict[str, Any]],
     entitlements: List[Dict[str, Any]],
     milestones: Optional[List[Dict[str, Any]]] = None,
     history: Optional[List[Dict[str, Any]]] = None,
+    tier_info: Optional[Dict[str, Any]] = None,
+    sla_scoring: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     milestones = milestones or []
     history = history or []
+    if sla_scoring is None:
+        sla_scoring = map_sla_scoring(cases, milestones, history, tier_info)
 
     # Bucket by SLA severity = severity at open (history), not current/final
     opened_labels = []
@@ -673,17 +1168,12 @@ def map_support(
         mttr_n += 1
     avg_mttr = round(mttr_hours / mttr_n, 1) if mttr_n else 0.0
 
-    # SLA met % = First Response met among P1/P2 only
-    sla_hits = 0
-    sla_total = 0
-    for c, opened in zip(cases, opened_labels):
-        adh = _case_sla_adherence(c, milestones, opened)
-        if not adh.get("slaBound") or adh.get("slaBreach") is None:
-            continue
-        sla_total += 1
-        if not adh["slaBreach"]:
-            sla_hits += 1
-    sla_met = round(100.0 * sla_hits / sla_total) if sla_total else 0
+    # slaMetPct stays the P1/P2 first-response headline the deck already renders.
+    # All-severity adherence is additive, under _slaAllSeverities.
+    headline = sla_scoring.get("headline") or {}
+    overall = sla_scoring.get("overall") or {}
+    sla_total = headline.get("scored") or 0
+    sla_met = headline.get("pct") or 0
 
     themes = Counter()
     for c in cases:
@@ -714,6 +1204,8 @@ def map_support(
             "status": _first_str(e, "Status"),
             "start": _first_str(e, "StartDate"),
             "end": _first_str(e, "EndDate"),
+            # Kept so the tier signal is auditable from a written payload.
+            "slaProcessId": _first_str(e, "SlaProcessId") or None,
         }
         for e in entitlements
     ]
@@ -737,6 +1229,13 @@ def map_support(
         "_openCases": len(open_cases),
         "_closedCases": len(closed),
         "_slaSampleSize": sla_total,
+        "_slaAllSeverities": {
+            "scored": overall.get("scored", 0),
+            "met": overall.get("met", 0),
+            "breached": overall.get("breached", 0),
+            "pct": overall.get("pct"),
+        },
+        "_subscriptionTier": (sla_scoring.get("subscription") or {}).get("tier"),
         "_recentCases": [
             {
                 "id": _first_str(c, "CaseNumber", "Id"),
@@ -784,8 +1283,13 @@ def map_source_review(
     history: List[Dict[str, Any]],
     milestones: List[Dict[str, Any]],
     months: int = CASE_MONTHS,
+    tier_info: Optional[Dict[str, Any]] = None,
+    sla_scoring: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Shape consumed by perf-report.html (sourceReview.ticketDetail)."""
+    if sla_scoring is None:
+        sla_scoring = map_sla_scoring(cases, milestones, history, tier_info)
+    tier = (sla_scoring.get("subscription") or {}).get("tier")
     open_n = sum(1 for c in cases if not c.get("IsClosed"))
     closed_n = len(cases) - open_n
     sev_counts = Counter()
@@ -793,8 +1297,8 @@ def map_source_review(
 
     for c in cases:
         opened, final = _opened_and_final_severity(c, history)
-        # SLA clock uses severity at open (P1/P2 commitment). Final severity is
-        # kept for reference only — progression is normal Support workflow.
+        # SLA clock uses severity at open, whichever severity that was. Final
+        # severity is kept for reference only — progression is normal workflow.
         sla_sev = opened or final
         if sla_sev:
             sev_counts[sla_sev] += 1
@@ -810,7 +1314,7 @@ def map_source_review(
 
         issue = _first_str(c, "Description", "Symptoms__c", "Cause__c")
         resolution = _first_str(c, "Resolution__c", "Cause__c")
-        adh = _case_sla_adherence(c, milestones, sla_sev or "")
+        adh = _case_sla_adherence(c, milestones, sla_sev or "", tier=tier)
         ticket_detail.append(
             {
                 "caseNumber": _first_str(c, "CaseNumber"),
@@ -825,8 +1329,12 @@ def map_source_review(
                 "resolution": resolution[:2000] if resolution else "",
                 "owner": None,
                 "slaBound": adh["slaBound"],
+                "slaHeadline": adh["slaHeadline"],
                 "slaBreach": adh["slaBreach"],
                 "slaTargetMins": adh["slaTargetMins"],
+                "slaTargetSource": adh["slaTargetSource"],
+                "slaContractTargetMins": adh["slaContractTargetMins"],
+                "slaTargetMismatch": adh["slaTargetMismatch"],
                 "slaActualMins": adh["slaActualMins"],
                 "slaMilestone": adh["slaMilestone"],
             }
@@ -843,6 +1351,14 @@ def map_source_review(
     def sev_n(label: str) -> int:
         return sev_counts.get(label, 0)
 
+    overall = sla_scoring.get("overall") or {}
+    adherence_text = (
+        f"{overall.get('pct')}% initial-response adherence across all four "
+        f"severities ({overall.get('met', 0)}/{overall.get('scored', 0)} scored)"
+        if overall.get("pct") is not None
+        else "no case carried a usable First Response milestone, so adherence is unscored"
+    )
+
     return {
         "period": f"past {months} months",
         "generated": datetime.now(timezone.utc).isoformat(),
@@ -852,7 +1368,8 @@ def map_source_review(
             f"Salesforce Case history for the past {months} months: {len(cases)} tickets "
             f"({open_n} open, {closed_n} closed). "
             f"SLA severity at open: Sev 1={sev_n('Sev 1')}, Sev 2={sev_n('Sev 2')}, "
-            f"Sev 3={sev_n('Sev 3')}, Sev 4={sev_n('Sev 4')}."
+            f"Sev 3={sev_n('Sev 3')}, Sev 4={sev_n('Sev 4')}. "
+            f"Subscription tier: {tier or 'unknown'} — {adherence_text}."
         ),
         "ticketSummary": {
             "total": len(cases),
@@ -875,6 +1392,7 @@ def map_source_review(
         "contacts": sorted(
             {t["contact"] for t in ticket_detail if t.get("contact")}
         ),
+        "slaScoring": sla_scoring,
         "ticketDetail": ticket_detail,
     }
 
@@ -1036,7 +1554,16 @@ def fetch_mirantis_bundle(sf: Salesforce, account_id: str) -> Dict[str, Any]:
     cases, w = query_cases(sf, account_id)
     if w:
         warnings.append(w)
-    entitlements, _, w = query_related(sf, "Entitlement", account_id, ENTITLEMENT_PREFERRED)
+    entitlements, _, w = query_related(
+        sf, "Entitlement", account_id, ENTITLEMENT_PREFERRED,
+        extra_keywords=["service level", "support level", "tier", "offering", "opscare"],
+    )
+    if w:
+        warnings.append(w)
+    # SlaProcess.Name is the leading candidate for the subscription tier.
+    sla_processes, w = query_sla_processes(
+        sf, [_first_str(e, "SlaProcessId") for e in entitlements]
+    )
     if w:
         warnings.append(w)
 
@@ -1053,6 +1580,7 @@ def fetch_mirantis_bundle(sf: Salesforce, account_id: str) -> Dict[str, Any]:
         "licenses": licenses,
         "cases": cases,
         "entitlements": entitlements,
+        "slaProcesses": sla_processes,
         "caseHistory": history,
         "caseMilestones": milestones,
         "warnings": warnings,

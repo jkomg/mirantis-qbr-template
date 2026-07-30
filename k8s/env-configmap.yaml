@@ -19,4 +19,4 @@ data:
   # Sandbox by default — override with your own host in .env.
   SF_DOMAIN: mirantis--mkeops.sandbox.my
   SF_AUTH_MODE: client_credentials
-  SYNC_VERSION: v0.5
+  SYNC_VERSION: v0.6

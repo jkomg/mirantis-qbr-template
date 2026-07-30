@@ -25,8 +25,10 @@ analysis is the only automated check available.
 ## Delegation model
 
 **Planner** holds durable context — the Salesforce field map, the
-`sourceReview` contract, why SLA scoring is P1/P2 first-response only. It
-reads indexes (grep hits, signatures, subagent reports), not whole files.
+`sourceReview` / `slaScoring` contract, and that initial-response SLA covers
+Sev 1–4 with P1/P2 as the headline only. It reads indexes (grep hits,
+signatures, subagent reports), not whole files. Session state is in
+`MEMORY.md`; Claude Code also reads `CLAUDE.md`.
 
 **Specialists** are `generalPurpose` subagents scoped to a disjoint slice of
 the tree. They inherit domain knowledge from the glob rules, so briefs cover

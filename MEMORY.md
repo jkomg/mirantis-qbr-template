@@ -1,19 +1,34 @@
-# Session memory — resume after reboot
+# Session memory — Cursor / resume after reboot
 
 Last updated: 2026-07-29
 
+Shared with Claude via `CLAUDE.md` → points here. Durable invariants live in
+`.cursor/rules/` and `AGENTS.md`. This file is **session state only** — update
+it when the working account, version, or next action changes.
+
 ## Where we left off
 
-Set up an agent delegation model (`AGENTS.md` + three glob-scoped rules under `.cursor/rules/`) and used it to unblock SLA report testing. The sandbox has too few cases to exercise the first-response SLA logic, so `scripts/make-sla-fixtures.py` now generates synthetic accounts. Building it surfaced three contract bugs in `perf-report.html`, all fixed. A Bugbot pass then found live Salesforce credentials in a kompose-generated ConfigMap.
+SLA scoring widened to all four severities against the Confluence
+[Service Level Management](https://mirantis.jira.com/wiki/spaces/2S/pages/884343127/Service+Level+Management)
+table. Tier derivation confirmed on sandbox: `SlaProcess.Name` →
+`Entitlement.Support_Level__c`; LabCare/Custom labeled but not scored.
+Follow-up posted on **[SC-5980](https://mirantis.jira.com/browse/SC-5980)**
+asking for LabCare windows + richer Case sandbox.
 
-**Action still owed: rotate the Salesforce security token for `jkennedy@mirantis.com`.** It was production, plaintext, in `k8s/env-configmap.yaml`. Never committed (the file was untracked), now scrubbed, but rotate anyway.
+**Agreed next product direction:** build rich synthetic / demo JSON that
+matches the real SF→QBR contract, design the deck against that, then switch
+`sf-sync` to prod. Sandbox is too thin for demos.
+
+**Action still owed:** rotate the Salesforce security token for
+`jkennedy@mirantis.com` (was production, plaintext in an untracked
+`k8s/env-configmap.yaml`; scrubbed, never committed — rotate anyway).
 
 ## Repo / stack
 
 - Path: `/Users/jkennedy/Projects/Mirantis QBR template design`
 - GitHub: `jkomg/mirantis-qbr-template`
-- Deck/Configurator: `http://localhost:8080`
-- Sidecar: `http://localhost:8081` (`SYNC_VERSION=v0.5`)
+- Deck / Configurator / SLA report: `http://localhost:8080`
+- Sidecar: `http://localhost:8081` (`SYNC_VERSION=v0.6`)
 
 ```bash
 cd "/Users/jkennedy/Projects/Mirantis QBR template design"
@@ -27,59 +42,69 @@ SF_AUTH_MODE=client_credentials
 SF_CONSUMER_KEY=...
 SF_CONSUMER_SECRET=...
 SF_DOMAIN=mirantis--mkeops.sandbox.my
-SYNC_VERSION=v0.5
+SYNC_VERSION=v0.6
 ```
 
-Optional AI review (one provider):
+Optional AI review: `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` →
+`/health` reports `reviewAvailable: true`.
 
+## Best sandbox account
+
+| | |
+|---|---|
+| Name | **MKE-k0f integration** |
+| Id | `001VF00000qH4OeYAK` |
+| Objects | `Environment__c`, `License__c`, `Case`, `Entitlement`, `CaseMilestone`, `SlaProcess` |
+| Not available | standard `Asset` (`INVALID_TYPE`) |
+| Tier probe | resolved OpsCare via `SlaProcess.Name`; also sees LabCare / Custom |
+| Cases | ~11, almost no Sev 1/2 — use fixtures for SLA UI |
+
+Inspect:
+
+```bash
+curl -s 'http://localhost:8081/inspect?account=MKE-k0f%20integration' | python3 -m json.tool
 ```
-OPENAI_API_KEY=sk-...
-# or ANTHROPIC_API_KEY=...
+
+## Demo / fixture data
+
+```bash
+python3 scripts/make-sla-fixtures.py          # writes accounts/demo-*.json
+python3 scripts/make-sla-fixtures.py --clean  # removes only demo-*.json
 ```
 
-`/health` should report `reviewAvailable: true` when a key is loaded.
+- Prefix `demo-` only; never touches real customer pulls.
+- Good for SLA report; **not yet** a full QBR demo pack (wins/asks/roadmaps thin).
+- `demo/meridian-financial-solutions.json` is gitignored — leave it alone.
 
-## Best test account
+## Key contracts (do not re-discover)
 
-- Name: **MKE-k0f integration**
-- Id: `001VF00000qH4OeYAK`
-- Useful SF objects: `Environment__c`, `License__c`, `Case`, `Entitlement` (standard Asset unavailable in this sandbox)
+| Topic | Source of truth |
+|---|---|
+| Case severity | `Severity_Level__c` (not `Priority`) |
+| Severity at open | `CaseHistory` → `openedAs` |
+| Commercial | `ARR__c`, `Total_Won_Amount__c`, `Open_Pipeline__c`, `Upcoming_renewal_date__c` |
+| Nodes | `Environment__c.of_nodes__c` |
+| SLA wiki | Confluence space `2S`, page `884343127` |
+| SLA score | Initial response, Sev 1–4; P1/P2 = headline only |
+| Tier | OpsCare / OpsCare Plus have targets; LabCare/Custom → `supportLevel`, `tier: null` |
+| Payload for report | `sourceReview.slaScoring` + `ticketDetail[]` |
+| Jira thread | [SC-5980](https://mirantis.jira.com/browse/SC-5980) |
 
-## Uncommitted work
+## Agent model
 
-### Earlier sessions
-
-1. **Live hydrate** — SF pull / full JSON import no longer fills Vertex demos into blanks (`QBR Configurator.dc.html`).
-2. **Placeholder gating** — flags demo leftovers + empty TAM sections after SF pull; Save/Download confirm before proceeding.
-3. **AI review** — `sf-sync/review.py`, `POST /review`, Configurator "Generate status commentary" + apply suggested takeaways.
-4. Sync no longer defaults empty Account Type → `"Strategic"`.
-5. **SLA pull** — Case severity via `Severity_Level__c`, `CaseHistory` + `CaseMilestone`, `sourceReview.ticketDetail` for the report, RevOps commercial fields (`ARR__c`, `Total_Won_Amount__c`, `Open_Pipeline__c`, `Upcoming_renewal_date__c`), `of_nodes__c` for node counts. Version `v0.5`.
-
-### This session
-
-6. **Agent model** — `AGENTS.md` plus `.cursor/rules/{sf-sync-python,static-frontend,container-infra}.mdc`. Domain invariants attach by file glob so subagents inherit them.
-7. **Fixtures** — `scripts/make-sla-fixtures.py` writes deterministic `accounts/demo-*.json` (~540 cases across 5 accounts). Only ever touches `demo-*.json`.
-8. **Report fixes** — `perf-report.html`: unguarded `d.customer.name` reads no longer blank the whole portfolio; SLA severity keys off `openedAs` before `severity`; boundness requires P1/P2 so the top-line percentage and per-severity table can't diverge; `slaMilestone` surfaced.
-9. **Credentials** — plaintext SF password/token removed from `k8s/env-configmap.yaml`; pods layer a `secretRef` over non-secret defaults; `.gitignore` blocks secret-bearing manifests.
-10. **k8s volume** — nginx and sf-sync co-located in one pod so they can share the ReadWriteOnce accounts claim (nginx read-only). `k8s/sf-sync-pod.yaml` deleted, merged into `qbr-pod.yaml`.
-11. `sync.py --out` now also writes the stable `{slug}.json` the report reads.
-
-Everything above is uncommitted. `demo/meridian-financial-solutions.json` is untracked — include only if you intend to ship it.
+- Planner: this chat + `AGENTS.md`
+- Domain rules: `.cursor/rules/{sf-sync-python,static-frontend,container-infra}.mdc`
+- Org: **no auto-run** — print commands, wait for paste-back
+- Never paste `accounts/*.json` or `.env` into chats / commits / briefs
 
 ## After reboot — verify
 
-1. `python3 scripts/make-sla-fixtures.py` (synthetic accounts; `--clean` removes them)
+1. `python3 scripts/make-sla-fixtures.py`
 2. `docker compose up --build`
-3. Open **SLA report** → portfolio should show 5 demo accounts with clearly different breach rates
-4. Open Configurator → Clear draft (if old Vertex leftovers in localStorage) → Search/Pull **MKE-k0f integration**
-5. Confirm orange banner lists empty TAM sections (not Vertex ARR/wins)
-6. Save should confirm if flags remain
-7. If API key set: **Generate status commentary**
+3. SLA report → demo accounts with different breach rates + tier chips
+4. Configurator → Clear draft → Pull **MKE-k0f integration**
+5. Confirm no Vertex demo backfill into blanks
 
 ## Still TAM-owned (SF does not fill)
 
-Wins, asks, roadmaps, training narrative, real ARR/NPS when SF has none.
-
-## Org note
-
-Team rule: agents must not auto-run shell/tools — paste command output back into chat to continue.
+Wins, asks, roadmaps, training narrative, NPS when SF has none.

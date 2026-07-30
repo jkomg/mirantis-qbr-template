@@ -46,3 +46,6 @@ exports/
 .env.local
 *.log
 .aider*
+__pycache__/
+*.py[cod]
+.cursor/settings.json

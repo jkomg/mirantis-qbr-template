@@ -7,14 +7,124 @@ Pulls Salesforce account data directly into the QBR Template's JSON schema. Runs
 When the TAM clicks **Pull from Salesforce** in the Configurator, the browser POSTs to this sidecar at `http://localhost:8081/pull` with `{account, quarter}`. The sidecar:
 
 1. Authenticates to SF (Client Credentials / OAuth / password)
-2. Runs Mirantis-aware queries: Account, Opportunities, Contacts, **Environment__c**, **License__c**, **Case** (`Severity_Level__c`), **CaseHistory**, **CaseMilestone**, **Entitlement**
-3. Maps footprint, support, products, incidents, risks, and `sourceReview.ticketDetail` (SLA Performance Report) into `qbr.data.json`
+2. Runs Mirantis-aware queries: Account, Opportunities, Contacts, **Environment__c**, **License__c**, **Case** (`Severity_Level__c`), **CaseHistory**, **CaseMilestone**, **Entitlement**, **SlaProcess**
+3. Maps footprint, support, products, incidents, risks, and `sourceReview.ticketDetail` + `sourceReview.slaScoring` (SLA Performance Report) into `qbr.data.json`
 4. Writes `/data/accounts/{slug}-{quarter}.json` and `/data/accounts/{slug}.json` (shared `./accounts` bind mount)
 5. Returns the payload to the Configurator
 
 Standard Salesforce **Asset** is not used (unavailable in the MKE Ops sandbox). Product mix comes from **License__c** + **Environment__c**.
 
 The TAM still curates wins, roadmap narrative, NPS, and asks — Salesforce does not own those.
+
+## SLA scoring (v0.6)
+
+Initial response is scored for **all four severities**, not just Sev 1/2. A
+support queue is mostly Sev 3/4, and those carry real 2-to-8-hour commitments —
+reporting them as "not SLA-bound" made the report silent on most of the
+contract.
+
+Contractual initial-response targets (`CONTRACT_RESPONSE_MINS` in
+`mirantis.py`), from Confluence **Service Level Management** (space `2S`, page
+`884343127`). All tiers are 24x7:
+
+| Severity | OpsCare Plus | OpsCare |
+|---|---|---|
+| Sev 1 | 15 min | 30 min |
+| Sev 2 | 1 hour | 2 hours |
+| Sev 3 | 2 hours | 4 hours |
+| Sev 4 | 8 hours | 8 hours |
+
+Three rules the mapping keeps:
+
+- **Severity at open decides the commitment.** A case reclassified after opening
+  is scored against the severity it opened as (`CaseHistory`).
+- **No usable First Response milestone → excluded from the denominator**, never
+  counted as a pass. Absent evidence is not adherence.
+- **`CaseMilestone.TargetResponseInMins` is the primary target**, because it is
+  what Salesforce actually enforced. The documented target rides alongside it,
+  and a disagreement becomes a warning rather than one source silently winning.
+
+Sev 1/2 stay separable (`slaScoring.headline`, and `support.slaMetPct` is still
+the P1/P2 figure the deck renders) so the report can keep them as the headline.
+
+### Subscription tier — unconfirmed, derived defensively
+
+Targets depend on the tier, and 15 vs 30 minutes on a Sev 1 is a 2x difference.
+Which Salesforce field distinguishes **OpsCare Plus** from **OpsCare** is *not
+yet confirmed for this org*, so `derive_subscription_tier()` tries several
+signals in order of directness:
+
+1. `SlaProcess.Name` (via `Entitlement.SlaProcessId`) → confidence `high`
+2. `Entitlement.Type` → `medium`
+3. Any Entitlement field whose name mentions service level / support level /
+   tier / offering / subscription → `low`
+4. `Entitlement.Name` → `low`
+
+Active entitlements win over lapsed ones. **Plus is only ever returned on an
+explicit "plus" marker** — guessing upward would apply the tighter target and
+hide breaches. An unresolved or conflicting tier is an explicit `null` plus a
+warning, and no comparison against the table is attempted.
+
+To confirm which field owns the tier, run the probes below and check
+`subscriptionTier.candidates` in the response.
+
+```bash
+# Every candidate value the sidecar can see for one account
+curl -s 'http://localhost:8081/inspect?account=Vertex%20Logistics' \
+  | python3 -m json.tool | less
+
+# Field lists — look for a service level / support level / tier picklist
+curl -s 'http://localhost:8081/object-fields?object=Entitlement' | python3 -m json.tool
+curl -s 'http://localhost:8081/object-fields?object=SlaProcess'  | python3 -m json.tool
+```
+
+Once confirmed, add the field to `ENTITLEMENT_PREFERRED` (never into a SOQL
+string) and, if it is not an OpsCare-shaped value, extend `_tier_from_text()`.
+
+### Emitted shape
+
+`sourceReview.slaScoring` is the authoritative block:
+
+```
+sourceReview.slaScoring
+  basis            "initial response"
+  scope            "all severities (Sev 1–4)"
+  headlineScope    "Sev 1–2"
+  subscription     { tier: "OpsCare Plus"|"OpsCare"|null, confidence:
+                     "high"|"medium"|"low"|"unknown", source: str|null,
+                     conflict: bool, scope: str, entitlementsConsidered: int,
+                     candidates: [{source, value, tier|null}],
+                     documentedTargetMins: {"Sev 1": int, …}|null, reference: str }
+  bySeverity       { "Sev 1".."Sev 4": { total, bound, scored, met, breached,
+                     noMilestone: int, pct: int|null,
+                     contractTargetMins: int|null,
+                     liveTargetMinsObserved: [int] } }
+  overall          { total, bound, scored, met, breached, noMilestone, pct|null }
+  headline         same keys, Sev 1–2 only
+  unknownSeverity  int — cases with no determinable severity at open
+  targetMismatches [{ severity, tier, liveTargetMins, documentedTargetMins,
+                     cases: int, sampleCaseNumbers: [str] }]
+  warnings         [str] — also merged into _meta.warnings
+```
+
+Per row in `sourceReview.ticketDetail[]`, added alongside the existing
+`slaBound` / `slaBreach` / `slaTargetMins` / `slaActualMins` / `slaMilestone`:
+
+```
+slaBound               now true for any determinable Sev 1–4 (false only when
+                       severity at open is unknown)
+slaHeadline            bool — case is in the Sev 1/2 headline band
+slaTargetSource        "CaseMilestone.TargetResponseInMins" | "contract" | null
+slaContractTargetMins  int|null — documented target for this severity + tier
+slaTargetMismatch      bool|null — null when not comparable
+```
+
+`support` additionally carries `_slaAllSeverities` (`{scored, met, breached,
+pct|null}`) and `_subscriptionTier`. `support.slaMetPct` and
+`support._slaSampleSize` keep their existing Sev 1/2 meaning.
+
+Note `customer.tier` is `Account.Type` — the commercial segment, unrelated to
+the support subscription tier.
 
 ## Optional — AI account status review
 
@@ -136,7 +246,7 @@ The queries in `sync.py` use standard SF field names. Mirantis SF will have cust
 - Environment node SoR: `of_nodes__c` (component node fields as fallback)
 - Standard Salesforce **Asset** is not used (unavailable in the MKE Ops sandbox; footprint from **License__c** + **Environment__c**)
 - Renewal date probably lives on a `Renewal_Date__c` custom field. Add it to the SELECT and map it in `build_payload`.
-- Tier values from SF picklists (`Tier__c = "Strategic Tier 1"`) need normalizing to what the deck expects (`Strategic`, `Enterprise`, `Growth`).
+- Account segment values from SF picklists (`Tier__c = "Strategic Tier 1"`) need normalizing to what the deck expects for `customer.tier` (`Strategic`, `Enterprise`, `Growth`). This is *not* the support subscription tier — see [SLA scoring](#sla-scoring-v06).
 - Health score / churn risk if you have custom fields for them.
 
 **Missing objects:** some sandboxes don't enable standard `Asset`. The pull now skips unavailable objects (Assets, Contacts, Opportunities) and continues with a warning in `_meta.warnings` instead of failing.

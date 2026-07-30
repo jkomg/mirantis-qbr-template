@@ -41,10 +41,40 @@ query strings directly.
 
 ## SLA scoring
 
-SLA adherence is **P1/P2 First Response milestones only**. Resolution-time,
-Next Update, and WatchDog milestones are not scored. Cases outside P1/P2 are
-reported as not SLA-bound (`slaBound: false`) rather than as passes — do not
-let unbound cases inflate the met percentage.
+Contractual commitments, from **Service Level Management** in Confluence
+(space `2S`, page `884343127`). All tiers are 24x7. Initial response:
+
+| Severity | OpsCare Plus | OpsCare |
+|---|---|---|
+| Sev 1 | 15 min | 30 min |
+| Sev 2 | 1 hour | 2 hours |
+| Sev 3 | 2 hours | 4 hours |
+| Sev 4 | 8 hours | 8 hours |
+
+There is a second commitment on **updates** — Sev 1 hourly, Sev 2 every 4h,
+Sev 3 every 48h, Sev 4 every 3 days (Plus) or 4 days (standard). Not currently
+scored, but it is a real obligation, not noise.
+
+All four severities are SLA-bound on initial response. Do not treat Sev 3/4 as
+unscored — they carry genuine 2-to-8-hour commitments and make up most of the
+queue. P1/P2 stays the headline metric because that is what customers
+challenge, but it is a presentation choice, not the scope of the contract.
+
+The response target depends on the subscription tier, and 15 vs 30 minutes on a
+Sev 1 is a 2x difference — never report adherence without knowing the tier.
+
+**Tier derivation (confirmed against MKE Ops sandbox):** prefer
+`SlaProcess.Name`, then `Entitlement.Support_Level__c`. Ignore
+`Entitlement.Type` — it is `"Phone Support"` for every row in this org.
+`LabCare` and `Custom` are real Salesforce levels but are **not** on the
+wiki table above: label them via `supportLevel`, leave `tier` null, and do
+not invent response windows for them.
+
+Prefer `CaseMilestone.TargetResponseInMins` as the live target, since it
+reflects what Salesforce actually enforced. Treat the table above as the
+expected value and surface any disagreement: a mismatch means either a
+misconfigured SLA process in Salesforce or a stale wiki page, and both matter
+before a report reaches a customer. Never silently pick one.
 
 ## Failure model: degrade, don't raise
 

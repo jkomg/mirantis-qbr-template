@@ -129,6 +129,34 @@
   .mini-stack span { height: 100%; }
   .health-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
   .health-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  /* The headline (Sev 1–2) and all-severity figures sit side by side and will
+     differ substantially, so each tile carries its own kicker and rail. */
+  .stat-tile.tile-headline { box-shadow: inset 3px 0 0 var(--accent-bg); }
+  .stat-tile.tile-secondary { box-shadow: inset 3px 0 0 var(--text-on-hero-muted); }
+  .stat-tile.tile-secondary .stat-value { font-size: 26px; }
+  .stat-kicker { font-family: var(--font-mono); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700; color: var(--accent-bg); margin-bottom: 4px; }
+  .stat-tile.tile-secondary .stat-kicker { color: var(--text-on-hero-muted); }
+  .hero-tier { margin-top: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13.5px; color: var(--text-on-hero-muted); }
+
+  .tier-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+  .tier-chip .tier-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--accent); }
+  .tier-chip.tier-unknown { color: var(--status-critical); }
+  .tier-chip.tier-unknown .tier-dot { background: var(--status-critical); }
+  .tier-qual { color: var(--text-muted); font-weight: 400; font-size: 12px; }
+  .hero .tier-chip { color: var(--text-on-hero); }
+  .hero .tier-chip.tier-unknown { color: #FF9B9B; }
+  .hero .tier-chip.tier-unknown .tier-dot { background: #FF9B9B; }
+
+  .band-tag { font-family: var(--font-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--border-strong); color: var(--text-muted); vertical-align: middle; margin-left: 6px; }
+  .band-tag.band-headline { color: var(--accent); border-color: var(--accent); }
+  .inline-bar { display: inline-block; vertical-align: middle; width: 110px; margin-right: 8px; }
+
+  .panel-alert { border-left: 4px solid var(--status-critical); }
+  .panel-alert .eyebrow { color: var(--status-critical); }
+  .enforced-mins { color: var(--status-serious); font-weight: 600; }
+  .note-list { margin: 16px 0 0; padding-left: 18px; font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+  .note-list li { margin-bottom: 6px; }
   .case-num { font-family: var(--font-mono); color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
   .subject-cell { max-width: 340px; }
   .subject-cell .subj { color: var(--text-primary); font-weight: 600; }
@@ -160,15 +188,20 @@
 <div id="tooltip"></div>
 
 <script>
-const SLA_BOUND = { P1: true, P2: true, P3: false, P4: false };
+// All four severities carry a contractual initial-response commitment, so
+// severity no longer decides boundness. P1/P2 stay separable as the headline
+// band because that is the number customers challenge in a QBR.
 const STATUS = {
-  P1: { color: 'var(--status-critical)', label: 'P1 · Critical (SLA)' },
-  P2: { color: 'var(--status-serious)',  label: 'P2 · Serious (SLA)' },
+  P1: { color: 'var(--status-critical)', label: 'P1 · Critical' },
+  P2: { color: 'var(--status-serious)',  label: 'P2 · Serious' },
   P3: { color: 'var(--status-warning)',  label: 'P3 · Warning' },
   P4: { color: 'var(--status-good)',     label: 'P4 · Minor' },
 };
 const SEV_ORDER = ['P1','P2','P3','P4'];
 const SEV_RANK = { P1: 1, P2: 2, P3: 3, P4: 4 };
+const HEADLINE_SEVS = ['P1','P2'];
+const SEV_LABEL_BY_KEY = { P1: 'Sev 1', P2: 'Sev 2', P3: 'Sev 3', P4: 'Sev 4' };
+const EMPTY_ROLLUP = { total: 0, bound: 0, scored: 0, met: 0, breached: 0, noMilestone: 0, pct: null };
 const HEALTH_META = {
   'Healthy': { color: 'var(--status-good)', label: 'Healthy' },
   'Low Activity': { color: 'var(--text-muted)', label: 'Low activity' },
@@ -267,6 +300,92 @@ async function fetchAllAccounts() {
   return [...byName.values()];
 }
 
+// ---------- SLA scoring: sidecar block first, client-side recompute second ----------
+// `sourceReview.slaScoring` is what sf-sync now precomputes, including the
+// contractual targets and the tier they depend on. Older pulls and the
+// synthetic fixtures predate it, so every reader below falls back to the
+// per-ticket recomputation rather than reporting zeros.
+function rollupFrom(raw) {
+  const o = asObject(raw);
+  const present = ['total','bound','scored','met','breached'].some(k => o[k] != null);
+  if (!present) return null;
+  const scored = num(o.scored), met = num(o.met);
+  return {
+    total: num(o.total), bound: num(o.bound), scored, met,
+    breached: num(o.breached), noMilestone: num(o.noMilestone),
+    pct: o.pct == null ? (scored ? Math.round(100 * met / scored) : null) : Math.round(num(o.pct)),
+  };
+}
+function sumRollups(rows) {
+  const agg = { total: 0, bound: 0, scored: 0, met: 0, breached: 0, noMilestone: 0 };
+  rows.forEach(r => { const o = asObject(r); Object.keys(agg).forEach(k => { agg[k] += num(o[k]); }); });
+  agg.pct = agg.scored ? Math.round(100 * agg.met / agg.scored) : null;
+  return agg;
+}
+// A tier of null is a finding, not a blank: Sev 1 is 15 min on OpsCare Plus and
+// 30 min on OpsCare, so adherence without a tier cannot be validated at all.
+function readSubscription(d, raw) {
+  const s = asObject(raw);
+  const support = asObject(asObject(d).support);
+  const str = (v) => (typeof v === 'string' && v.trim()) ? v.trim() : null;
+  return {
+    // customer.tier is the commercial segment (Enterprise / Growth) and is a
+    // different thing entirely — never read it as the subscription tier.
+    tier: str(s.tier) || str(support._subscriptionTier),
+    // LabCare / Custom are recognized Salesforce levels with no published
+    // contract targets — shown as a label when tier is null.
+    supportLevel: str(s.supportLevel),
+    confidence: str(s.confidence) || 'unknown',
+    source: str(s.source),
+    conflict: s.conflict === true,
+    scope: str(s.scope),
+    reference: str(s.reference),
+    documentedTargetMins: asObject(s.documentedTargetMins),
+    reported: Object.keys(s).length > 0,
+  };
+}
+function readMismatches(raw, account) {
+  return asArray(raw).map(m => {
+    const r = asObject(m);
+    const live = r.liveTargetMins == null ? null : num(r.liveTargetMins);
+    const doc = r.documentedTargetMins == null ? null : num(r.documentedTargetMins);
+    if (live == null || doc == null || live === doc) return null;
+    return {
+      account, severity: String(r.severity ?? ''), sevKey: sevKey(r.severity),
+      tier: (typeof r.tier === 'string' && r.tier.trim()) ? r.tier.trim() : null,
+      liveTargetMins: live, documentedTargetMins: doc, cases: num(r.cases),
+      sampleCaseNumbers: asArray(r.sampleCaseNumbers).map(String),
+    };
+  }).filter(Boolean);
+}
+function readSlaScoring(d) {
+  const raw = asObject(asObject(asObject(d).sourceReview).slaScoring);
+  const headline = rollupFrom(raw.headline);
+  const overall = rollupFrom(raw.overall);
+  // A block missing either rollup is treated as absent — a half-read sidebar
+  // figure is worse than the recomputation it would replace.
+  if (!headline || !overall) return null;
+  const rawBySev = asObject(raw.bySeverity);
+  const bySev = {};
+  SEV_ORDER.forEach(k => {
+    const row = asObject(rawBySev[SEV_LABEL_BY_KEY[k]]);
+    bySev[k] = Object.assign({}, EMPTY_ROLLUP, rollupFrom(row) || {}, {
+      contractTargetMins: row.contractTargetMins == null ? null : num(row.contractTargetMins),
+      liveTargetMinsObserved: asArray(row.liveTargetMinsObserved).filter(v => v != null).map(num),
+    });
+  });
+  return {
+    headline, overall, bySev,
+    basis: raw.basis || 'initial response',
+    scope: raw.scope || 'all severities (Sev 1–4)',
+    headlineScope: raw.headlineScope || 'Sev 1–2',
+    subscriptionRaw: raw.subscription,
+    unknownSeverity: num(raw.unknownSeverity),
+    mismatchesRaw: raw.targetMismatches,
+    warnings: asArray(raw.warnings).filter(w => typeof w === 'string'),
+  };
+}
+
 // ---------- Per-account computed view ----------
 function computeAccountStats(d) {
   const sr = asObject(asObject(d).sourceReview);
@@ -277,20 +396,26 @@ function computeAccountStats(d) {
     // writes severity-at-open into both, but a hand-built file may carry the
     // current severity there, and tickets routinely step down after response.
     const slaSev = sevKey(row.openedAs) || sevKey(row.severity) || 'P4';
-    // Boundness is P1/P2 first response only. A payload declaring slaBound on a
-    // P3/P4 row must not enter the scored set, or the top-line percentage and
-    // the per-severity breakdown would be computed over different rows.
-    const slaBound = !!SLA_BOUND[slaSev] && (row.slaBound == null || !!row.slaBound);
+    // Every severity carries an initial-response commitment, so only an
+    // explicit slaBound:false takes a row out of the scored set. Older payloads
+    // set that flag on Sev 3/4, which keeps them excluded exactly as before.
+    const slaBound = row.slaBound == null ? true : !!row.slaBound;
     let slaBreach = row.slaBreach ?? null;
     if (!slaBound) slaBreach = null;
     return {
       ...row,
       slaSev,
       slaBound,
+      // Derived from slaSev rather than read from row.slaHeadline, so the
+      // headline rollup and the severity column can never disagree.
+      slaHeadline: HEADLINE_SEVS.includes(slaSev),
       hours: parseDurationHours(row.duration),
       slaBreach,
       slaTargetMins: row.slaTargetMins ?? null,
       slaActualMins: row.slaActualMins ?? null,
+      slaTargetSource: row.slaTargetSource ?? null,
+      slaContractTargetMins: row.slaContractTargetMins ?? null,
+      slaTargetMismatch: slaBound ? (row.slaTargetMismatch ?? null) : null,
     };
   });
   const slaTotals = { P1:0, P2:0, P3:0, P4:0 };
@@ -306,27 +431,54 @@ function computeAccountStats(d) {
       max: Math.max(...vals),
     } : { count: 0 };
   });
-  const slaBoundTickets = tickets.filter(t => t.slaBound);
-  const slaScored = slaBoundTickets.filter(t => t.slaBreach != null);
-  const slaMet = slaScored.filter(t => t.slaBreach === false).length;
-  const slaBreached = slaScored.filter(t => t.slaBreach === true).length;
-  const bySev = {};
-  ['P1','P2'].forEach(k => {
-    const rows = slaBoundTickets.filter(t => t.slaSev === k && t.slaBreach != null);
-    const met = rows.filter(t => t.slaBreach === false).length;
-    bySev[k] = { total: rows.length, met, breached: rows.length - met, pct: rows.length ? Math.round(100 * met / rows.length) : null };
+  // Client-side recomputation — the fallback for any payload without a
+  // slaScoring block, and the source of the per-ticket rows either way.
+  const derivedBySev = {};
+  SEV_ORDER.forEach(k => {
+    const rows = tickets.filter(t => t.slaSev === k);
+    const bound = rows.filter(t => t.slaBound);
+    const scored = bound.filter(t => t.slaBreach != null);
+    const met = scored.filter(t => t.slaBreach === false).length;
+    const live = [...new Set(bound.map(t => t.slaTargetMins).filter(v => v != null).map(num))];
+    derivedBySev[k] = {
+      total: rows.length, bound: bound.length, scored: scored.length, met,
+      breached: scored.length - met,
+      // A case with no usable milestone leaves the denominator; it is never
+      // counted as a pass.
+      noMilestone: bound.length - scored.length,
+      pct: scored.length ? Math.round(100 * met / scored.length) : null,
+      contractTargetMins: null,
+      liveTargetMinsObserved: live.sort((a,b) => a - b),
+    };
   });
-  return {
-    tickets, slaTotals, resStats,
-    sla: {
-      bound: slaBoundTickets.length,
-      scored: slaScored.length,
-      met: slaMet,
-      breached: slaBreached,
-      pct: slaScored.length ? Math.round(100 * slaMet / slaScored.length) : null,
-      bySev,
-    },
+
+  const scoring = readSlaScoring(d);
+  const subscription = readSubscription(d, scoring && scoring.subscriptionRaw);
+  const name = accountName(d);
+  const sla = scoring ? {
+    source: 'sidecar',
+    headline: scoring.headline,
+    all: scoring.overall,
+    bySev: scoring.bySev,
+    unknownSeverity: scoring.unknownSeverity,
+    mismatches: readMismatches(scoring.mismatchesRaw, name),
+    warnings: scoring.warnings,
+    basis: scoring.basis, scope: scoring.scope, headlineScope: scoring.headlineScope,
+    subscription,
+  } : {
+    source: 'derived',
+    headline: sumRollups(HEADLINE_SEVS.map(k => derivedBySev[k])),
+    all: sumRollups(SEV_ORDER.map(k => derivedBySev[k])),
+    bySev: derivedBySev,
+    unknownSeverity: 0,
+    // Target validation needs the contractual table, which only the sidecar
+    // holds. A recomputed account reports adherence but not mismatches.
+    mismatches: [],
+    warnings: [],
+    basis: 'initial response', scope: 'all severities (Sev 1–4)', headlineScope: 'Sev 1–2',
+    subscription,
   };
+  return { tickets, slaTotals, resStats, sla };
 }
 
 // ---------- Portfolio aggregation ----------
@@ -338,10 +490,16 @@ function accountSummary(d) {
     file: asObject(d)._file, name: accountName(d),
     total: num(counts.total), open: num(counts.open), closed: num(counts.closed),
     slaTotals: av.slaTotals,
-    slaPct: av.sla.pct,
-    slaBreached: av.sla.breached,
+    // Sort keys stay flat: `sla*` is the Sev 1–2 headline, `slaAll*` the wider
+    // measure. The two are never folded into one column.
+    slaPct: av.sla.headline.pct,
+    slaBreached: av.sla.headline.breached,
+    slaAllPct: av.sla.all.pct,
+    slaAllBreached: av.sla.all.breached,
+    tier: av.sla.subscription.tier,
+    tierSort: av.sla.subscription.tier || 'zz-unknown',
     health: asObject(asObject(d).health).status ?? 'Unknown',
-    _stats: av, _raw: asObject(d),
+    _sla: av.sla, _stats: av, _raw: asObject(d),
   };
 }
 
@@ -380,16 +538,29 @@ function computePortfolio(accounts) {
     } : { count: 0, avg_hours: null, median_hours: null, max_hours: null };
   });
 
-  const slaBound = allTickets.filter(t => t.slaBound);
-  const slaScored = slaBound.filter(t => t.slaBreach != null);
-  const slaMet = slaScored.filter(t => t.slaBreach === false).length;
-  const slaBreached = slaScored.filter(t => t.slaBreach === true);
+  // Portfolio totals sum each account's own rollup rather than rescoring the
+  // pooled tickets, so a sidecar-scored account keeps its precomputed figures
+  // even when it sits next to a recomputed one.
   const slaBySev = {};
-  ['P1','P2'].forEach(k => {
-    const rows = slaBound.filter(t => t.slaSev === k && t.slaBreach != null);
-    const met = rows.filter(t => t.slaBreach === false).length;
-    slaBySev[k] = { total: rows.length, met, breached: rows.length - met, pct: rows.length ? Math.round(100 * met / rows.length) : null };
+  SEV_ORDER.forEach(k => {
+    slaBySev[k] = sumRollups(list.map(a => a._sla.bySev[k]));
+    const contract = [...new Set(list.map(a => a._sla.bySev[k].contractTargetMins).filter(v => v != null))];
+    slaBySev[k].contractTargetMins = contract.length === 1 ? contract[0] : null;
+    slaBySev[k].liveTargetMinsObserved = [...new Set(
+      list.flatMap(a => asArray(a._sla.bySev[k].liveTargetMinsObserved))
+    )].sort((a,b) => a - b);
   });
+  const slaHeadline = sumRollups(list.map(a => a._sla.headline));
+  const slaAll = sumRollups(list.map(a => a._sla.all));
+  const slaBreaches = allTickets.filter(t => t.slaBound && t.slaBreach === true);
+  const mismatches = list.flatMap(a => a._sla.mismatches);
+  const tierCounts = {};
+  let tierUnknown = 0;
+  list.forEach(a => {
+    if (a.tier) tierCounts[a.tier] = (tierCounts[a.tier] || 0) + 1;
+    else tierUnknown++;
+  });
+  const derivedAccounts = list.filter(a => a._sla.source === 'derived').length;
 
   const openTickets = allTickets.filter(t => t.status === 'Open');
   const longestResolutions = allTickets.filter(t => t.hours != null && t.status === 'Closed')
@@ -417,13 +588,21 @@ function computePortfolio(accounts) {
     portfolio: { total: portfolioTotal, open: portfolioOpen, closed: portfolioClosed, slaTotals, healthCounts },
     resolutionStats,
     sla: {
-      bound: slaBound.length,
-      scored: slaScored.length,
-      met: slaMet,
-      breached: slaBreached.length,
-      pct: slaScored.length ? Math.round(100 * slaMet / slaScored.length) : null,
+      headline: slaHeadline,
+      all: slaAll,
       bySev: slaBySev,
-      breaches: slaBreached.sort((a,b) => (a.account || '').localeCompare(b.account || '')),
+      mismatches: mismatches.sort((a,b) =>
+        (SEV_RANK[a.sevKey] || 9) - (SEV_RANK[b.sevKey] || 9) ||
+        (a.account || '').localeCompare(b.account || '')),
+      tierCounts, tierUnknown, derivedAccounts,
+      // Only the contract reference is portfolio-wide; tiers are per account.
+      subscription: { reference: list.map(a => a._sla.subscription.reference).find(Boolean) || null },
+      // Breaches are row-level and stay pooled. Headline severities lead the
+      // list so a Sev 3 backlog cannot bury a Sev 1 miss.
+      breaches: slaBreaches.sort((a,b) =>
+        (SEV_RANK[a.slaSev] || 9) - (SEV_RANK[b.slaSev] || 9) ||
+        (a.account || '').localeCompare(b.account || '')),
+      headlineBreaches: slaBreaches.filter(t => t.slaHeadline).length,
     },
     openTickets, longestResolutions, themeBuckets,
   };
@@ -460,6 +639,125 @@ function fmtMins(m) {
   if (n < 1440) return fmt1(n / 60) + 'h';
   return fmt1(n / 1440) + 'd';
 }
+function pctText(v) { return v == null ? '—' : v + '%'; }
+function sevDotHtml(k) {
+  const color = (STATUS[k] || {}).color || 'var(--text-muted)';
+  return '<span class="sev-dot" style="background:' + color + '; display:inline-block; margin-right:6px;"></span>';
+}
+// A tier that could not be resolved is rendered loudly rather than left blank:
+// the Sev 1 window is 15 min on OpsCare Plus and 30 on OpsCare, so an unknown
+// tier means the adherence beside it has not been validated against anything.
+function tierChipHtml(sub, opts) {
+  opts = opts || {};
+  const s = asObject(sub);
+  const chip = (cls, text, title) =>
+    '<span class="tier-chip ' + cls + '" title="' + esc(title) + '"><span class="tier-dot"></span>' + text + '</span>';
+  if (s.conflict) {
+    return chip('tier-unknown', 'Tier unresolved' + (opts.terse ? '' : ' — conflicting signals'),
+      'Salesforce returned more than one tier signal' + (s.scope ? ' across ' + s.scope : '') +
+      '. Not guessing: assuming the higher tier would hide breaches.');
+  }
+  if (!s.tier) {
+    if (s.supportLevel) {
+      return chip('tier-unknown',
+        esc(s.supportLevel) + (opts.terse ? '' : ' — no published SLA targets'),
+        esc(s.supportLevel) + ' is a known Salesforce support level, but it has no ' +
+        'initial-response windows on the Service Level Management page. Adherence is ' +
+        'measured against whatever Salesforce enforced and is not validated against ' +
+        'the OpsCare / OpsCare Plus contract table.' +
+        (s.source ? ' Derived from ' + s.source + '.' : ''));
+    }
+    return chip('tier-unknown', 'Tier unknown' + (opts.terse ? '' : ' — targets unvalidated'),
+      (s.reported
+        ? 'No entitlement named a subscription tier.'
+        : 'This payload predates tier detection, so no tier was reported.') +
+      ' Adherence is measured against whatever Salesforce enforced and is not checked against the contract.');
+  }
+  const qual = (!opts.terse && s.confidence && s.confidence !== 'high')
+    ? ' <span class="tier-qual">· ' + esc(s.confidence) + ' confidence</span>' : '';
+  return chip('', esc(s.tier) + qual,
+    (s.source ? 'Derived from ' + s.source : 'Subscription tier') +
+    ' · confidence ' + (s.confidence || 'unknown'));
+}
+// Adherence by severity, with the headline band marked. `excluded` is the gap
+// between bound and scored — cases with no usable milestone, which leave the
+// denominator rather than counting as a pass.
+function adherenceBySevHtml(sla) {
+  const body = SEV_ORDER.map(k => {
+    const r = asObject(sla.bySev[k]);
+    const excluded = Math.max(0, num(r.bound) - num(r.scored));
+    const tag = HEADLINE_SEVS.includes(k)
+      ? '<span class="band-tag band-headline">headline</span>'
+      : '<span class="band-tag">all-severity only</span>';
+    const bar = r.pct == null
+      ? '<span style="color:var(--text-muted)">not scored</span>'
+      : '<span class="inline-bar bar-track"><span class="bar-fill" style="width:' + Math.max(r.pct, 2) + '%; background:' + STATUS[k].color + '"></span></span>' +
+        '<span class="num">' + r.pct + '%</span>';
+    const targets = [];
+    if (r.contractTargetMins != null) targets.push('contract ' + fmtMins(r.contractTargetMins));
+    const live = asArray(r.liveTargetMinsObserved);
+    if (live.length) targets.push('enforced ' + live.map(fmtMins).join(', '));
+    return '<tr>' +
+      '<td>' + sevDotHtml(k) + STATUS[k].label + tag + '</td>' +
+      '<td>' + bar + '</td>' +
+      '<td class="num">' + fmt(r.scored) + '</td>' +
+      '<td class="num">' + fmt(r.met) + '</td>' +
+      '<td class="num">' + fmt(r.breached) + '</td>' +
+      '<td class="num">' + fmt(excluded) + '</td>' +
+      '<td>' + (targets.length ? esc(targets.join(' · ')) : '<span style="color:var(--text-muted)">—</span>') + '</td>' +
+      '</tr>';
+  }).join('');
+  return '<div class="table-scroll"><table class="data-table"><thead><tr>' +
+    '<th>Severity at open</th><th>Initial-response adherence</th><th class="num">Scored</th>' +
+    '<th class="num">Met</th><th class="num">Breached</th><th class="num">Excluded</th><th>Response target</th>' +
+    '</tr></thead><tbody>' + body + '</tbody></table></div>';
+}
+function mismatchPanelHtml(rows, opts) {
+  opts = opts || {};
+  if (!rows.length) return '';
+  const cases = rows.reduce((s,r) => s + r.cases, 0);
+  return `
+      <div class="panel panel-alert">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Resolve before this reaches a customer</div>
+          <h2>Enforced response targets disagree with the contract (${fmt(rows.length)})</h2>
+          <div class="panel-takeaway">On ${fmt(cases)} case(s) Salesforce enforced a different first-response window than the documented commitment. That is either a misconfigured SLA process or a stale contract reference — and every adherence figure in this report is measured against the enforced window, not the documented one.</div>
+        </div></div>
+        <div class="table-scroll">
+          <table class="data-table"><thead><tr>
+            ${opts.showAccount ? '<th>Account</th>' : ''}
+            <th>Severity</th><th>Tier</th><th class="num">Salesforce enforced</th><th class="num">Contract says</th><th class="num">Cases</th><th>Sample cases</th>
+          </tr></thead><tbody>${rows.map(r => '<tr>' +
+            (opts.showAccount ? '<td>' + esc(r.account) + '</td>' : '') +
+            '<td>' + sevDotHtml(r.sevKey) + esc(r.severity) + '</td>' +
+            '<td>' + (r.tier ? esc(r.tier) : tierChipHtml({ tier: null, reported: true }, { terse: true })) + '</td>' +
+            '<td class="num enforced-mins">' + fmtMins(r.liveTargetMins) + '</td>' +
+            '<td class="num">' + fmtMins(r.documentedTargetMins) + '</td>' +
+            '<td class="num">' + fmt(r.cases) + '</td>' +
+            '<td class="case-num">' + (r.sampleCaseNumbers.length ? r.sampleCaseNumbers.map(esc).join(', ') : '—') + '</td>' +
+          '</tr>').join('')}</tbody></table>
+        </div>
+      </div>`;
+}
+function methodologyHtml(sla) {
+  const s = asObject(asObject(sla).subscription);
+  const ref = s.reference ? ' Documented targets come from ' + esc(s.reference) + '.' : '';
+  return `
+      <div class="footnote">
+        <h3>Methodology &amp; data notes</h3>
+        <ul>
+          <li><strong>What we score:</strong> the <strong>initial response</strong> (First Response milestone) on <strong>all four severities</strong>. Sev 3 and Sev 4 carry real 2-to-8-hour commitments and are scored, not skipped.</li>
+          <li><strong>Headline vs. all-severity:</strong> the headline percentage covers <strong>P1/P2 only</strong>, because that is the commitment customers challenge. The all-severity figure covers P1–P4. They are different denominators and will normally differ — neither substitutes for the other.</li>
+          <li><strong>Targets depend on the subscription tier:</strong> a Sev 1 initial response is 15 minutes on OpsCare Plus and 30 on OpsCare. Where the tier could not be determined the report says so, and adherence there is measured against whatever Salesforce enforced, unvalidated.${ref}</li>
+          <li><strong>Target mismatches:</strong> where the enforced window differs from the documented one, both are shown and neither is silently preferred.</li>
+          <li><strong>No usable milestone:</strong> a case that carries no First Response milestone is <strong>excluded from the denominator</strong> — it is never counted as a pass.</li>
+          <li><strong>Severity at open:</strong> taken from Case history on <code>Severity_Level__c</code> when available; otherwise the Case field at pull time. Severity changes after open are normal resolve/verify workflow and are not a finding.</li>
+          <li><strong>What we ignore:</strong> WatchDog / Next Update milestones and the separate periodic-update commitment, which is a real obligation but is not scored here.</li>
+          <li><strong>Source:</strong> <code>accounts/*.json</code> — the sidecar's <code>sourceReview.slaScoring</code> block where present, otherwise recomputed in-browser from <code>ticketDetail</code>. Recomputed accounts have no contractual target to compare against, so tier validation and mismatch detection are unavailable for them.</li>
+        </ul>
+      </div>`;
+}
+
 // The column is headed "First response", so naming the milestone is only
 // informative when the row was scored against a different one.
 function slaMilestoneNote(t) {
@@ -467,19 +765,33 @@ function slaMilestoneNote(t) {
   if (!name || String(name) === 'First Response') return '';
   return ' <span style="color:var(--text-muted);font-size:12px">· ' + esc(name) + '</span>';
 }
+// Flags a row whose enforced window differs from the documented one, and a row
+// scored against the contract because the milestone carried no target of its own.
+function slaTargetNote(t) {
+  if (t.slaTargetMismatch === true && t.slaContractTargetMins != null) {
+    return ' <span class="reclass-flag" title="' + esc('Salesforce enforced ' + fmtMins(t.slaTargetMins) +
+      '; the contract documents ' + fmtMins(t.slaContractTargetMins) + '.') + '">≠ contract ' +
+      fmtMins(t.slaContractTargetMins) + '</span>';
+  }
+  if (t.slaTargetSource === 'contract') {
+    return ' <span style="color:var(--text-muted);font-size:12px" title="' +
+      esc('The milestone carried no target, so the documented contractual window is shown.') + '">· contract target</span>';
+  }
+  return '';
+}
 function slaLabel(t) {
   if (!t.slaBound) return '<span style="color:var(--text-muted)">n/a</span>';
-  if (t.slaBreach == null) return '<span style="color:var(--text-muted)">no milestone</span>';
+  if (t.slaBreach == null) return '<span style="color:var(--text-muted)">no milestone · not scored</span>';
   if (t.slaBreach) {
     return '<span class="reclass-flag">Breached</span>' +
       (t.slaTargetMins != null ? ' <span style="color:var(--text-muted);font-size:12px">target ' + fmtMins(t.slaTargetMins) + '</span>' : '') +
-      slaMilestoneNote(t);
+      slaTargetNote(t) + slaMilestoneNote(t);
   }
   return '<span style="color:var(--status-good);font-weight:600">Met</span>' +
     (t.slaActualMins != null || t.slaTargetMins != null
       ? ' <span style="color:var(--text-muted);font-size:12px">' + fmtMins(t.slaActualMins) + ' / ' + fmtMins(t.slaTargetMins) + '</span>'
       : '') +
-    slaMilestoneNote(t);
+    slaTargetNote(t) + slaMilestoneNote(t);
 }
 function resBarListHtml(resStats) {
   const maxAvg = Math.max(...SEV_ORDER.map(k => resStats[k].avg_hours || resStats[k].avg || 0));
@@ -516,7 +828,7 @@ function ticketRowHtml(t, opts) {
     '</td>' +
     '<td>' + esc(t.created) + '</td>' +
     '<td>' + esc(t.status) + ageSuffix(t) + '</td>' +
-    '<td><span class="sev-dot" style="background:' + STATUS[t.slaSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.slaSev + '</td>' +
+    '<td>' + sevDotHtml(t.slaSev) + t.slaSev + '</td>' +
     '<td>' + slaLabel(t) + '</td>' +
     '</tr>';
 }
@@ -529,7 +841,7 @@ function fullHistoryRowHtml(t) {
     '</td>' +
     '<td>' + esc(t.created) + '</td>' +
     '<td>' + esc(t.status) + ageSuffix(t) + '</td>' +
-    '<td><span class="sev-dot" style="background:' + STATUS[t.slaSev].color + '; display:inline-block; margin-right:6px;"></span>' + t.slaSev + '</td>' +
+    '<td>' + sevDotHtml(t.slaSev) + t.slaSev + '</td>' +
     '<td>' + slaLabel(t) + '</td>' +
     '</tr>';
 }
@@ -567,8 +879,16 @@ function wireSortableTable(tableId, rows, rowRenderFn, defaultKey, defaultDir) {
 function renderPortfolio(agg) {
   const p = agg.portfolio;
   const sla = agg.sla;
-  const p1 = sla.bySev.P1 || { total: 0, met: 0, breached: 0, pct: null };
-  const p2 = sla.bySev.P2 || { total: 0, met: 0, breached: 0, pct: null };
+  const headline = sla.headline;
+  const all = sla.all;
+  const p1 = sla.bySev.P1 || EMPTY_ROLLUP;
+  const p2 = sla.bySev.P2 || EMPTY_ROLLUP;
+  const tierParts = Object.keys(sla.tierCounts).sort()
+    .map(t => '<span>' + fmt(sla.tierCounts[t]) + ' × ' + esc(t) + '</span>');
+  if (sla.tierUnknown) {
+    tierParts.push('<span class="tier-chip tier-unknown"><span class="tier-dot"></span>' +
+      fmt(sla.tierUnknown) + ' with no known tier</span>');
+  }
 
   const html = `
     <div class="hero">
@@ -580,7 +900,7 @@ function renderPortfolio(agg) {
               <a class="nav-link" href="QBR Configurator.dc.html">QBR Configurator →</a>
             </div>
             <h1>SLA &amp; Service Performance Report</h1>
-            <div class="hero-sub">First-response adherence for P1/P2 across ${agg.accounts.length} accounts — the commitment that matters. Severity step-downs after response are normal Support workflow and are not scored here.</div>
+            <div class="hero-sub">Initial-response adherence across ${agg.accounts.length} accounts. P1/P2 is the headline commitment; Sev 3/4 carry their own 2-to-8-hour windows and are scored alongside it. Severity step-downs after response are normal Support workflow and are not scored here.</div>
           </div>
           <div class="hero-meta">
             Period: <strong>trailing 24 months</strong><br>
@@ -588,18 +908,31 @@ function renderPortfolio(agg) {
           </div>
         </div>
         <div class="stat-row">
-          <div class="stat-tile"><div class="stat-label">P1/P2 first response</div><div class="stat-value">${sla.pct == null ? '—' : sla.pct + '%'}</div><div class="stat-note">${fmt(sla.met)} met · ${fmt(sla.breached)} breached · ${fmt(sla.scored)} scored</div></div>
-          <div class="stat-tile"><div class="stat-label">P1 first response</div><div class="stat-value">${p1.pct == null ? '—' : p1.pct + '%'}</div><div class="stat-note">${fmt(p1.met)} / ${fmt(p1.total)} within window</div></div>
-          <div class="stat-tile"><div class="stat-label">P2 first response</div><div class="stat-value">${p2.pct == null ? '—' : p2.pct + '%'}</div><div class="stat-note">${fmt(p2.met)} / ${fmt(p2.total)} within window</div></div>
+          <div class="stat-tile tile-headline"><div class="stat-kicker">Headline · P1/P2</div><div class="stat-label">First response</div><div class="stat-value">${pctText(headline.pct)}</div><div class="stat-note">${fmt(headline.met)} met · ${fmt(headline.breached)} breached · ${fmt(headline.scored)} scored</div></div>
+          <div class="stat-tile"><div class="stat-label">P1 first response</div><div class="stat-value">${pctText(p1.pct)}</div><div class="stat-note">${fmt(p1.met)} / ${fmt(p1.scored)} within window</div></div>
+          <div class="stat-tile"><div class="stat-label">P2 first response</div><div class="stat-value">${pctText(p2.pct)}</div><div class="stat-note">${fmt(p2.met)} / ${fmt(p2.scored)} within window</div></div>
+          <div class="stat-tile tile-secondary"><div class="stat-kicker">Secondary · wider scope</div><div class="stat-label">All severities P1–P4</div><div class="stat-value">${pctText(all.pct)}</div><div class="stat-note">${fmt(all.met)} met · ${fmt(all.breached)} breached · ${fmt(all.scored)} scored</div></div>
         </div>
+        <div class="hero-tier"><span>Subscription tier:</span>${tierParts.join('<span>·</span>')}${sla.derivedAccounts ? '<span>· ' + fmt(sla.derivedAccounts) + ' account(s) scored in-browser from an older payload</span>' : ''}</div>
       </div>
     </div>
     <div class="wrap">
+      ${mismatchPanelHtml(sla.mismatches, { showAccount: true })}
+
+      <div class="panel">
+        <div class="panel-head"><div>
+          <div class="eyebrow">Initial response · all severities</div>
+          <h2>Adherence by severity at open</h2>
+          <div class="panel-takeaway"><strong>P1/P2 is the headline band</strong> and is reported on its own above. Sev 3 and Sev 4 carry their own contractual windows and are scored here too, so the all-severity figure covers a much larger denominator and will not match the headline. <strong>Excluded</strong> counts cases with no usable First Response milestone — they leave the denominator rather than counting as a pass.</div>
+        </div></div>
+        ${adherenceBySevHtml(sla)}
+      </div>
+
       <div class="panel">
         <div class="panel-head"><div>
           <div class="eyebrow">SLA-bound volume</div>
           <h2>Tickets by severity at open</h2>
-          <div class="panel-takeaway"><strong>P1 and P2 are SLA-bound</strong> — first response must land inside the entitlement window (x for P1, y for P2, from Salesforce Case milestones). P3/P4 are shown for volume context only. Severity often changes after the first response; that progression is expected and is not treated as a finding.</div>
+          <div class="panel-takeaway"><strong>All four severities are SLA-bound on initial response</strong> — the target window depends on severity and on the subscription tier. P1/P2 remain the headline because that is what customers challenge. Severity often changes after the first response; that progression is expected and is not treated as a finding.</div>
         </div></div>
         <div class="bar-list">${sevBarListHtml(p.slaTotals)}</div>
       </div>
@@ -609,7 +942,7 @@ function renderPortfolio(agg) {
         <div class="panel-head"><div>
           <div class="eyebrow">Attention</div>
           <h2>First-response breaches (${fmt(sla.breaches.length)})</h2>
-          <div class="panel-takeaway">P1/P2 cases where the First Response milestone was violated.</div>
+          <div class="panel-takeaway">Cases where the First Response milestone was violated, headline severities first — <strong>${fmt(sla.headlineBreaches)} P1/P2</strong> and ${fmt(sla.breaches.length - sla.headlineBreaches)} Sev 3/4.</div>
         </div></div>
         <div class="table-scroll">
           <table class="data-table"><thead><tr><th>Account</th><th>Case</th><th>Subject</th><th>Created</th><th>Severity</th><th>First response</th></tr></thead>
@@ -620,7 +953,7 @@ function renderPortfolio(agg) {
         <div class="panel-head"><div>
           <div class="eyebrow">Attention</div>
           <h2>First-response breaches</h2>
-          <div class="panel-takeaway">No P1/P2 First Response violations in the scored sample for this period.</div>
+          <div class="panel-takeaway">No First Response violations at any severity in the scored sample for this period.</div>
         </div></div>
       </div>`}
 
@@ -646,15 +979,17 @@ function renderPortfolio(agg) {
         <div class="panel-head"><div>
           <div class="eyebrow">Portfolio detail</div>
           <h2>Account-by-account breakdown</h2>
-          <div class="panel-takeaway">Click any account for ticket history and first-response detail. Sorted by breach count, then volume.</div>
+          <div class="panel-takeaway">Click any account for ticket history and first-response detail. Sorted by P1/P2 breach count, then volume. The two adherence columns are different measures: <strong>P1/P2 met %</strong> is the headline, <strong>all-sev met %</strong> covers Sev 1–4.</div>
         </div></div>
         <div class="table-scroll">
           <table class="data-table" id="acctTable">
             <thead><tr>
               <th data-sort="name">Account<span class="arrow">▾</span></th>
               <th data-sort="total" class="num">Total<span class="arrow">▾</span></th>
-              <th data-sort="slaBreached" class="num">SLA breaches<span class="arrow">▾</span></th>
-              <th data-sort="slaPct" class="num">SLA met %<span class="arrow">▾</span></th>
+              <th data-sort="slaBreached" class="num">P1/P2 breaches<span class="arrow">▾</span></th>
+              <th data-sort="slaPct" class="num">P1/P2 met %<span class="arrow">▾</span></th>
+              <th data-sort="slaAllPct" class="num">All-sev met %<span class="arrow">▾</span></th>
+              <th data-sort="tierSort">Tier<span class="arrow">▾</span></th>
               <th>Severity at open</th>
               <th data-sort="health">Health<span class="arrow">▾</span></th>
             </tr></thead>
@@ -685,15 +1020,7 @@ function renderPortfolio(agg) {
         </div>
       </div>
 
-      <div class="footnote">
-        <h3>Methodology &amp; data notes</h3>
-        <ul>
-          <li><strong>What we score:</strong> First Response milestone on cases that opened as <strong>P1 or P2</strong>. Target windows come from Salesforce entitlement milestones (per-case <code>TargetResponseInMins</code>).</li>
-          <li><strong>What we ignore:</strong> Severity changes after open (normal resolve/verify workflow), WatchDog / Next Update milestones, and P3/P4 first-response clocks.</li>
-          <li><strong>Severity at open:</strong> taken from Case history on <code>Severity_Level__c</code> when available; otherwise the Case field at pull time.</li>
-          <li><strong>Source:</strong> <code>accounts/*.json</code> from the Salesforce sidecar (<code>sourceReview</code>) or curated dumps.</li>
-        </ul>
-      </div>
+      ${methodologyHtml(sla)}
     </div>
   `;
   document.getElementById('app').innerHTML = html;
@@ -711,7 +1038,7 @@ function renderPortfolio(agg) {
   function renderRows() {
     const rows = [...agg.accounts].sort((a,b) => {
       let av = a[sortState.key], bv = b[sortState.key];
-      if (sortState.key === 'health' || sortState.key === 'name') {
+      if (sortState.key === 'health' || sortState.key === 'name' || sortState.key === 'tierSort') {
         av = a[sortState.key] || ''; bv = b[sortState.key] || '';
         return String(av).localeCompare(String(bv)) * sortState.dir;
       }
@@ -725,7 +1052,9 @@ function renderPortfolio(agg) {
       '<td class="acct-name">' + esc(a.name) + '<span class="go">view →</span></td>' +
       '<td class="num">' + a.total + '</td>' +
       '<td class="num">' + a.slaBreached + '</td>' +
-      '<td class="num">' + (a.slaPct == null ? '—' : a.slaPct + '%') + '</td>' +
+      '<td class="num">' + pctText(a.slaPct) + '</td>' +
+      '<td class="num">' + pctText(a.slaAllPct) + '</td>' +
+      '<td>' + tierChipHtml(a._sla.subscription, { terse: true }) + '</td>' +
       '<td>' + sevStackHtml(a.slaTotals) + '</td><td>' + healthChipHtml(a.health) + '</td></tr>'
     ).join('');
     document.querySelectorAll('#acctTable tbody tr').forEach(tr => {
@@ -754,8 +1083,10 @@ function renderAccountDetail(d) {
   const sr = asObject(asObject(d).sourceReview);
   const health = asObject(asObject(d).health).status ?? 'Unknown';
   const sla = stats.sla;
-  const p1 = sla.bySev.P1 || { total: 0, met: 0, pct: null };
-  const p2 = sla.bySev.P2 || { total: 0, met: 0, pct: null };
+  const headline = sla.headline;
+  const all = sla.all;
+  const p1 = sla.bySev.P1 || EMPTY_ROLLUP;
+  const p2 = sla.bySev.P2 || EMPTY_ROLLUP;
 
   const narrativeParts = [];
   if (sr.executiveSummary) narrativeParts.push('<p><strong>Executive summary:</strong> ' + esc(sr.executiveSummary) + '</p>');

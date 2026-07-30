@@ -370,7 +370,6 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
         sf, SOQL_CONTACTS.format(account_id=account_id), "Contacts"
     )
     bundle = mirantis.fetch_mirantis_bundle(sf, account_id)
-    warnings = [w for w in (w1, w2, w3, *bundle.get("warnings", [])) if w]
 
     revenue_n = _num_field(acct, "ARR__c", "AnnualRevenue", "Total_Won_Amount__c")
 
@@ -378,6 +377,16 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
     licenses = bundle.get("licenses") or []
     cases = bundle.get("cases") or []
     entitlements = bundle.get("entitlements") or []
+    sla_processes = bundle.get("slaProcesses") or []
+
+    # Tier derivation is unconfirmed for this org, so /inspect reports every
+    # candidate value it saw — that is what confirms which field owns the tier.
+    tier_info = mirantis.derive_subscription_tier(entitlements, sla_processes)
+    warnings = [
+        w
+        for w in (w1, w2, w3, *bundle.get("warnings", []), *tier_info.get("warnings", []))
+        if w
+    ]
 
     signals = {
         "hasRevenue": revenue_n > 0,
@@ -389,6 +398,7 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
         "hasLicenses": len(licenses) > 0,
         "hasCases": len(cases) > 0,
         "hasEntitlements": len(entitlements) > 0,
+        "hasSubscriptionTier": bool(tier_info.get("tier")),
     }
     score = sum(
         [
@@ -432,7 +442,9 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
             "licenses": len(licenses),
             "cases": len(cases),
             "entitlements": len(entitlements),
+            "slaProcesses": len(sla_processes),
         },
+        "subscriptionTier": tier_info,
         "samples": {
             "environments": [
                 {
@@ -461,12 +473,26 @@ def inspect_account(sf: Salesforce, account_name: str) -> Dict[str, Any]:
                 {"name": c.get("Name"), "title": c.get("Title"), "email": c.get("Email")}
                 for c in contacts[:5]
             ],
+            # Every selected field, minus SF metadata — probe for LabCare /
+            # OpsCare / OpsCare Plus / Custom on Support_Level__c + SlaProcess.
+            "entitlements": [
+                {k: v for k, v in e.items() if k != "attributes"}
+                for e in entitlements[:3]
+            ],
+            "slaProcesses": [
+                {k: v for k, v in p.items() if k != "attributes"}
+                for p in sla_processes[:3]
+            ],
         },
         "warnings": warnings,
         "note": (
             "Mirantis QBR depth comes from Environment__c (of_nodes__c), License__c, Case, and Entitlement — "
             "not standard Asset / AnnualRevenue. Commercial SoR: ARR__c, Total_Won_Amount__c, "
-            "Open_Pipeline__c, Upcoming_renewal_date__c."
+            "Open_Pipeline__c, Upcoming_renewal_date__c. "
+            "subscriptionTier prefers SlaProcess.Name then "
+            "Entitlement.Support_Level__c (Entitlement.Type is ignored). "
+            "LabCare / Custom set supportLevel with tier=null — they have no "
+            "published windows on the Service Level Management page."
         ),
     }
 
@@ -696,15 +722,32 @@ def build_payload(
     licenses = bundle.get("licenses") or []
     cases = bundle.get("cases") or []
     entitlements = bundle.get("entitlements") or []
+    sla_processes = bundle.get("slaProcesses") or []
     case_history = bundle.get("caseHistory") or []
     case_milestones = bundle.get("caseMilestones") or []
 
+    # Tier first: the contractual response target depends on it, and an unknown
+    # tier means targets are reported unvalidated rather than assumed.
+    tier_info = mirantis.derive_subscription_tier(entitlements, sla_processes)
+    sla_scoring = mirantis.map_sla_scoring(
+        cases, case_milestones, case_history, tier_info
+    )
+    for w in sla_scoring.get("warnings") or []:
+        if w not in warnings:
+            warnings.append(w)
+
     usage = mirantis.map_usage(envs)
-    support = mirantis.map_support(cases, entitlements, case_milestones, case_history)
+    support = mirantis.map_support(
+        cases, entitlements, case_milestones, case_history,
+        tier_info=tier_info, sla_scoring=sla_scoring,
+    )
     products, product_mix = mirantis.map_products_from_licenses_and_envs(licenses, envs)
     incidents = mirantis.map_incidents_from_p1(cases, case_history)
     risks = mirantis.map_risks_from_signals(licenses, cases, envs)
-    source_review = mirantis.map_source_review(cases, case_history, case_milestones)
+    source_review = mirantis.map_source_review(
+        cases, case_history, case_milestones,
+        tier_info=tier_info, sla_scoring=sla_scoring,
+    )
     health = mirantis.map_health_from_cases(cases, support)
     takeaways = mirantis.map_exec_takeaways(
         acct.get("Name") or account_name, usage, support, products, risks
@@ -756,8 +799,9 @@ def build_payload(
             "schemaVersion": SCHEMA_VERSION,
             "lastUpdated": datetime.now(timezone.utc).isoformat(),
             "source": (
-                f"sf-sync/{os.environ.get('SYNC_VERSION', 'v0.5')} "
-                "(Environment__c + License__c + Case + CaseMilestone + Entitlement)"
+                f"sf-sync/{os.environ.get('SYNC_VERSION', 'v0.6')} "
+                "(Environment__c + License__c + Case + CaseMilestone + Entitlement "
+                "+ SlaProcess)"
             ),
             "accountId": account_id,
             "warnings": warnings,
@@ -767,12 +811,15 @@ def build_payload(
                 "cases": len(cases),
                 "caseMilestones": len(case_milestones),
                 "entitlements": len(entitlements),
+                "slaProcesses": len(sla_processes),
                 "contacts": len(contacts),
                 "opportunitiesOpen": len(opps_open),
             },
         },
         "customer": {
             "name": acct["Name"],
+            # Account.Type — the commercial segment. The support subscription
+            # tier is a different thing: sourceReview.slaScoring.subscription.
             "tier": acct.get("Type") or "",
             "industry": acct.get("Industry") or "",
             "stakeholders": [
@@ -883,6 +930,15 @@ def main() -> int:
     print(f"  {len(payload['products'])} products · {len(payload['commercial']['expansions'])} open opps · "
           f"{len(payload['customer']['stakeholders'])} contacts · "
           f"{len((payload.get('sourceReview') or {}).get('ticketDetail') or [])} cases")
+    scoring = (payload.get("sourceReview") or {}).get("slaScoring") or {}
+    overall = scoring.get("overall") or {}
+    subscription = scoring.get("subscription") or {}
+    print(
+        f"  tier: {subscription.get('tier') or 'UNKNOWN'} "
+        f"({subscription.get('confidence')}, {subscription.get('source') or 'no source'}) · "
+        f"initial response Sev 1–4: {overall.get('met', 0)}/{overall.get('scored', 0)} met "
+        f"({overall.get('pct')}%) · {len(scoring.get('targetMismatches') or [])} target mismatch(es)"
+    )
     return 0
 
 

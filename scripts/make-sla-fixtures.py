@@ -10,13 +10,24 @@ Payload shape is derived from, and must stay aligned with:
   * `map_source_review()` / `map_support()` in `sf-sync/mirantis.py`
   * `computeAccountStats()` / `computePortfolio()` in `perf-report.html`
 
-Edge cases these fixtures deliberately cover, from contract gaps found while
-deriving the shape above (both since fixed in `perf-report.html`):
-  * SLA severity precedence. `computeAccountStats()` now reads `openedAs`
-    before `severity`, and boundness additionally requires a P1/P2 bucket.
-    Fixtures exercise the fallback (no `severity` key), the disagreement
-    (`openedAs` and `severity` differ), and a P3/P4 row that nonetheless
-    declares `slaBound: true`.
+Initial response is scored for all four severities, against the contractual
+table in `CONTRACT_RESPONSE_MINS` — Sev 3/4 carry real 2-to-8-hour commitments
+and are most of the queue. Sev 1/2 stay rolled up separately under
+`slaScoring.headline` because that is what customers challenge.
+
+Edge cases these fixtures deliberately cover:
+  * SLA severity precedence. The SLA severity is severity at open, so `openedAs`
+    wins over `severity`. Fixtures exercise the fallback (no `severity` key),
+    the disagreement (`openedAs` and `severity` differ), a row that declares
+    `slaBound: false` despite a scoreable severity, and a row with no
+    determinable severity at all (the only case that is genuinely unbound).
+  * Subscription tier. The response target is tier-dependent and 15 vs 30
+    minutes on a Sev 1 is a 2x difference, so the tier is varied across
+    accounts: OpsCare Plus, OpsCare (via Support_Level__c), LabCare (known
+    level, no published targets), and conflicting SlaProcess.Name signals.
+  * Target mismatch. One account has Salesforce enforcing a window the contract
+    table does not document, which means either a misconfigured SLA process or a
+    stale wiki page. `slaScoring.targetMismatches` carries it.
   * `sourceReview.executiveSummary`, `healthTrajectory` and `recommendations`
     are rendered by the report but the sidecar always emits None/[]. Curated
     dumps such as `demo/meridian-financial-solutions.json` do populate them, so
@@ -52,7 +63,7 @@ import sys
 from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 # --------------------------------------------------------------------------
 # Contract constants (mirrored from the authorities named in the docstring)
@@ -64,12 +75,36 @@ DEFAULT_SEED = 20260701
 DEFAULT_AS_OF = "2026-06-30"
 
 SEV_LABELS = ("Sev 1", "Sev 2", "Sev 3", "Sev 4")
+# mirantis.py HEADLINE_SEVERITIES — kept separable, but not the scope of scoring.
+HEADLINE_SEVERITIES = ("Sev 1", "Sev 2")
 
-# perf-report.html SLA_BOUND — P1/P2 First Response only.
-SLA_BOUND = {"Sev 1": True, "Sev 2": True, "Sev 3": False, "Sev 4": False}
+SCOPE_ALL = "all severities (Sev 1–4)"          # mirantis.py map_sla_scoring scope
+SCOPE_HEADLINE = "Sev 1–2"                      # mirantis.py headlineScope
 
-# Stands in for Entitlement milestone TargetResponseInMins.
-FIRST_RESPONSE_TARGET_MINS = {"Sev 1": 30, "Sev 2": 120}
+TIER_OPSCARE_PLUS = "OpsCare Plus"
+TIER_OPSCARE = "OpsCare"
+LEVEL_LABCARE = "LabCare"
+LEVEL_CUSTOM = "Custom"
+
+# mirantis.py CONTRACT_RESPONSE_MINS — contractual initial response, in minutes,
+# per severity and subscription tier. All tiers are 24x7. LabCare / Custom are
+# recognized Salesforce levels but have no published windows here.
+CONTRACT_RESPONSE_MINS: Dict[str, Dict[str, int]] = {
+    TIER_OPSCARE_PLUS: {"Sev 1": 15, "Sev 2": 60, "Sev 3": 120, "Sev 4": 480},
+    TIER_OPSCARE: {"Sev 1": 30, "Sev 2": 120, "Sev 3": 240, "Sev 4": 480},
+}
+CONTRACT_REFERENCE = "Confluence 'Service Level Management' (space 2S, page 884343127)"
+
+# mirantis.py TARGET_SOURCE_* — which of the two targets a row is reporting.
+TARGET_SOURCE_LIVE = "CaseMilestone.TargetResponseInMins"
+TARGET_SOURCE_CONTRACT = "contract"
+
+# mirantis.py _TIER_SOURCE_CONFIDENCE — confirmed against MKE Ops sandbox.
+# Entitlement.Type is never used for the decision (always "Phone Support").
+TIER_SOURCE_CONFIDENCE = {
+    "SlaProcess.Name": "high",
+    "Entitlement.Support_Level__c": "high",
+}
 
 # perf-report.html parseDurationHours() accepts exactly these three forms.
 DURATION_PATTERNS = (
@@ -300,17 +335,36 @@ def assert_demo_target(path: Path, out_dir: Path, action: str) -> None:
 # Account specs
 # --------------------------------------------------------------------------
 @dataclass
+class EntitlementSpec:
+    """One Entitlement row, as `derive_subscription_tier()` would read it.
+
+    The tier is not declared directly anywhere in this file — it is derived from
+    these rows by the same rules the sidecar uses, so a fixture cannot claim a
+    tier its own entitlement data would not support.
+    """
+    name: str
+    type: str
+    status: str
+    start: str
+    end: str
+    sla_process_name: Optional[str] = None
+    sla_process_id: Optional[str] = None
+    service_level: Optional[str] = None
+
+
+@dataclass
 class AccountSpec:
     slug: str
     name: str
-    tier: str
+    tier: str                               # commercial segment, not the SLA tier
     industry: str
     cases: int
     # Severity-at-open mix, weighted toward Sev 3/4 as real queues are.
     sev_mix: Tuple[float, float, float, float]
-    # First-response breach probability for the SLA-bound severities.
+    # First-response breach probability, per severity at open. All four are
+    # scored, so all four need a rate.
     breach_rate: Dict[str, float]
-    # Share of P1/P2 cases with no First Response milestone at all (unknown).
+    # Share of cases at any severity with no First Response milestone at all.
     no_milestone_rate: float
     open_rate: float
     reclass_rate: float
@@ -319,22 +373,34 @@ class AccountSpec:
     clusters: int
     arr: int
     stakeholders: int
+    entitlements: List[EntitlementSpec]
     write_quarter_twin: bool = False
     edge_rows: bool = False
     narrative: bool = False
     themes_limit: int = 8
     warnings: List[str] = field(default_factory=list)
+    # What the Salesforce SLA process actually enforces per severity. Severities
+    # left out fall back to the documented target for the derived tier; listing
+    # one that disagrees with the contract table produces a targetMismatch.
+    live_target_mins: Dict[str, int] = field(default_factory=dict)
+    # Share of milestone-bearing cases whose milestone carries no target at all,
+    # forcing the documented value (labelled `contract`) or none when the tier
+    # is unknown.
+    no_live_target_rate: float = 0.0
 
 
 ACCOUNT_SPECS: List[AccountSpec] = [
     AccountSpec(
+        # Tier resolves to OpsCare Plus at high confidence, but the milestones
+        # inside that entitlement process enforce the standard OpsCare windows on
+        # Sev 1 and Sev 3 — the target-mismatch fixture.
         slug="demo-northwind-grid-systems",
         name="Northwind Grid Systems",
         tier="Enterprise",
         industry="Energy & Utilities",
         cases=384,
         sev_mix=(0.06, 0.18, 0.44, 0.32),
-        breach_rate={"Sev 1": 0.31, "Sev 2": 0.27},
+        breach_rate={"Sev 1": 0.31, "Sev 2": 0.27, "Sev 3": 0.19, "Sev 4": 0.11},
         no_milestone_rate=0.06,
         open_rate=0.09,
         reclass_rate=0.16,
@@ -343,16 +409,33 @@ ACCOUNT_SPECS: List[AccountSpec] = [
         clusters=9,
         arr=2_480_000,
         stakeholders=6,
+        entitlements=[
+            EntitlementSpec(
+                name="Northwind Grid Systems — OpsCare Plus",
+                type="OpsCare Plus",
+                status="Active",
+                start="2024-07-01",
+                end="2027-06-30",
+                sla_process_name="OpsCare Plus 24x7 Entitlement Process",
+                sla_process_id="SYNTHETIC-SLAP-NWGS-01",
+                service_level="OpsCare Plus",
+            ),
+        ],
         write_quarter_twin=True,
+        live_target_mins={"Sev 1": 30, "Sev 3": 240},
+        no_live_target_rate=0.05,
     ),
     AccountSpec(
+        # Tier resolves to OpsCare at high confidence from Support_Level__c
+        # (SlaProcess.Name is a generic process name). The lapsed Plus
+        # entitlement must not turn that into a conflict.
         slug="demo-cascadia-health-network",
         name="Cascadia Health Network",
         tier="Enterprise",
         industry="Healthcare",
         cases=128,
         sev_mix=(0.03, 0.11, 0.47, 0.39),
-        breach_rate={"Sev 1": 0.05, "Sev 2": 0.06},
+        breach_rate={"Sev 1": 0.05, "Sev 2": 0.06, "Sev 3": 0.04, "Sev 4": 0.02},
         no_milestone_rate=0.03,
         open_rate=0.06,
         reclass_rate=0.10,
@@ -361,16 +444,42 @@ ACCOUNT_SPECS: List[AccountSpec] = [
         clusters=4,
         arr=910_000,
         stakeholders=4,
+        entitlements=[
+            EntitlementSpec(
+                name="Cascadia Health Network — Support",
+                type="Phone Support",
+                status="Active",
+                start="2025-01-01",
+                end="2026-12-31",
+                sla_process_name="Standard 24x7 Response Process",
+                sla_process_id="SYNTHETIC-SLAP-CHN-02",
+                service_level="OpsCare",
+            ),
+            EntitlementSpec(
+                name="Cascadia Health Network — Legacy Support",
+                type="Phone Support",
+                status="Expired",
+                start="2023-01-01",
+                end="2024-12-31",
+                sla_process_name="OpsCare Plus 24x7 Entitlement Process",
+                sla_process_id="SYNTHETIC-SLAP-CHN-01",
+                service_level="OpsCare Plus",
+            ),
+        ],
         narrative=True,
+        no_live_target_rate=0.04,
     ),
     AccountSpec(
+        # Known-but-unmapped level: LabCare is a real Salesforce support level
+        # (SlaProcess.Name / Support_Level__c) with no published windows on the
+        # Service Level Management page. supportLevel=LabCare, tier=null.
         slug="demo-talos-robotics",
         name="Talos Robotics",
         tier="Growth",
         industry="Industrial Automation",
         cases=27,
         sev_mix=(0.07, 0.19, 0.41, 0.33),
-        breach_rate={"Sev 1": 0.18, "Sev 2": 0.15},
+        breach_rate={"Sev 1": 0.18, "Sev 2": 0.15, "Sev 3": 0.12, "Sev 4": 0.07},
         no_milestone_rate=0.12,
         open_rate=0.15,
         reclass_rate=0.12,
@@ -379,16 +488,33 @@ ACCOUNT_SPECS: List[AccountSpec] = [
         clusters=2,
         arr=180_000,
         stakeholders=3,
+        entitlements=[
+            EntitlementSpec(
+                name="Talos Robotics — LabCare",
+                type="Phone Support",
+                status="Active",
+                start="2025-04-01",
+                end="2026-09-30",
+                sla_process_name="LabCare",
+                sla_process_id="SYNTHETIC-SLAP-TR-01",
+                service_level="LabCare",
+            ),
+        ],
         edge_rows=True,
+        live_target_mins={"Sev 1": 30, "Sev 2": 120, "Sev 3": 240, "Sev 4": 480},
+        no_live_target_rate=0.10,
     ),
     AccountSpec(
+        # Conflicting signals at the preferred source: two active entitlements
+        # with different SlaProcess.Name values. Entitlement.Type is ignored
+        # (always "Phone Support" in this org), so the conflict has to be here.
         slug="demo-juniper-fields-coop",
         name="Juniper Fields Co-op",
         tier="Growth",
         industry="Agriculture",
         cases=3,
         sev_mix=(0.0, 0.0, 0.55, 0.45),
-        breach_rate={"Sev 1": 0.0, "Sev 2": 0.0},
+        breach_rate={"Sev 1": 0.0, "Sev 2": 0.0, "Sev 3": 0.34, "Sev 4": 0.15},
         no_milestone_rate=0.0,
         open_rate=0.33,
         reclass_rate=0.0,
@@ -397,6 +523,29 @@ ACCOUNT_SPECS: List[AccountSpec] = [
         clusters=1,
         arr=42_000,
         stakeholders=1,
+        entitlements=[
+            EntitlementSpec(
+                name="Juniper Fields Co-op — OpsCare",
+                type="Phone Support",
+                status="Active",
+                start="2025-10-01",
+                end="2026-09-30",
+                sla_process_name="OpsCare",
+                sla_process_id="SYNTHETIC-SLAP-JFC-01",
+                service_level="OpsCare",
+            ),
+            EntitlementSpec(
+                name="Juniper Fields Co-op — OpsCare Plus",
+                type="Phone Support",
+                status="Active",
+                start="2025-10-01",
+                end="2026-09-30",
+                sla_process_name="OpsCare Plus 24x7 Entitlement Process",
+                sla_process_id="SYNTHETIC-SLAP-JFC-02",
+                service_level="OpsCare Plus",
+            ),
+        ],
+        live_target_mins={"Sev 1": 15, "Sev 2": 60, "Sev 3": 120, "Sev 4": 480},
     ),
 ]
 
@@ -409,7 +558,7 @@ SPARSE_SPEC = AccountSpec(
     industry="",
     cases=0,
     sev_mix=(0.0, 0.0, 0.0, 1.0),
-    breach_rate={"Sev 1": 0.0, "Sev 2": 0.0},
+    breach_rate={"Sev 1": 0.0, "Sev 2": 0.0, "Sev 3": 0.0, "Sev 4": 0.0},
     no_milestone_rate=0.0,
     open_rate=0.0,
     reclass_rate=0.0,
@@ -418,6 +567,7 @@ SPARSE_SPEC = AccountSpec(
     clusters=0,
     arr=0,
     stakeholders=0,
+    entitlements=[],
     warnings=[
         "Environment__c: object not accessible for this synthetic account",
         "Case: no rows returned in the 24-month window",
