@@ -144,19 +144,55 @@ SLA_PROCESS_PREFERRED = [
 
 TIER_OPSCARE_PLUS = "OpsCare Plus"
 TIER_OPSCARE = "OpsCare"
-# Present in Salesforce (SlaProcess.Name / Support_Level__c) but not on the
-# Confluence "Service Level Management" table — label them, never invent targets.
 LEVEL_LABCARE = "LabCare"
+# Still undocumented — label it, never invent targets.
 LEVEL_CUSTOM = "Custom"
 
-# Contractual initial-response commitments in minutes. All tiers are 24x7.
-# Only OpsCare / OpsCare Plus are documented; LabCare and Custom stay out.
+# Support hours per level. NOT uniform: LabCare is 8x5, so its minute targets are
+# business minutes and are not wall-clock comparable to the 24x7 levels. The live
+# CaseMilestone path is unaffected (Salesforce applies BusinessHoursId itself);
+# this only matters for the contract fallback below.
+SUPPORT_HOURS: Dict[str, str] = {
+    TIER_OPSCARE_PLUS: "24x7",
+    TIER_OPSCARE: "24x7",
+    LEVEL_LABCARE: "8x5",
+}
+
+# Severity levels a support level is not entitled to open. A case at one of these
+# is a data or process anomaly worth surfacing, not merely "unscored".
+DISALLOWED_SEVERITIES: Dict[str, Tuple[str, ...]] = {
+    LEVEL_LABCARE: ("Sev 1",),
+}
+
+# Contractual initial-response commitments, in minutes.
+#
+# OpsCare / OpsCare Plus: from the Confluence contract table (CONTRACT_REFERENCE).
+# NOTE: SC-5980 (Daniil Gelfanov, Salesforce admin) quotes a single combined
+# "OpsCare / OpsCare Plus" column carrying the *Plus* values (15/60/120/480),
+# i.e. Salesforce may enforce Plus targets for both levels. The contract table
+# keeps them distinct. We score against the contract and let the report's
+# enforced-vs-contract panel surface any per-case disagreement, rather than
+# silently tightening OpsCare and manufacturing breaches. Open question on the
+# ticket — see MEMORY.md.
+#
+# LabCare: from SC-5980 (Daniil, 2026-07-30). Business minutes, 8x5.
 CONTRACT_RESPONSE_MINS: Dict[str, Dict[str, int]] = {
     TIER_OPSCARE_PLUS: {"Sev 1": 15, "Sev 2": 60, "Sev 3": 120, "Sev 4": 480},
     TIER_OPSCARE: {"Sev 1": 30, "Sev 2": 120, "Sev 3": 240, "Sev 4": 480},
+    LEVEL_LABCARE: {"Sev 2": 240, "Sev 3": 480, "Sev 4": 480},
+}
+
+# Next-update commitments, in minutes. Not yet scored — recorded so the report
+# can show the committed cadence next to first response.
+# OpsCare/Plus from the contract table; LabCare from SC-5980.
+CONTRACT_NEXT_UPDATE_MINS: Dict[str, Dict[str, int]] = {
+    TIER_OPSCARE_PLUS: {"Sev 1": 60, "Sev 2": 240, "Sev 3": 2880, "Sev 4": 4320},
+    TIER_OPSCARE: {"Sev 1": 60, "Sev 2": 240, "Sev 3": 2880, "Sev 4": 5760},
+    LEVEL_LABCARE: {"Sev 2": 480, "Sev 3": 1440, "Sev 4": 1920},
 }
 CONTRACT_REFERENCE = (
-    "Confluence 'Service Level Management' (space 2S, page 884343127)"
+    "Confluence 'Service Level Management' (space 2S, page 884343127); "
+    "LabCare windows from SC-5980"
 )
 
 SEV_LABELS = ("Sev 1", "Sev 2", "Sev 3", "Sev 4")
@@ -181,19 +217,22 @@ _TIER_FIELD_HINTS = (
     "tier",
 )
 
-# Confirmed against MKE Ops sandbox inspect: SlaProcess.Name and
-# Entitlement.Support_Level__c both carry OpsCare / LabCare / Custom.
+# Both carry OpsCare / LabCare / Custom, but they are not peers.
+# Per SC-5980 (Daniil Gelfanov, Salesforce admin): Support_Level__c is the custom
+# field where the support level is *chosen*; SlaProcess is a standard field set
+# *automatically from* it. So Support_Level__c is the source of truth and
+# SlaProcess.Name is a derived echo of it — prefer the former.
 _TIER_SOURCE_CONFIDENCE = {
-    "SlaProcess.Name": "high",
     "Entitlement.Support_Level__c": "high",
+    "SlaProcess.Name": "high",
 }
 
 
 def _source_rank(source: str) -> int:
     """Lower wins. Entitlement.Type is excluded from the decision path entirely."""
-    if source == "SlaProcess.Name":
-        return 0
     if source == "Entitlement.Support_Level__c":
+        return 0
+    if source == "SlaProcess.Name":
         return 1
     if source == "Entitlement.Type":
         return 99
@@ -228,10 +267,26 @@ def _int_or_none(val: Any) -> Optional[int]:
 
 
 def _contract_target_mins(sev_label: str, tier: Optional[str]) -> Optional[int]:
-    """Documented initial-response target, or None when the tier is unknown."""
+    """Documented initial-response target, or None when the tier is unknown.
+
+    Also None for a severity the level cannot open (LabCare Sev 1) — see
+    _severity_not_entitled, which distinguishes that from a plain lookup miss.
+    """
     if not tier:
         return None
     return CONTRACT_RESPONSE_MINS.get(tier, {}).get(sev_label)
+
+
+def _severity_not_entitled(sev_label: str, level: Optional[str]) -> bool:
+    """True when this support level is not entitled to open this severity.
+
+    LabCare cannot open Sev 1. A case that exists anyway is an anomaly — either
+    mis-set severity or a process gap — and is worth surfacing rather than
+    silently reporting as unscored.
+    """
+    if not level or not sev_label:
+        return False
+    return sev_label in DISALLOWED_SEVERITIES.get(level, ())
 
 
 def _pick_account_field(meta: Dict[str, Any]) -> Optional[str]:
@@ -579,9 +634,9 @@ def _support_level_from_text(text: str) -> Optional[str]:
     """Map a free-text value onto a known support level label, or None.
 
     OpsCare Plus is only returned on an explicit plus marker — guessing upward
-    would apply the tighter target and under-report breaches.
-    LabCare and Custom are recognized as labels but have no published targets
-    on the Service Level Management page.
+    would apply the tighter target and over-report breaches.
+    LabCare now has published targets (SC-5980); Custom still has none and is
+    recognized as a label only.
     """
     squashed = re.sub(r"[^a-z0-9+]", "", (text or "").lower())
     if not squashed:
@@ -598,7 +653,7 @@ def _support_level_from_text(text: str) -> Optional[str]:
 
 
 def _contract_tier(level: Optional[str]) -> Optional[str]:
-    """Only OpsCare / OpsCare Plus have documented response windows."""
+    """Levels with documented response windows: OpsCare, OpsCare Plus, LabCare."""
     if level in CONTRACT_RESPONSE_MINS:
         return level
     return None
@@ -623,19 +678,20 @@ def derive_subscription_tier(
     entitlements: List[Dict[str, Any]],
     sla_processes: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
-    """Derive OpsCare / OpsCare Plus (and label LabCare / Custom) from Entitlements.
+    """Derive the support level (OpsCare / OpsCare Plus / LabCare / Custom).
 
-    Decision order, confirmed against the MKE Ops sandbox:
-      1. SlaProcess.Name
-      2. Entitlement.Support_Level__c
+    Decision order — per SC-5980, Support_Level__c is where the level is chosen
+    and SlaProcess is set automatically from it, so the custom field leads:
+      1. Entitlement.Support_Level__c
+      2. SlaProcess.Name  (derived echo of the above)
       3. other Entitlement.* level-ish fields
       4. Entitlement.Name
     Entitlement.Type is recorded in candidates but never decides — in this org
     it is always "Phone Support".
 
-    `tier` is only set when the level has documented targets (OpsCare / Plus).
-    LabCare and Custom set `supportLevel` with `tier: null` so the report can
-    show the label without inventing response windows.
+    `tier` is set when the level has documented targets — now OpsCare, OpsCare
+    Plus and LabCare. Custom sets `supportLevel` with `tier: null` so the report
+    can show the label without inventing response windows.
     """
     entitlements = entitlements or []
     processes = {p.get("Id"): p for p in (sla_processes or []) if p.get("Id")}
@@ -799,6 +855,12 @@ def _case_sla_adherence(
         "slaTargetMismatch": None,
         "slaActualMins": None,
         "slaMilestone": None,
+        # LabCare cannot open Sev 1 — flag rather than silently leaving unscored.
+        "slaSeverityNotEntitled": _severity_not_entitled(label, tier),
+        # LabCare is 8x5, so its target minutes are business minutes and are not
+        # wall-clock comparable to the 24x7 levels. Verdicts still come from
+        # Salesforce (which applies BusinessHoursId), so this is presentational.
+        "slaSupportHours": SUPPORT_HOURS.get(tier) if tier else None,
     }
     if not label:
         # Severity at open is undeterminable — nothing to hold anyone to.

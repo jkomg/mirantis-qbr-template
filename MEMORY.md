@@ -19,9 +19,17 @@ asking for LabCare windows + richer Case sandbox.
 matches the real SF→QBR contract, design the deck against that, then switch
 `sf-sync` to prod. Sandbox is too thin for demos.
 
-**Action still owed:** rotate the Salesforce security token for
-`jkennedy@mirantis.com` (was production, plaintext in an untracked
-`k8s/env-configmap.yaml`; scrubbed, never committed — rotate anyway).
+**Token rotation: done.**
+
+**Production access granted (2026-07-30)** — Daniil enabled API + opportunities
+on the prod profile and shared credentials via 1Password. Sandbox
+(`mirantis--mkeops`) stays the safe place to iterate; point at prod deliberately,
+not by default.
+
+**Open with IT:** the auth *model* was never answered. We run
+`client_credentials` = one integration identity, so every pull carries that
+user's record visibility. Roadmap says per-user OAuth. Needs settling before
+this goes wider than one person.
 
 ## Repo / stack
 
@@ -84,11 +92,41 @@ python3 scripts/make-sla-fixtures.py --clean  # removes only demo-*.json
 | Severity at open | `CaseHistory` → `openedAs` |
 | Commercial | `ARR__c`, `Total_Won_Amount__c`, `Open_Pipeline__c`, `Upcoming_renewal_date__c` |
 | Nodes | `Environment__c.of_nodes__c` |
+| Product info | `Entitlement` product field — **not** `Asset` (no access; `INVALID_TYPE`) |
 | SLA wiki | Confluence space `2S`, page `884343127` |
 | SLA score | Initial response, Sev 1–4; P1/P2 = headline only |
-| Tier | OpsCare / OpsCare Plus have targets; LabCare/Custom → `supportLevel`, `tier: null` |
+| Tier precedence | **`Support_Level__c` → `SlaProcess.Name`** — the custom field is chosen, SlaProcess is auto-set from it |
+| Tier | OpsCare / OpsCare Plus / **LabCare** have targets; Custom → `supportLevel`, `tier: null` |
 | Payload for report | `sourceReview.slaScoring` + `ticketDetail[]` |
 | Jira thread | [SC-5980](https://mirantis.jira.com/browse/SC-5980) |
+
+### SLA windows (minutes) — SC-5980, 2026-07-30
+
+LabCare is **8x5**, so its minutes are *business* minutes and are not wall-clock
+comparable to the 24x7 levels. Verdicts always come from Salesforce
+`CaseMilestone.IsViolated` (which applies `BusinessHoursId`), so the contract
+table only supplies display targets and the enforced-vs-contract mismatch flag —
+it never decides a breach.
+
+| | First response | | Next update | |
+|---|---|---|---|---|
+| **Sev** | LabCare | OpsCare/Plus | LabCare | OpsCare/Plus |
+| 1 | not allowed | 15 | not allowed | 60 |
+| 2 | 240 | 60 | 480 | 240 |
+| 3 | 480 | 120 | 1440 | 2880 |
+| 4 | 480 | 480 | 1920 | 4320 |
+
+**LabCare cannot open Sev 1.** A LabCare Sev 1 case sets
+`slaSeverityNotEntitled: true` — a data/process anomaly to surface, not just
+"unscored".
+
+**Open conflict — do not silently resolve.** Daniil quotes one combined
+"OpsCare / OpsCare Plus" column carrying the *Plus* values (15/60/120/480). The
+Confluence contract table keeps them distinct — OpsCare is looser
+(30/120/240/480 first response; Sev 4 next update 5760 vs Plus 4320). Code keeps
+the contract values and lets the enforced-vs-contract panel surface per-case
+disagreement, rather than tightening OpsCare and manufacturing breaches. Needs
+Daniil to confirm which governs.
 
 ## Agent model
 
