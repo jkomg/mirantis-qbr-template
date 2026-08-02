@@ -44,6 +44,8 @@ exports/
 # ---- Local dev ----
 .env
 .env.local
+.env.*
+!.env.example
 *.log
 .aider*
 __pycache__/
