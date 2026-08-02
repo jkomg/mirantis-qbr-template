@@ -1072,6 +1072,9 @@ def map_sla_scoring(
     }
     live_seen: Dict[str, set] = {label: set() for label in SEV_LABELS}
     mismatches: Dict[Tuple[str, int, int], Dict[str, Any]] = {}
+    # Enforced targets we could not check against a contract value.
+    unvalidated: Dict[str, set] = {label: set() for label in SEV_LABELS}
+    unvalidated_cases: Dict[str, int] = {label: 0 for label in SEV_LABELS}
     unknown_sev = 0
 
     for case in cases:
@@ -1095,7 +1098,15 @@ def map_sla_scoring(
         doc_mins = adh["slaContractTargetMins"]
         if live_mins is not None:
             live_seen[label].add(live_mins)
-            if adh["slaTargetMismatch"] and doc_mins is not None:
+            if doc_mins is None:
+                # Salesforce enforced a target but there is no contract value to
+                # check it against — the tier didn't resolve to a documented
+                # level. Silently skipping these is how a 16x gap reports as
+                # "0 mismatches"; count them so the report can say "unvalidated"
+                # instead of implying agreement.
+                unvalidated[label].add(live_mins)
+                unvalidated_cases[label] += 1
+            elif adh["slaTargetMismatch"]:
                 entry = mismatches.setdefault(
                     (label, live_mins, doc_mins),
                     {
@@ -1180,6 +1191,42 @@ def map_sla_scoring(
         )
 
     subscription = {k: v for k, v in tier_info.items() if k != "warnings"}
+
+    # An empty targetMismatches list means one of two very different things:
+    # "checked, and they agree" or "had nothing to check against". Say which,
+    # so a tier that never resolved can't read as a clean bill of health.
+    unvalidated_rows = [
+        {
+            "severity": label,
+            "cases": unvalidated_cases[label],
+            "liveTargetMinsObserved": sorted(unvalidated[label]),
+        }
+        for label in SEV_LABELS
+        if unvalidated_cases[label]
+    ]
+    unvalidated_total = sum(r["cases"] for r in unvalidated_rows)
+    target_validation = {
+        "contractTargetsAvailable": bool(tier_info.get("tier")),
+        "unvalidatedCases": unvalidated_total,
+        "bySeverity": unvalidated_rows,
+        "reason": (
+            None
+            if tier_info.get("tier")
+            else (
+                "No documented response windows for support level "
+                f"{tier_info.get('supportLevel') or 'unknown'!r}. Enforced targets "
+                "are reported as-is and were NOT checked against any contract — "
+                "an empty mismatch list here means unverified, not compliant."
+            )
+        ),
+    }
+    if unvalidated_total:
+        warnings.append(
+            f"{unvalidated_total} case(s) carry a Salesforce-enforced response "
+            "target that could not be validated against a contract window. "
+            "Adherence for these reflects Salesforce configuration only."
+        )
+
     return {
         "basis": "initial response",
         "scope": "all severities (Sev 1–4)",
@@ -1190,6 +1237,7 @@ def map_sla_scoring(
         "headline": headline,
         "unknownSeverity": unknown_sev,
         "targetMismatches": mismatch_rows,
+        "targetValidation": target_validation,
         "warnings": warnings,
     }
 
