@@ -700,12 +700,32 @@ def derive_subscription_tier(
     # A lapsed OpsCare row alongside a live OpsCare Plus row is a normal upgrade
     # history, not a conflict — score the active ones when there are any.
     active = [e for e in entitlements if _first_str(e, "Status").lower() == "active"]
-    pool = active or entitlements
+    lapsed = False
     if active:
+        pool = active
         scope = "active entitlements"
     elif entitlements:
-        scope = "all entitlements (none marked Active)"
+        # Coverage has lapsed. Falling back to *every* historical entitlement lets
+        # a years-old expired level tie with the most recent one and register as a
+        # conflict, which reads as "tier unknown" when the answer is really "their
+        # last contract was X and it has run out". Narrow to the latest expiry.
+        lapsed = True
+        with_end = [(_first_str(e, "EndDate"), e) for e in entitlements]
+        latest_end = max((d for d, _ in with_end if d), default="")
+        pool = [e for d, e in with_end if d == latest_end] if latest_end else entitlements
+        scope = (
+            f"most recently expired entitlements (ended {latest_end}; none Active)"
+            if latest_end
+            else "all entitlements (none marked Active, no end dates)"
+        )
+        warnings.append(
+            "No Active entitlement on this account"
+            + (f" — most recent coverage ended {latest_end}." if latest_end else ".")
+            + " Support level is read from the lapsed record; treat adherence as"
+            " historical and check whether a renewal is pending."
+        )
     else:
+        pool = []
         scope = "none"
 
     candidates: List[Dict[str, Any]] = []
@@ -828,6 +848,7 @@ def _case_sla_adherence(
     milestones: List[Dict[str, Any]],
     sla_sev_label: str,
     tier: Optional[str] = None,
+    final_sev_label: str = "",
 ) -> Dict[str, Any]:
     """
     All four severities carry an initial-response commitment, so every case with
@@ -843,9 +864,19 @@ def _case_sla_adherence(
     """
     label = _normalize_sev_label(sla_sev_label)
     bucket = _priority_bucket(sla_sev_label)
-    contract_mins = _contract_target_mins(label, tier)
+    final_label = _normalize_sev_label(final_sev_label) or label
+    # Support re-triages on intake and steps severity down as work progresses, and
+    # Salesforce sets the milestone target from the severity *then current* — not
+    # the one the customer filed under. So the contract window to compare against
+    # is the final severity's. Comparing the enforced target to the opened-as row
+    # reads a normal re-triage as a target mismatch.
+    contract_mins = _contract_target_mins(final_label, tier)
     out: Dict[str, Any] = {
         "slaSeverity": label or None,
+        "slaSeverityFinal": final_label or None,
+        "slaSeverityChanged": bool(label and final_label and label != final_label),
+        # Which severity's contract row slaContractTargetMins came from.
+        "slaContractTargetSeverity": final_label or None,
         "slaBound": bool(label),
         "slaHeadline": bucket in ("p1", "p2"),
         "slaBreach": None,
@@ -1079,12 +1110,19 @@ def map_sla_scoring(
 
     for case in cases:
         label = _sla_severity_label(case, history)
+        # Bucketing stays on severity-at-open — that is what the customer filed
+        # and what they experience. The final severity rides alongside so the
+        # target can be validated against the row it was actually set from.
+        _opened_raw, _final_raw = _opened_and_final_severity(case, history)
+        final_label = _normalize_sev_label(_final_raw or _case_severity_raw(case))
         if label not in per_sev:
             unknown_sev += 1
             continue
         row = per_sev[label]
         row["total"] += 1
-        adh = _case_sla_adherence(case, milestones, label, tier=tier)
+        adh = _case_sla_adherence(
+            case, milestones, label, tier=tier, final_sev_label=final_label
+        )
         if adh["slaBound"]:
             row["bound"] += 1
         if adh["slaMilestone"] is None:
@@ -1424,7 +1462,9 @@ def map_source_review(
 
         issue = _first_str(c, "Description", "Symptoms__c", "Cause__c")
         resolution = _first_str(c, "Resolution__c", "Cause__c")
-        adh = _case_sla_adherence(c, milestones, sla_sev or "", tier=tier)
+        adh = _case_sla_adherence(
+            c, milestones, sla_sev or "", tier=tier, final_sev_label=final or ""
+        )
         ticket_detail.append(
             {
                 "caseNumber": _first_str(c, "CaseNumber"),
@@ -1447,6 +1487,13 @@ def map_source_review(
                 "slaTargetMismatch": adh["slaTargetMismatch"],
                 "slaActualMins": adh["slaActualMins"],
                 "slaMilestone": adh["slaMilestone"],
+                # Re-triage is normal: support adjusts severity on intake and steps
+                # it down as work progresses. Carry both so the report can say
+                # "opened Sev 1 · resolved Sev 3 · scored against Sev 3's window"
+                # rather than silently showing one and the other's target.
+                "slaSeverityFinal": adh["slaSeverityFinal"],
+                "slaSeverityChanged": adh["slaSeverityChanged"],
+                "slaContractTargetSeverity": adh["slaContractTargetSeverity"],
             }
         )
 
