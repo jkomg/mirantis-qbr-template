@@ -114,6 +114,9 @@ ACCOUNT_PREFERRED = [
     "Open_Pipeline__c",  # sum of TCV from non-closed opps
     "Upcoming_renewal_date__c",  # Latest_Open_Renewal_Opportunity__r.Entitlement_Expiration_Date__c
     "Renewal_Open_Opportunity_Start_Date__c",  # close date of open renewal opp
+    # Real account tier — NOT Account.Type, which is "Customer" almost everywhere.
+    "Customer_Tier__c",
+    "Mirantis_Tier__c",
     # Legacy fallback only
     "AnnualRevenue",
 ]
@@ -818,9 +821,18 @@ def build_payload(
         },
         "customer": {
             "name": acct["Name"],
-            # Account.Type — the commercial segment. The support subscription
-            # tier is a different thing: sourceReview.slaScoring.subscription.
-            "tier": acct.get("Type") or "",
+            # Customer_Tier__c / Mirantis_Tier__c carry the real account tier
+            # ("Tier 1", ...). Account.Type is a record classification and holds
+            # "Customer" for nearly everything, which rendered on the deck as a
+            # support tier of "Customer". Left blank when neither is populated —
+            # the Configurator flags a blank, whereas a wrong value looks correct.
+            # The *support* subscription level is a separate concept and lives in
+            # sourceReview.slaScoring.subscription.
+            "tier": (
+                acct.get("Customer_Tier__c")
+                or acct.get("Mirantis_Tier__c")
+                or ""
+            ),
             "industry": acct.get("Industry") or "",
             "stakeholders": [
                 {"name": c["Name"], "title": c.get("Title") or ""}
@@ -837,7 +849,9 @@ def build_payload(
         "usage": usage,
         "support": support,
         "health": health,
-        "nps": {"score": 0, "industry": 30, "delta": 0},
+        # No NPS system is wired in. 0 rendered as a measured NPS of zero on the
+        # cover; null reads as unknown and the deck dashes the tile.
+        "nps": {"score": None, "industry": None, "delta": None},
         "products": products,
         "productMix": product_mix,
         "sourceReview": source_review,

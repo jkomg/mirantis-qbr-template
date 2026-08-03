@@ -415,7 +415,10 @@ def map_usage(environments: List[Dict[str, Any]]) -> Dict[str, Any]:
         "workloads": 0,
         "workloadsDelta": 0,
         "environments": len(environments),
-        "uptime": 0,
+        # Salesforce has no uptime source. Emitting 0 made the deck print a
+        # real-looking "0%" uptime — worse than blank, and worse than the deck's
+        # 99.94 demo fallback firing. null means "unknown"; the deck dashes it.
+        "uptime": None,
         "_environmentDetail": [
             {
                 "name": _first_str(e, "Name"),
@@ -1365,8 +1368,13 @@ def map_support(
         "slaMetPct": sla_met,
         "slaDeltaPp": 0,
         "p1MttrHours": avg_mttr,
-        "p1MttrTargetHours": 3.0,
-        "csat": 0,
+        # There is no resolution-time SLA — only First Response and Next Update
+        # milestones exist, and Resolution_Time_is_violated__c never fires. A 3.0h
+        # "target" was invented here, so the deck rendered FDA's 687.6h time-to-close
+        # as a 229x miss against a commitment that does not exist.
+        "p1MttrTargetHours": None,
+        # No CSAT source is wired in. 0 rendered as a measured score of 0/5.
+        "csat": None,
         "ticketsBySeverity": {
             "p1": buckets.get("p1", 0),
             "p2": buckets.get("p2", 0),
@@ -1668,8 +1676,20 @@ def map_exec_takeaways(
         {
             "kind": "SUPPORT",
             "label": "02 · SUPPORT",
-            "headline": f"{support.get('ticketsTotal', 0)} cases · {support.get('p1Count', 0)} P1 · {support.get('slaMetPct', 0)}% SLA",
-            "body": f"Open cases: {support.get('_openCases', 0)}. P1 MTTR (closed): {support.get('p1MttrHours', 0)}h.",
+            # p1Count is severity *at open*; most get re-triaged down, so say so
+            # rather than implying that many live criticals. Time-to-close is
+            # dropped from the headline — it is not an SLA measure and pairing it
+            # with an SLA percentage invites the wrong question.
+            "headline": (
+                f"{support.get('ticketsTotal', 0)} cases · "
+                f"{support.get('p1Count', 0)} opened P1 · "
+                f"{support.get('slaMetPct', 0)}% first response"
+            ),
+            "body": (
+                f"Open now: {support.get('_openCases', 0)}. "
+                "P1 count is severity at open — support re-triages most downward. "
+                "Adherence is first response only; there is no resolution-time SLA."
+            ),
         },
     ]
     if products:

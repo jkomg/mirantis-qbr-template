@@ -393,23 +393,23 @@
   <div style="margin-top:50px; display:grid; grid-template-columns:repeat(4, 1fr); gap:32px;">
     <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">CLUSTERS</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">14</div>
-      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +3 QoQ · +6 YoY</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">{{ clusters }}</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">{{ clustersTrendStr }}</div>
     </div>
     <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">NODES</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">312</div>
-      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +24 QoQ</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">{{ nodes }}</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">{{ nodesTrendStr }}</div>
     </div>
     <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">WORKLOADS</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">1,847</div>
-      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">▲ +412 QoQ</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">{{ workloads }}</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#3DAE73; margin-top:6px; font-weight:600;">{{ workloadsTrendStr }}</div>
     </div>
     <div style="border-top:3px solid #3A1A3A; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:20px; color:#6B7280; letter-spacing:3px;">ENVIRONMENTS</div>
-      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">6</div>
-      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#6B7280; margin-top:6px; font-weight:600;">— flat</div>
+      <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:96px; color:#14161A; line-height:1; margin-top:14px;">{{ environments }}</div>
+      <div style="font-family:'Lato',sans-serif; font-size:22px; color:#6B7280; margin-top:6px; font-weight:600;">{{ environmentsTrendStr }}</div>
     </div>
   </div>
 
@@ -473,7 +473,7 @@
     <div style="border-top:3px solid #F5A623; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#B57515; letter-spacing:2px;">P1 MTTR</div>
       <div style="font-family:'Overpass',sans-serif; font-weight:800; font-size:80px; color:#14161A; line-height:1; margin-top:12px;">{{ p1MttrHours }}<span style="font-size:48px;">h</span></div>
-      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">target {{ p1MttrTarget }}h</div>
+      <div style="font-family:'Lato',sans-serif; font-size:20px; color:#F5A623; margin-top:6px;">{{ p1MttrTarget }}</div>
     </div>
     <div style="border-top:3px solid #3DAE73; padding:24px 0 0 0;">
       <div style="font-family:'Lato',sans-serif; font-weight:700; font-size:18px; color:#1F7D52; letter-spacing:2px;">CSAT</div>
@@ -1195,11 +1195,34 @@ class Component extends DCLogic {
     };
     const arrCurrent = fmtMoney(d.commercial?.arr?.current ?? 2400000);
     const arrYoy = d.commercial?.arr?.yoyPct ?? 33;
-    const clusters = d.usage?.clusters ?? 14;
+    // Usage & Adoption slide — its four KPI tiles were hardcoded to the Vertex
+    // demo (14 / 312 / 1,847 / 6), so a real pull rendered another customer's
+    // footprint next to a correct cover. Bound here, dashing what we don't have:
+    // Salesforce gives environments and nodes; workloads has no source yet.
+    const loaded = !!this.state.data;
+    const dashIfLoaded = (v, demo) => (v != null ? v : (loaded ? '—' : demo));
+    const clusters = dashIfLoaded(d.usage?.clusters, 14);
+    const nodes = dashIfLoaded(d.usage?.nodes, 312);
+    const workloads = d.usage?.workloads
+      ? Number(d.usage.workloads).toLocaleString('en-US')
+      : (loaded ? '—' : '1,847');
+    const environments = dashIfLoaded(d.usage?.environments, 6);
+    const trendOrBlank = (delta, suffix, demo) => {
+      if (!loaded) return demo;
+      if (delta == null || delta === 0) return 'no prior period';
+      return (delta >= 0 ? '▲ +' : '▼ ') + delta + suffix;
+    };
+    const nodesTrendStr = trendOrBlank(d.usage?.nodesDelta, ' QoQ', '▲ +24 QoQ');
+    const workloadsTrendStr = trendOrBlank(d.usage?.workloadsDelta, ' QoQ', '▲ +412 QoQ');
+    const environmentsTrendStr = loaded ? 'current' : '— flat';
     const clustersDelta = d.usage?.clustersDelta ?? 3;
     const slaMet = d.support?.slaMetPct ?? 96;
     const slaDelta = d.support?.slaDeltaPp ?? -2;
-    const nps = d.nps?.score ?? 42;
+    // `??` only catches null/undefined, so a real 0 from Salesforce used to print
+    // as a measured NPS of zero. Data loaded but NPS absent should read "—", not
+    // 0 and not the 42 demo value.
+    const npsKnown = d.nps?.score != null;
+    const nps = npsKnown ? d.nps.score : (this.state.data ? '—' : 42);
     const npsDelta = d.nps?.delta ?? 7;
     // Support Performance slide — previously hardcoded to the demo mockup values
     // regardless of loaded data; bound here the same way the KPI strip above is.
@@ -1207,10 +1230,15 @@ class Component extends DCLogic {
     const p1Count = d.support?.p1Count ?? 4;
     const p1Delta = d.support?.p1Delta ?? -2;
     const p1MttrHours = d.support?.p1MttrHours ?? 3.4;
-    const p1MttrTarget = d.support?.p1MttrTargetHours ?? 3.0;
-    const csat = d.support?.csat ?? 4.6;
+    // No resolution-time SLA exists, so there is no MTTR target to miss. When
+    // absent, label the number as what it is instead of scoring it against 3.0h.
+    const p1MttrTargetRaw = d.support?.p1MttrTargetHours;
+    const p1MttrTarget = p1MttrTargetRaw ?? (loaded ? null : 3.0);
+    const csat = d.support?.csat != null ? d.support.csat : (loaded ? '—' : 4.6);
     const csatDelta = d.support?.csatDelta ?? 0.2;
-    const p1MttrTargetFmt = Number(p1MttrTarget).toFixed(1);
+    const p1MttrTargetFmt = p1MttrTarget != null
+      ? ('target ' + Number(p1MttrTarget).toFixed(1) + 'h')
+      : 'no resolution SLA';
     const sevCounts = d.support?.ticketsBySeverity ?? { p1: 4, p2: 19, p3: 42, p4: 22 };
     const sevTotal = Math.max(1, (sevCounts.p1 || 0) + (sevCounts.p2 || 0) + (sevCounts.p3 || 0) + (sevCounts.p4 || 0));
     const sevBreakdown = [
@@ -1481,13 +1509,21 @@ class Component extends DCLogic {
       dataConnected: status === 'loaded',
       dataError: status === 'error',
       slaTrendStr: (slaDelta >= 0 ? '▲ +' : '▼ ') + slaDelta + 'pp QoQ',
-      npsTrendStr: (npsDelta >= 0 ? '▲ +' : '▼ ') + npsDelta + ' QoQ',
-      clustersTrendStr: (clustersDelta >= 0 ? '▲ +' : '▼ ') + clustersDelta + ' QoQ',
+      // No score means no trend to state — an arrow next to "—" reads as data.
+      npsTrendStr: npsKnown
+        ? ((npsDelta >= 0 ? '▲ +' : '▼ ') + npsDelta + ' QoQ')
+        : 'not tracked',
+      clustersTrendStr: loaded
+        ? (d.usage?.clustersDelta ? ((d.usage.clustersDelta >= 0 ? '▲ +' : '▼ ') + d.usage.clustersDelta + ' QoQ') : 'no prior period')
+        : ('▲ +' + clustersDelta + ' QoQ · +6 YoY'),
+      nodes, workloads, environments, nodesTrendStr, workloadsTrendStr, environmentsTrendStr,
       arrTrendStr: '▲ +' + arrYoy + '% YoY',
       ticketsTotal, p1Count, p1MttrHours, csat, sevBreakdown, timeSpent,
       p1MttrTarget: p1MttrTargetFmt,
       p1TrendStr: (p1Delta <= 0 ? '▼ ' : '▲ +') + p1Delta + ' QoQ',
-      csatTrendStr: (csatDelta >= 0 ? '▲ +' : '▼ ') + csatDelta + ' QoQ',
+      csatTrendStr: (d.support?.csat != null)
+        ? ((csatDelta >= 0 ? '▲ +' : '▼ ') + csatDelta + ' QoQ')
+        : 'not tracked',
       seLight: se === 'light',
       seNotLight: se !== 'light',
       seDeep: se === 'deep',
@@ -1497,7 +1533,14 @@ class Component extends DCLogic {
       // Per-slide ON/OFF (from Configurator's Sections panel). Default ON if missing.
       // Combined with length-gating so length=compact still trims, but the user's explicit toggles always win.
       secExecSummary:     d.sections?.execSummary     !== false,
-      secAccountHealth:   d.sections?.accountHealth   !== false,
+      // The Account Health slide's scores and 4-quarter history are still
+      // hardcoded to the Vertex demo, and nothing populates health.composite yet
+      // (see issue #2 — the health model isn't decided). Until it's bound, a
+      // loaded deck with no health data must not render it: it would show another
+      // customer's scores under this customer's name. Hides itself rather than
+      // relying on someone remembering the toggle.
+      secAccountHealth:   d.sections?.accountHealth !== false
+                          && !(this.state.data && d.health?.composite == null),
       secUsage:           d.sections?.usage           !== false,
       secWins:            d.sections?.wins            !== false,
       secRisks:           d.sections?.risks           !== false,
